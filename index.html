@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使魔卡牌对战</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #14141f;
+    color: #e8e4d8;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    min-height: 100vh;
+  }
+  #game { max-width: 1180px; margin: 0 auto; padding: 10px 14px 30px; }
+  #topbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; }
+  #topbar h1 { font-size: 20px; color: #d8b96a; letter-spacing: 2px; }
+  .btn {
+    background: #4a3b22; color: #e8d9a8; border: 1px solid #8a744a;
+    padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+  }
+  .btn:hover:not(:disabled) { background: #5d4b2c; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ---------- 组牌界面 ---------- */
+  #deckbuilder { max-width: 1180px; margin: 0 auto; padding: 10px 14px 30px; }
+  #db-main { display: flex; gap: 14px; align-items: flex-start; margin-top: 8px; }
+  #card-pool { flex: 1; min-width: 0; }
+  .race-section h2 {
+    font-size: 15px; color: #d8b96a; margin: 12px 2px 6px;
+    border-bottom: 1px solid #3a3a52; padding-bottom: 4px; letter-spacing: 1px;
+  }
+  .race-cards { display: flex; flex-wrap: wrap; gap: 8px; }
+  .db-card {
+    width: 112px; min-height: 150px; border-radius: 8px; padding: 6px;
+    background: linear-gradient(160deg, #33455e, #1e2a3a);
+    border: 2px solid #5a7a9a; display: flex; flex-direction: column;
+    font-size: 12px; cursor: pointer; position: relative; user-select: none;
+    transition: transform .12s;
+  }
+  .db-card:hover { transform: translateY(-6px); }
+  .db-card.maxed { opacity: .4; }
+  .db-card .picked-badge {
+    position: absolute; top: -8px; right: -8px;
+    background: #4a3b22; border: 1px solid #d8b96a; color: #ffe8b0;
+    border-radius: 10px; font-size: 11px; padding: 1px 7px; white-space: nowrap;
+  }
+  #db-sidebar {
+    width: 230px; flex-shrink: 0; background: #1c1c2b;
+    border: 1px solid #3a3a52; border-radius: 10px; padding: 12px;
+    position: sticky; top: 10px;
+  }
+  #db-sidebar h3 { font-size: 14px; color: #d8b96a; margin-bottom: 6px; }
+  #deck-count { font-size: 15px; font-weight: bold; color: #7ab8ff; margin-bottom: 8px; }
+  #deck-count.ready { color: #7ee87e; }
+  #deck-list { min-height: 120px; max-height: 380px; overflow-y: auto; margin-bottom: 10px; }
+  .deck-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #cfc8b8;
+  }
+  .deck-item:hover { background: #3b2e2e; color: #ff9a9a; }
+  .deck-item .d-cost { color: #7ab8ff; font-weight: bold; margin-right: 6px; }
+  .deck-item .d-n { color: #d8b96a; }
+  .deck-empty { font-size: 12px; color: #4a4a60; padding: 6px; }
+  #db-sidebar .btn { width: 100%; margin-top: 6px; }
+  #start-battle {
+    background: linear-gradient(160deg, #6a4a1a, #4a320e); color: #ffe8b0;
+    border: 2px solid #b08a3a; font-weight: bold; font-size: 15px; padding: 8px 0;
+  }
+  #start-battle:hover:not(:disabled) { filter: brightness(1.2); }
+
+  /* ---------- 对战界面 ---------- */
+  .zone-label { font-size: 12px; color: #8a8a9a; margin: 4px 2px; }
+
+  .hero-row { display: flex; align-items: center; gap: 12px; margin: 4px 0; }
+  .hero {
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #2a2438, #1d1a2a);
+    border: 2px solid #5a4a7a; border-radius: 10px; padding: 8px 14px;
+    min-width: 300px; cursor: default; position: relative;
+  }
+  .hero.targetable { cursor: pointer; border-color: #c0392b; box-shadow: 0 0 10px #c0392b88; }
+  .hero .portrait {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #6a5a9a, #33294d);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; border: 2px solid #8a74ba;
+  }
+  .hero .name { font-size: 14px; color: #cfc4ea; }
+  .hero .hp { font-size: 18px; color: #ff7a7a; font-weight: bold; }
+  .hero .mana-info { font-size: 13px; color: #7ab8ff; }
+  .hero .grave-info { font-size: 12px; color: #9a8aa8; }
+  .burned-tag { color: #c39bd3; font-size: 12px; }
+
+  .hand-back-row { display: flex; gap: 4px; min-height: 40px; align-items: center; }
+  .card-back {
+    width: 30px; height: 42px; border-radius: 4px;
+    background: linear-gradient(135deg, #3a2f1f, #221a10);
+    border: 1px solid #8a744a;
+  }
+
+  .board {
+    display: flex; gap: 8px; justify-content: center; align-items: flex-end;
+    min-height: 158px; padding: 6px;
+    background: #1c1c2b; border-radius: 10px; border: 1px dashed #3a3a52;
+  }
+  .board .empty-hint { color: #4a4a60; font-size: 13px; align-self: center; }
+
+  .minion {
+    width: 104px; height: 146px; border-radius: 8px; padding: 6px;
+    background: linear-gradient(160deg, #2e3b2e, #1b241b);
+    border: 2px solid #5a7a52; display: flex; flex-direction: column;
+    font-size: 12px; position: relative; cursor: default; user-select: none;
+  }
+  .minion.enemy { background: linear-gradient(160deg, #3b2e2e, #241b1b); border-color: #7a5252; }
+  .minion.can-attack { box-shadow: 0 0 10px #7ec87e; cursor: pointer; }
+  .minion.selected { border-color: #ffd700; box-shadow: 0 0 12px #ffd700; }
+  .minion .m-name { text-align: center; font-weight: bold; color: #f0e6c8; margin-bottom: 2px; }
+  .minion .m-traits { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; min-height: 16px; }
+  .trait-badge {
+    font-size: 10px; background: #4a3a5e; color: #d8c8f0;
+    border-radius: 3px; padding: 0 4px; line-height: 15px;
+  }
+  .trait-badge.poison { background: #3e5e2e; color: #b8e89a; }
+  .minion .m-spell { font-size: 10px; color: #9fc8a0; text-align: center; flex: 1; margin-top: 2px; line-height: 1.3; }
+  .minion .m-stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; }
+  .stat-atk { color: #ffb84d; }
+  .stat-arm { color: #9ab8c8; }
+  .stat-hp { color: #ff7a7a; }
+  .stat-hp.buffed { color: #7ee87e; }
+
+  #player-hand {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    min-height: 168px; padding: 8px 4px;
+  }
+  .hand-card {
+    width: 112px; height: 158px; border-radius: 8px; padding: 6px;
+    background: linear-gradient(160deg, #33455e, #1e2a3a);
+    border: 2px solid #5a7a9a; display: flex; flex-direction: column;
+    font-size: 12px; cursor: pointer; position: relative; user-select: none;
+    transition: transform .12s;
+  }
+  .hand-card:hover { transform: translateY(-10px); }
+  .hand-card.unaffordable { opacity: .45; }
+  .hand-card .c-cost {
+    position: absolute; top: -8px; left: -8px; width: 28px; height: 28px;
+    border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a9ae8, #1a3a6a);
+    border: 2px solid #9ac8ff; color: #fff; font-weight: bold; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hand-card .c-name { text-align: center; font-weight: bold; color: #f0e6c8; margin: 10px 0 2px; }
+  .hand-card .c-traits { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; min-height: 16px; }
+  .hand-card .c-spell { font-size: 10px; color: #a8c8e8; text-align: center; flex: 1; margin-top: 2px; line-height: 1.35; }
+  .hand-card .c-stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
+  .db-card .c-cost {
+    position: absolute; top: -8px; left: -8px; width: 28px; height: 28px;
+    border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a9ae8, #1a3a6a);
+    border: 2px solid #9ac8ff; color: #fff; font-weight: bold; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .db-card .c-name { text-align: center; font-weight: bold; color: #f0e6c8; margin: 10px 0 2px; }
+  .db-card .c-traits { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; min-height: 16px; }
+  .db-card .c-spell { font-size: 10px; color: #a8c8e8; text-align: center; flex: 1; margin-top: 2px; line-height: 1.35; }
+  .db-card .c-stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
+
+  #midbar { display: flex; gap: 14px; margin: 8px 0; align-items: stretch; }
+  #end-turn {
+    background: linear-gradient(160deg, #6a4a1a, #4a320e); color: #ffe8b0;
+    border: 2px solid #b08a3a; border-radius: 8px; padding: 10px 18px;
+    font-size: 16px; font-weight: bold; cursor: pointer; white-space: nowrap;
+  }
+  #end-turn:hover:not(:disabled) { filter: brightness(1.2); }
+  #end-turn:disabled { opacity: .4; cursor: not-allowed; }
+  #turn-indicator { font-size: 13px; color: #d8b96a; align-self: center; white-space: nowrap; }
+  #log {
+    flex: 1; height: 76px; overflow-y: auto; background: #101018;
+    border: 1px solid #2e2e44; border-radius: 8px; padding: 6px 10px;
+    font-size: 12px; line-height: 1.5; color: #a8a8bc;
+  }
+
+  #overlay {
+    display: none; position: fixed; inset: 0; background: #000a;
+    align-items: center; justify-content: center; z-index: 10;
+  }
+  #overlay.show { display: flex; }
+  #overlay .panel {
+    background: #1e1e2e; border: 2px solid #d8b96a; border-radius: 12px;
+    padding: 36px 60px; text-align: center;
+  }
+  #overlay .result { font-size: 30px; color: #ffd700; margin-bottom: 18px; }
+
+  #rules { margin-top: 14px; font-size: 12px; color: #8a8a9a; line-height: 1.7; }
+  #rules summary { cursor: pointer; color: #b0a080; }
+</style>
+</head>
+<body>
+<!-- ========== 组牌界面 ========== -->
+<div id="deckbuilder">
+  <div id="topbar">
+    <h1>使魔卡牌对战 · 组牌</h1>
+  </div>
+  <div id="db-main">
+    <div id="card-pool"></div>
+    <div id="db-sidebar">
+      <h3>我的牌组</h3>
+      <div id="deck-count">0 / 20</div>
+      <div id="deck-list"></div>
+      <button class="btn" id="random-deck">随机牌组</button>
+      <button class="btn" id="clear-deck">清空</button>
+      <button class="btn" id="start-battle" disabled>开始战斗</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 对战界面 ========== -->
+<div id="game" style="display:none">
+  <div id="topbar">
+    <h1>使魔卡牌对战</h1>
+    <button class="btn" id="back-builder">返回组牌</button>
+  </div>
+
+  <div class="zone-label">敌方</div>
+  <div class="hero-row">
+    <div class="hero" id="enemy-hero" data-action="attack-hero"></div>
+    <div class="hand-back-row" id="enemy-hand"></div>
+  </div>
+  <div class="board" id="enemy-board"></div>
+
+  <div id="midbar">
+    <button id="end-turn">结束回合</button>
+    <div id="turn-indicator"></div>
+    <div id="log"></div>
+  </div>
+
+  <div class="board" id="player-board"></div>
+  <div class="hero-row">
+    <div class="hero" id="player-hero"></div>
+  </div>
+  <div class="zone-label">你的手牌（点击打出）</div>
+  <div id="player-hand"></div>
+
+  <details id="rules">
+    <summary>规则说明</summary>
+    <div>
+      三维 = 攻击 / 护甲 / 生命。护甲可减免每次受到的攻击伤害（法术伤害不受护甲减免）。<br>
+      远程：攻击时不受反击。飞行：只能被远程或飞行单位攻击。骑兵：冲锋，入场回合即可攻击。<br>
+      再生X：控制者回合开始时恢复 X 点生命。毒LvX：被攻击造成伤害的随从中毒（重复取最高 Lv），中毒者在其控制者回合开始时受 X 点伤害。<br>
+      分裂：亡语——召唤一个【史莱姆】（场上满员则不触发）。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。<br>
+      范围攻击：攻击随从时对其余敌方随从造成等量溅射（各自结算护甲，溅射不反击）。石化：生命未满时护甲视为 4。吸血：造成的伤害等量治疗己方英雄。法术护盾2：受到的法术伤害 -2。<br>
+      圣骑士「法力燃烧2」：攻击敌方英雄时对方下回合法力 -2；被圣骑士击杀的使魔不触发亡语。<br>
+      魅魔：战吼——随机夺取一个敌方随从。死神：战吼——消灭攻击力最高的敌方随从。骨龙：打出时除外己方墓地，每张除外牌费用 -1。<br>
+      每回合摸一张牌，法力水晶上限 10。英雄生命 30，先击倒对方英雄者胜。牌库抽空后每次摸牌受到递增的疲劳伤害。随从死亡进入墓地。
+    </div>
+  </details>
+</div>
+
+<div id="overlay">
+  <div class="panel">
+    <div class="result" id="result-text"></div>
+    <button class="btn" id="back-builder2">返回组牌</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ---------- 卡牌数据 ----------
+const CARD_DEFS = [
+  // 人族
+  { name: '枪兵',     race: '人族',   cost: 1, atk: 2, arm: 0, hp: 3,  traits: [] },
+  { name: '农夫约翰', race: '人族',   cost: 1, atk: 1, arm: 0, hp: 2,  traits: [], spell: 'draw' },
+  { name: '弓箭手',   race: '人族',   cost: 2, atk: 1, arm: 0, hp: 2,  traits: ['远程'] },
+  { name: '戟兵',     race: '人族',   cost: 2, atk: 3, arm: 0, hp: 5,  traits: [] },
+  { name: '狮鹫',     race: '人族',   cost: 3, atk: 3, arm: 0, hp: 7,  traits: ['飞行'] },
+  { name: '十字军',   race: '人族',   cost: 4, atk: 4, arm: 1, hp: 7,  traits: [] },
+  { name: '圣骑士',   race: '人族',   cost: 5, atk: 4, arm: 0, hp: 8,  traits: ['法力燃烧2'] },
+  { name: '祭司',     race: '人族',   cost: 5, atk: 2, arm: 0, hp: 6,  traits: ['远程'], spell: 'prayer' },
+  { name: '骑兵',     race: '人族',   cost: 6, atk: 3, arm: 0, hp: 12, traits: ['骑兵'] },
+  { name: '女武神',   race: '人族',   cost: 7, atk: 8, arm: 0, hp: 15, traits: [] },
+  // 精灵族
+  { name: '小精灵',   race: '精灵族', cost: 0, atk: 1, arm: 0, hp: 1,  traits: [], spell: 'wisp' },
+  { name: '史莱姆',   race: '精灵族', cost: 1, atk: 1, arm: 0, hp: 2,  traits: ['再生1', '分裂'] },
+  { name: '半人马',   race: '精灵族', cost: 1, atk: 1, arm: 0, hp: 3,  traits: ['骑兵'] },
+  { name: '精灵',     race: '精灵族', cost: 3, atk: 0, arm: 0, hp: 3,  traits: [], spell: 'elfHeal' },
+  { name: '石头人',   race: '精灵族', cost: 3, atk: 4, arm: 0, hp: 7,  traits: [] },
+  { name: '棕熊',     race: '精灵族', cost: 4, atk: 5, arm: 0, hp: 9,  traits: [] },
+  { name: '魔女',     race: '精灵族', cost: 4, atk: 1, arm: 0, hp: 6,  traits: ['远程'], spell: 'witch' },
+  { name: '巨型史莱姆', race: '精灵族', cost: 4, atk: 3, arm: 0, hp: 6, traits: ['再生1', '分裂'] },
+  { name: '龙女',     race: '精灵族', cost: 7, atk: 0, arm: 0, hp: 6,  traits: [], spell: 'dragoness' },
+  { name: '独角兽骑士', race: '精灵族', cost: 6, atk: 3, arm: 0, hp: 9, traits: ['骑兵', '法术护盾2'] },
+  // 魔物族
+  { name: '蛇',       race: '魔物族', cost: 1, atk: 1, arm: 0, hp: 3,  traits: ['毒Lv1'] },
+  { name: '鹰身女妖R', race: '魔物族', cost: 2, atk: 1, arm: 0, hp: 5, traits: ['飞行', '三姐妹'] },
+  { name: '鹰身女妖G', race: '魔物族', cost: 2, atk: 1, arm: 0, hp: 5, traits: ['飞行', '三姐妹'] },
+  { name: '鹰身女妖B', race: '魔物族', cost: 2, atk: 1, arm: 0, hp: 5, traits: ['飞行', '三姐妹'] },
+  { name: '钻石人',   race: '魔物族', cost: 4, atk: 4, arm: 1, hp: 8,  traits: [] },
+  { name: '蝎狮',     race: '魔物族', cost: 6, atk: 5, arm: 0, hp: 14, traits: ['毒Lv3'] },
+  { name: '魅魔',     race: '魔物族', cost: 6, atk: 1, arm: 0, hp: 4,  traits: [], spell: 'charm' },
+  { name: '九头怪',   race: '魔物族', cost: 7, atk: 3, arm: 0, hp: 18, traits: ['范围攻击'] },
+  // 不死族
+  { name: '骷髅',     race: '不死族', cost: 1, atk: 1, arm: 0, hp: 2,  traits: [], spell: 'skeletonSearch' },
+  { name: '石像鬼',   race: '不死族', cost: 2, atk: 2, arm: 1, hp: 2,  traits: ['石化'] },
+  { name: '木乃伊',   race: '不死族', cost: 2, atk: 2, arm: 0, hp: 6,  traits: [], spell: 'curse' },
+  { name: '幽灵',     race: '不死族', cost: 3, atk: 3, arm: 0, hp: 5,  traits: ['再生2'] },
+  { name: '吸血鬼',   race: '不死族', cost: 4, atk: 3, arm: 0, hp: 7,  traits: ['吸血'] },
+  { name: '死灵法师', race: '不死族', cost: 5, atk: 2, arm: 0, hp: 6,  traits: ['远程'], spell: 'necro' },
+  { name: '死神',     race: '不死族', cost: 6, atk: 2, arm: 0, hp: 4,  traits: [], spell: 'reaper' },
+  { name: '死亡骑士', race: '不死族', cost: 6, atk: 3, arm: 1, hp: 9,  traits: ['骑兵'] },
+  { name: '骨龙',     race: '不死族', cost: 7, atk: 3, arm: 0, hp: 9,  traits: [], spell: 'boneDragon' },
+];
+// token：不在牌池，仅由龙女变形产生
+const GREEN_DRAGON = { name: '绿龙', race: '精灵族', cost: 0, atk: 8, arm: 0, hp: 16, traits: [], token: true };
+
+const RACES = ['人族', '精灵族', '魔物族', '不死族'];
+
+const SPELL_TEXT = {
+  draw: '亡语：摸一张牌',
+  prayer: '战吼·祈祷：其他友方使魔 +1攻/+2血',
+  wisp: '战吼：本回合法力 +1',
+  elfHeal: '战吼：本回合法力 +1，英雄恢复 2 点生命',
+  witch: '战吼：对随机一个敌方随从造成 1~6 点法术伤害',
+  dragoness: '战吼：变形为【绿龙】(8/0/16)，英雄恢复 4 点生命',
+  charm: '战吼：随机获得一个敌方随从的控制权',
+  skeletonSearch: '亡语：从牌库检索一张【骷髅】置入手牌',
+  curse: '亡语·诅咒：所有敌方随从攻击 -1',
+  necro: '战吼·招魂术：召唤一个【骷髅】',
+  reaper: '战吼：消灭攻击力最高的敌方随从',
+  boneDragon: '打出时除外己方墓地，每张除外牌使费用 -1',
+};
+const TRAIT_TEXT = {
+  '远程': '攻击时不受反击',
+  '飞行': '只能被远程或飞行单位攻击',
+  '骑兵': '冲锋：入场回合即可攻击',
+  '法力燃烧2': '攻击英雄时对手下回合法力-2；被其击杀的使魔不触发亡语',
+  '再生1': '控制者回合开始时恢复 1 点生命',
+  '再生2': '控制者回合开始时恢复 2 点生命',
+  '分裂': '亡语：召唤一个【史莱姆】（场上满员则不触发）',
+  '毒Lv1': '攻击造成伤害使目标中毒，目标在其控制者回合开始时受 1 点伤害',
+  '毒Lv3': '攻击造成伤害使目标中毒，目标在其控制者回合开始时受 3 点伤害',
+  '三姐妹': '场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限',
+  '范围攻击': '攻击随从时，对其他敌方随从造成等量溅射伤害（各自结算护甲，不反击）',
+  '石化': '生命未满时护甲视为 4',
+  '吸血': '造成的伤害等量治疗己方英雄',
+  '法术护盾2': '受到的法术伤害 -2',
+};
+
+const BOARD_LIMIT = 7;
+const HAND_LIMIT = 10;
+const MAX_MANA = 10;
+const DECK_SIZE = 20;
+const MAX_COPIES = 2;
+
+let uid = 0;
+let state = null;
+let logLines = [];
+// 组牌选择：name -> 数量（保留上次所选）
+const builderSel = {};
+
+function newSide() {
+  return { hp: 30, maxHp: 30, maxMana: 0, mana: 0, burned: 0, fatigue: 0, deck: [], hand: [], board: [], graveyard: [] };
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function findDef(name) {
+  if (name === '绿龙') return GREEN_DRAGON;
+  return CARD_DEFS.find(d => d.name === name);
+}
+
+// AI 牌组：随机 10 种卡各 2 张
+function buildAIDeck() {
+  const pool = shuffle(CARD_DEFS.slice()).slice(0, 10);
+  const deck = [];
+  pool.forEach(d => { deck.push(d, d); });
+  return shuffle(deck);
+}
+
+function initGame(playerDeckDefs) {
+  uid = 0;
+  logLines = [];
+  state = { player: newSide(), enemy: newSide(), turn: 'player', selected: null, gameOver: false, aiPhase: 'play' };
+  state.player.deck = shuffle(playerDeckDefs.slice());
+  state.enemy.deck = buildAIDeck();
+  for (let i = 0; i < 3; i++) { drawCard('player', true); drawCard('enemy', true); }
+  drawCard('enemy', true); // 后手补偿
+  log('战斗开始！你是先手。');
+  startTurn('player', true);
+  render();
+}
+
+function sideName(side) { return side === 'player' ? '你' : '对手'; }
+function otherSide(side) { return side === 'player' ? 'enemy' : 'player'; }
+
+function log(msg) {
+  logLines.push(msg);
+  if (logLines.length > 60) logLines.shift();
+  const el = document.getElementById('log');
+  if (el) { el.innerHTML = logLines.map(l => '<div>' + l + '</div>').join(''); el.scrollTop = el.scrollHeight; }
+}
+
+function drawCard(side, silent) {
+  const p = state[side];
+  if (p.deck.length === 0) {
+    p.fatigue++;
+    p.hp -= p.fatigue;
+    log(sideName(side) + '牌库已空，受到 ' + p.fatigue + ' 点疲劳伤害');
+    checkGameOver();
+    return;
+  }
+  const c = p.deck.pop();
+  if (p.hand.length >= HAND_LIMIT) { log(sideName(side) + '手牌已满，' + c.name + ' 被烧毁'); return; }
+  p.hand.push(c);
+  if (!silent && side === 'player') log('你摸到了 ' + c.name);
+}
+
+function traitLv(m, prefix) {
+  const t = m.traits.find(x => x.startsWith(prefix));
+  return t ? parseInt(t.slice(prefix.length), 10) : 0;
+}
+
+// 有效护甲：石像鬼生命未满时视为 4
+function effArmor(m) {
+  if (m.traits.includes('石化') && m.curHp < m.maxHp) return 4;
+  return m.arm;
+}
+
+function healHero(side, n) {
+  const p = state[side];
+  const before = p.hp;
+  p.hp = Math.min(p.maxHp, p.hp + n);
+  if (p.hp > before) log(sideName(side) + '的英雄恢复了 ' + (p.hp - before) + ' 点生命');
+}
+
+function startTurn(side, first) {
+  const p = state[side];
+  p.maxMana = Math.min(MAX_MANA, p.maxMana + 1);
+  p.mana = Math.max(0, p.maxMana - p.burned);
+  if (p.burned > 0) log(sideName(side) + '受到法力燃烧影响，本回合法力 -' + p.burned);
+  p.burned = 0;
+  p.board.forEach(m => { m.canAttack = true; });
+  // 结算顺序：再生 → 中毒 → 清理死亡
+  p.board.forEach(m => {
+    const r = traitLv(m, '再生');
+    if (r > 0 && m.curHp < m.maxHp) {
+      const before = m.curHp;
+      m.curHp = Math.min(m.maxHp, m.curHp + r);
+      log('【' + m.name + '】再生：恢复 ' + (m.curHp - before) + ' 点生命');
+    }
+  });
+  p.board.forEach(m => {
+    if (m.poison > 0) {
+      m.curHp -= m.poison;
+      log('【' + m.name + '】中毒发作，受到 ' + m.poison + ' 点伤害');
+    }
+  });
+  cleanupDead(side);
+  if (!first) drawCard(side);
+}
+
+function makeMinion(def) {
+  return {
+    uid: ++uid, name: def.name, cost: def.cost,
+    atk: def.atk, arm: def.arm, baseAtk: def.atk, baseMaxHp: def.hp,
+    maxHp: def.hp, curHp: def.hp,
+    traits: def.traits.slice(), spell: def.spell || null,
+    poison: 0, canAttack: def.traits.includes('骑兵'), _noDR: false,
+  };
+}
+
+// 骨龙：打出时除外己方墓地，每张除外牌费用 -1（最低 0）
+function effCost(side, def) {
+  if (def.spell === 'boneDragon') return Math.max(0, def.cost - state[side].graveyard.length);
+  return def.cost;
+}
+
+function summonMinion(side, def) {
+  const p = state[side];
+  if (p.board.length >= BOARD_LIMIT) return null;
+  const m = makeMinion(def);
+  p.board.push(m);
+  return m;
+}
+
+// 三姐妹光环：场上有 x 种鹰身女妖时，我方全体鹰身女妖 +(x-1)攻 / +(x-1)血上限
+function recalcAuras() {
+  ['player', 'enemy'].forEach(side => {
+    const p = state[side];
+    const kinds = new Set(p.board.filter(m => m.traits.includes('三姐妹')).map(m => m.name)).size;
+    const bonus = Math.max(0, kinds - 1);
+    p.board.forEach(m => {
+      const b = m.traits.includes('三姐妹') ? bonus : 0;
+      const newMax = m.baseMaxHp + b;
+      const delta = newMax - m.maxHp;
+      m.maxHp = newMax;
+      if (delta !== 0) m.curHp = Math.max(1, m.curHp + delta);
+      m.atk = m.baseAtk + b;
+    });
+  });
+}
+
+function playCard(side, idx) {
+  const p = state[side];
+  const def = p.hand[idx];
+  if (!def) return false;
+  const cost = effCost(side, def);
+  if (cost > p.mana) return false;
+  if (p.board.length >= BOARD_LIMIT) { if (side === 'player') log('场上使魔已满（' + BOARD_LIMIT + '）'); return false; }
+  p.mana -= cost;
+  p.hand.splice(idx, 1);
+  if (def.spell === 'boneDragon' && p.graveyard.length > 0) {
+    log('【骨龙】除外了墓地中的 ' + p.graveyard.length + ' 张牌，法力消耗 -' + p.graveyard.length);
+    p.graveyard = [];
+  }
+  const m = makeMinion(def);
+  p.board.push(m);
+  log(sideName(side) + '召唤了【' + m.name + '】（' + m.atk + '/' + m.arm + '/' + m.curHp + '）');
+  battlecry(side, m);
+  cleanupDead('player');
+  cleanupDead('enemy');
+  recalcAuras();
+  checkGameOver();
+  return true;
+}
+
+function battlecry(side, m) {
+  const p = state[side], foeSide = otherSide(side), foe = state[foeSide];
+  switch (m.spell) {
+    case 'prayer': {
+      let n = 0;
+      p.board.forEach(o => { if (o !== m) { o.baseAtk += 1; o.baseMaxHp += 2; o.atk += 1; o.maxHp += 2; o.curHp += 2; n++; } });
+      if (n > 0) log('【祭司】的祈祷：其他 ' + n + ' 个友方使魔 +1攻/+2血');
+      break;
+    }
+    case 'wisp':
+      p.mana = Math.min(MAX_MANA, p.mana + 1);
+      log('【小精灵】战吼：本回合法力 +1');
+      break;
+    case 'elfHeal':
+      p.mana = Math.min(MAX_MANA, p.mana + 1);
+      log('【精灵】战吼：本回合法力 +1');
+      healHero(side, 2);
+      break;
+    case 'witch': {
+      if (foe.board.length === 0) { log('【魔女】战吼：敌方没有随从，无效果'); break; }
+      const t = foe.board[Math.floor(Math.random() * foe.board.length)];
+      const roll = 1 + Math.floor(Math.random() * 6);
+      const shield = t.traits.includes('法术护盾2') ? 2 : 0;
+      const dmg = Math.max(0, roll - shield);
+      t.curHp -= dmg;
+      log('【魔女】战吼：对【' + t.name + '】造成 ' + dmg + ' 点法术伤害（掷出 ' + roll + (shield ? '，法术护盾-' + shield : '') + '）');
+      break;
+    }
+    case 'dragoness': {
+      m.name = '绿龙'; m.baseAtk = 8; m.atk = 8; m.arm = 0;
+      m.baseMaxHp = 16; m.maxHp = 16; m.curHp = 16;
+      m.traits = []; m.spell = null;
+      log('【龙女】变形为【绿龙】（8/0/16）！');
+      healHero(side, 4);
+      break;
+    }
+    case 'charm': {
+      if (foe.board.length === 0) { log('【魅魔】战吼：敌方没有随从，无效果'); break; }
+      if (p.board.length > BOARD_LIMIT) { log('【魅魔】战吼：我方场上已满，无效果'); break; }
+      // 魅魔自身已占 1 格，达到上限则无法拉人
+      if (p.board.length >= BOARD_LIMIT) { log('【魅魔】战吼：我方场上已满，无效果'); break; }
+      const t = foe.board[Math.floor(Math.random() * foe.board.length)];
+      foe.board = foe.board.filter(o => o !== t);
+      t.canAttack = t.traits.includes('骑兵'); // 换边视为重新入场
+      p.board.push(t);
+      log('【魅魔】战吼：夺取了敌方【' + t.name + '】的控制权！');
+      break;
+    }
+    case 'necro': {
+      const s = summonMinion(side, findDef('骷髅'));
+      if (s) log('【死灵法师】招魂术：召唤了一个【骷髅】');
+      else log('【死灵法师】招魂术：场上已满，无效果');
+      break;
+    }
+    case 'reaper': {
+      if (foe.board.length === 0) { log('【死神】战吼：敌方没有随从，无效果'); break; }
+      let t = foe.board[0];
+      foe.board.forEach(o => { if (o.atk > t.atk) t = o; });
+      t.curHp = 0;
+      log('【死神】战吼：消灭了攻击力最高的【' + t.name + '】！');
+      break;
+    }
+  }
+}
+
+function canTarget(attacker, defender) {
+  if (defender.traits.includes('飞行') &&
+      !attacker.traits.includes('远程') && !attacker.traits.includes('飞行')) return false;
+  return true;
+}
+
+function applyPoison(src, dst) {
+  const lv = traitLv(src, '毒Lv');
+  if (lv > 0 && lv > dst.poison) {
+    dst.poison = lv;
+    log('【' + dst.name + '】中毒了（Lv' + lv + '）');
+  }
+}
+
+// targetUid 为 null 表示攻击英雄
+function doAttack(side, attackerUid, targetUid) {
+  if (state.gameOver) return;
+  const me = state[side], foeSide = otherSide(side), foe = state[foeSide];
+  const attacker = me.board.find(m => m.uid === attackerUid);
+  if (!attacker || !attacker.canAttack) return;
+  const defender = targetUid == null ? null : foe.board.find(m => m.uid === targetUid);
+  if (targetUid != null && !defender) return;
+  if (defender && !canTarget(attacker, defender)) {
+    if (side === 'player') log('【' + defender.name + '】是飞行单位，只有远程或飞行单位能攻击它');
+    return;
+  }
+
+  attacker.canAttack = false;
+  if (defender) {
+    log('【' + attacker.name + '】攻击【' + defender.name + '】');
+    // 攻击方对主目标造成伤害（护甲减免）
+    const dmgOut = Math.max(0, attacker.atk - effArmor(defender));
+    defender.curHp -= dmgOut;
+    if (dmgOut > 0) {
+      applyPoison(attacker, defender);
+      if (attacker.traits.includes('吸血')) healHero(side, dmgOut);
+    }
+    if (defender.curHp <= 0 && attacker.traits.includes('法力燃烧2')) defender._noDR = true;
+    // 范围攻击：对其他敌方随从造成等量溅射（各自结算护甲，不反击）
+    if (attacker.traits.includes('范围攻击')) {
+      foe.board.forEach(o => {
+        if (o === defender || o.curHp <= 0) return;
+        const sd = Math.max(0, attacker.atk - effArmor(o));
+        if (sd > 0) {
+          o.curHp -= sd;
+          log('【' + attacker.name + '】的溅射对【' + o.name + '】造成 ' + sd + ' 点伤害');
+          if (o.curHp <= 0 && attacker.traits.includes('法力燃烧2')) o._noDR = true;
+        }
+      });
+    }
+    // 主目标反击（远程不承受反击）
+    if (!attacker.traits.includes('远程') && defender.curHp > 0) {
+      const dmgBack = Math.max(0, defender.atk - effArmor(attacker));
+      attacker.curHp -= dmgBack;
+      if (dmgBack > 0) {
+        applyPoison(defender, attacker);
+        if (defender.traits.includes('吸血')) healHero(foeSide, dmgBack);
+      }
+      if (attacker.curHp <= 0 && defender.traits.includes('法力燃烧2')) attacker._noDR = true;
+    }
+  } else {
+    foe.hp -= attacker.atk;
+    log('【' + attacker.name + '】攻击' + sideName(foeSide) + '英雄，造成 ' + attacker.atk + ' 点伤害');
+    if (attacker.traits.includes('吸血')) healHero(side, attacker.atk);
+    if (attacker.traits.includes('法力燃烧2')) {
+      foe.burned += 2;
+      log('法力燃烧：' + sideName(foeSide) + '下回合法力 -2');
+    }
+  }
+  cleanupDead('player');
+  cleanupDead('enemy');
+  recalcAuras();
+  checkGameOver();
+}
+
+function cleanupDead(side) {
+  const p = state[side];
+  const dead = p.board.filter(m => m.curHp <= 0);
+  if (dead.length === 0) return;
+  p.board = p.board.filter(m => m.curHp > 0);
+  dead.forEach(m => {
+    log('【' + m.name + '】被消灭');
+    p.graveyard.push(m);
+    if (m._noDR) { log('【' + m.name + '】被圣骑士击杀，亡语未能触发'); return; }
+    // 亡语
+    if (m.spell === 'draw') {
+      log('【' + m.name + '】亡语触发：' + sideName(side) + '摸一张牌');
+      drawCard(side);
+    } else if (m.spell === 'skeletonSearch') {
+      const i = p.deck.findIndex(d => d.name === '骷髅');
+      if (i >= 0 && p.hand.length < HAND_LIMIT) {
+        p.deck.splice(i, 1);
+        p.hand.push(findDef('骷髅'));
+        log('【骷髅】亡语触发：从牌库检索一张【骷髅】置入手牌');
+      } else {
+        log('【骷髅】亡语触发：' + (i < 0 ? '牌库中没有骷髅' : '手牌已满') + '，无效果');
+      }
+    } else if (m.spell === 'curse') {
+      const foe = state[otherSide(side)];
+      let n = 0;
+      foe.board.forEach(o => { o.baseAtk = Math.max(0, o.baseAtk - 1); o.atk = Math.max(0, o.atk - 1); n++; });
+      if (n > 0) log('【木乃伊】亡语·诅咒：' + n + ' 个敌方随从攻击 -1');
+    }
+    // 分裂（视为亡语）
+    if (m.traits.includes('分裂')) {
+      const s = summonMinion(side, findDef('史莱姆'));
+      if (s) log('【' + m.name + '】分裂：召唤了一个【史莱姆】');
+      else log('【' + m.name + '】分裂：场上已满，未能触发');
+    }
+  });
+  recalcAuras();
+}
+
+function checkGameOver() {
+  if (state.gameOver) return;
+  const pDead = state.player.hp <= 0, eDead = state.enemy.hp <= 0;
+  if (!pDead && !eDead) return;
+  state.gameOver = true;
+  let text;
+  if (eDead && !pDead) text = '胜利！你击败了对手';
+  else if (pDead && !eDead) text = '败北……对手获胜';
+  else text = '同归于尽！';
+  log('—— ' + text + ' ——');
+  document.getElementById('result-text').textContent = text;
+  document.getElementById('overlay').classList.add('show');
+}
+
+// ---------- AI ----------
+function aiPlayStep() {
+  const e = state.enemy;
+  if (e.board.length >= BOARD_LIMIT) return false;
+  const affordable = e.hand
+    .map((c, i) => ({ c, i }))
+    .filter(x => effCost('enemy', x.c) <= e.mana)
+    .sort((a, b) => effCost('enemy', b.c) - effCost('enemy', a.c));
+  if (affordable.length === 0) return false;
+  return playCard('enemy', affordable[0].i);
+}
+
+function aiAttackStep() {
+  const e = state.enemy, p = state.player;
+  const m = e.board.find(x => x.canAttack);
+  if (!m || state.gameOver) return false;
+  // 优先做有利交换：能击杀且自己不死（远程除外），否则打脸
+  const targets = p.board.filter(t => canTarget(m, t));
+  const kill = targets.find(t => {
+    const dmg = Math.max(0, m.atk - effArmor(t));
+    if (dmg < t.curHp) return false;
+    if (m.traits.includes('远程')) return true;
+    return Math.max(0, t.atk - effArmor(m)) < m.curHp;
+  });
+  doAttack('enemy', m.uid, kill ? kill.uid : null);
+  return true;
+}
+
+function aiTick() {
+  if (state.gameOver) { render(); return; }
+  if (state.aiPhase === 'play') {
+    if (aiPlayStep()) { render(); setTimeout(aiTick, 650); return; }
+    state.aiPhase = 'attack';
+  }
+  if (state.aiPhase === 'attack') {
+    if (aiAttackStep()) { render(); setTimeout(aiTick, 650); return; }
+    state.turn = 'player';
+    log('—— 你的回合 ——');
+    startTurn('player');
+    render();
+  }
+}
+
+function endPlayerTurn() {
+  if (state.turn !== 'player' || state.gameOver) return;
+  state.turn = 'enemy';
+  state.selected = null;
+  state.aiPhase = 'play';
+  log('—— 对手回合 ——');
+  render();
+  setTimeout(() => { startTurn('enemy'); render(); setTimeout(aiTick, 500); }, 500);
+}
+
+// ---------- 渲染 ----------
+function traitsHtml(traits) {
+  return traits.map(t => '<span class="trait-badge" title="' + (TRAIT_TEXT[t] || '') + '">' + t + '</span>').join('');
+}
+
+function minionHtml(m, isEnemy) {
+  const classes = ['minion'];
+  if (isEnemy) classes.push('enemy');
+  if (!isEnemy && state.turn === 'player' && m.canAttack && !state.gameOver) classes.push('can-attack');
+  if (!isEnemy && state.selected === m.uid) classes.push('selected');
+  const spell = m.spell ? '<div class="m-spell">' + SPELL_TEXT[m.spell] + '</div>' : '<div class="m-spell"></div>';
+  const poisonBadge = m.poison > 0
+    ? '<span class="trait-badge poison" title="中毒：控制者回合开始时受到 ' + m.poison + ' 点伤害">中毒' + m.poison + '</span>' : '';
+  const def = findDef(m.name);
+  const hpClass = m.maxHp > (def ? def.hp : m.maxHp) ? 'stat-hp buffed' : 'stat-hp';
+  return '<div class="' + classes.join(' ') + '" data-action="' + (isEnemy ? 'attack-minion' : 'select-minion') + '" data-uid="' + m.uid + '">' +
+    '<div class="m-name">' + m.name + '</div>' +
+    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + '</div>' +
+    spell +
+    '<div class="m-stats"><span class="stat-atk">攻' + m.atk + '</span><span class="stat-arm">甲' + effArmor(m) + '</span><span class="' + hpClass + '">血' + Math.max(0, m.curHp) + '</span></div>' +
+  '</div>';
+}
+
+function handCardHtml(def, i) {
+  const cost = effCost('player', def);
+  const afford = state.player.mana >= cost && state.turn === 'player' && !state.gameOver;
+  const spell = def.spell ? '<div class="c-spell">' + SPELL_TEXT[def.spell] + '</div>' : '<div class="c-spell"></div>';
+  return '<div class="hand-card' + (afford ? '' : ' unaffordable') + '" data-action="play-hand" data-idx="' + i + '">' +
+    '<div class="c-cost">' + cost + '</div>' +
+    '<div class="c-name">' + def.name + '</div>' +
+    '<div class="c-traits">' + traitsHtml(def.traits) + '</div>' +
+    spell +
+    '<div class="c-stats"><span class="stat-atk">攻' + def.atk + '</span><span class="stat-arm">甲' + def.arm + '</span><span class="stat-hp">血' + def.hp + '</span></div>' +
+  '</div>';
+}
+
+function heroHtml(side) {
+  const p = state[side];
+  const isEnemy = side === 'enemy';
+  const selectedMinion = state.selected != null ? state.player.board.find(m => m.uid === state.selected) : null;
+  const targetable = isEnemy && selectedMinion && state.turn === 'player' && !state.gameOver;
+  const burned = p.burned > 0 ? ' <span class="burned-tag">下回合法力-' + p.burned + '</span>' : '';
+  return '<div class="portrait">' + (isEnemy ? '👿' : '🧙') + '</div>' +
+    '<div><div class="name">' + (isEnemy ? '敌方英雄' : '你的英雄') + '</div>' +
+    '<div class="hp">生命 ' + Math.max(0, p.hp) + ' / ' + p.maxHp + '</div>' +
+    '<div class="mana-info">法力 ' + p.mana + ' / ' + p.maxMana + burned + '</div>' +
+    '<div class="grave-info">墓地 ' + p.graveyard.length + ' 张 · 牌库 ' + p.deck.length + ' 张</div></div>' +
+    (targetable ? '<div style="margin-left:auto;color:#ff9a9a;font-size:12px;">点击攻击</div>' : '');
+}
+
+function render() {
+  const eb = document.getElementById('enemy-board');
+  const pb = document.getElementById('player-board');
+  eb.innerHTML = state.enemy.board.length ? state.enemy.board.map(m => minionHtml(m, true)).join('') : '<div class="empty-hint">（空）</div>';
+  pb.innerHTML = state.player.board.length ? state.player.board.map(m => minionHtml(m, false)).join('') : '<div class="empty-hint">（空）</div>';
+
+  document.getElementById('player-hand').innerHTML = state.player.hand.map((c, i) => handCardHtml(c, i)).join('');
+  document.getElementById('enemy-hand').innerHTML =
+    '<span style="font-size:12px;color:#8a8a9a;">对手手牌 ' + state.enemy.hand.length + ' 张</span>' +
+    state.enemy.hand.map(() => '<div class="card-back"></div>').join('');
+
+  const eh = document.getElementById('enemy-hero');
+  eh.innerHTML = heroHtml('enemy');
+  eh.classList.toggle('targetable', state.selected != null && state.turn === 'player' && !state.gameOver);
+  document.getElementById('player-hero').innerHTML = heroHtml('player');
+
+  document.getElementById('turn-indicator').textContent = state.gameOver ? '游戏结束' : (state.turn === 'player' ? '你的回合' : '对手回合…');
+  document.getElementById('end-turn').disabled = state.turn !== 'player' || state.gameOver;
+}
+
+// ---------- 组牌 ----------
+function selCount() {
+  return Object.keys(builderSel).reduce((s, k) => s + builderSel[k], 0);
+}
+
+function buildRandomDeck() {
+  Object.keys(builderSel).forEach(k => { builderSel[k] = 0; });
+  while (selCount() < DECK_SIZE) {
+    const d = CARD_DEFS[Math.floor(Math.random() * CARD_DEFS.length)];
+    if ((builderSel[d.name] || 0) < MAX_COPIES) builderSel[d.name] = (builderSel[d.name] || 0) + 1;
+  }
+  return selectedDeck();
+}
+
+function selectedDeck() {
+  const deck = [];
+  CARD_DEFS.forEach(d => {
+    for (let i = 0; i < (builderSel[d.name] || 0); i++) deck.push(d);
+  });
+  return deck;
+}
+
+function dbCardHtml(def) {
+  const n = builderSel[def.name] || 0;
+  const spell = def.spell ? '<div class="c-spell">' + SPELL_TEXT[def.spell] + '</div>' : '<div class="c-spell"></div>';
+  return '<div class="db-card' + (n >= MAX_COPIES ? ' maxed' : '') + '" data-action="add-card" data-name="' + def.name + '">' +
+    '<div class="c-cost">' + def.cost + '</div>' +
+    '<div class="picked-badge">已选 ' + n + '/' + MAX_COPIES + '</div>' +
+    '<div class="c-name">' + def.name + '</div>' +
+    '<div class="c-traits">' + traitsHtml(def.traits) + '</div>' +
+    spell +
+    '<div class="c-stats"><span class="stat-atk">攻' + def.atk + '</span><span class="stat-arm">甲' + def.arm + '</span><span class="stat-hp">血' + def.hp + '</span></div>' +
+  '</div>';
+}
+
+function renderBuilder() {
+  document.getElementById('card-pool').innerHTML = RACES.map(race =>
+    '<div class="race-section"><h2>' + race + '</h2><div class="race-cards">' +
+    CARD_DEFS.filter(d => d.race === race).map(dbCardHtml).join('') +
+    '</div></div>'
+  ).join('');
+
+  const total = selCount();
+  const cnt = document.getElementById('deck-count');
+  cnt.textContent = total + ' / ' + DECK_SIZE;
+  cnt.classList.toggle('ready', total === DECK_SIZE);
+
+  const picked = CARD_DEFS.filter(d => (builderSel[d.name] || 0) > 0);
+  document.getElementById('deck-list').innerHTML = picked.length
+    ? picked.map(d =>
+        '<div class="deck-item" data-action="remove-card" data-name="' + d.name + '" title="点击移除一张">' +
+        '<span><span class="d-cost">' + d.cost + '</span>' + d.name + '</span>' +
+        '<span class="d-n">×' + builderSel[d.name] + '</span></div>'
+      ).join('')
+    : '<div class="deck-empty">（点击左侧卡牌加入牌组，每张最多 ' + MAX_COPIES + ' 张）</div>';
+
+  document.getElementById('start-battle').disabled = total !== DECK_SIZE;
+}
+
+function showBuilder() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('deckbuilder').style.display = 'block';
+  renderBuilder();
+}
+
+function showGame() {
+  document.getElementById('deckbuilder').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+}
+
+// ---------- 交互 ----------
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+
+  // 组牌界面
+  if (action === 'add-card') {
+    const name = el.dataset.name;
+    if ((builderSel[name] || 0) >= MAX_COPIES || selCount() >= DECK_SIZE) return;
+    builderSel[name] = (builderSel[name] || 0) + 1;
+    renderBuilder();
+    return;
+  }
+  if (action === 'remove-card') {
+    const name = el.dataset.name;
+    if (builderSel[name] > 0) builderSel[name]--;
+    renderBuilder();
+    return;
+  }
+
+  // 对战界面
+  if (!state || state.gameOver) return;
+
+  if (action === 'play-hand') {
+    if (state.turn !== 'player') return;
+    const idx = parseInt(el.dataset.idx, 10);
+    const def = state.player.hand[idx];
+    if (def && effCost('player', def) > state.player.mana) { log('法力不足，无法打出【' + def.name + '】'); return; }
+    if (playCard('player', idx)) render();
+  } else if (action === 'select-minion') {
+    if (state.turn !== 'player') return;
+    const u = parseInt(el.dataset.uid, 10);
+    const m = state.player.board.find(x => x.uid === u);
+    if (!m || !m.canAttack) return;
+    state.selected = state.selected === u ? null : u;
+    render();
+  } else if (action === 'attack-minion') {
+    if (state.turn !== 'player' || state.selected == null) return;
+    doAttack('player', state.selected, parseInt(el.dataset.uid, 10));
+    state.selected = null;
+    render();
+  } else if (action === 'attack-hero') {
+    if (state.turn !== 'player' || state.selected == null) return;
+    doAttack('player', state.selected, null);
+    state.selected = null;
+    render();
+  }
+});
+
+document.getElementById('end-turn').addEventListener('click', endPlayerTurn);
+document.getElementById('back-builder').addEventListener('click', showBuilder);
+document.getElementById('back-builder2').addEventListener('click', showBuilder);
+document.getElementById('clear-deck').addEventListener('click', () => {
+  Object.keys(builderSel).forEach(k => { builderSel[k] = 0; });
+  renderBuilder();
+});
+document.getElementById('random-deck').addEventListener('click', () => {
+  buildRandomDeck();
+  renderBuilder();
+});
+document.getElementById('start-battle').addEventListener('click', () => {
+  if (selCount() !== DECK_SIZE) return;
+  showGame();
+  initGame(selectedDeck());
+});
+
+showBuilder();
+
+// 供自动化测试 / 调试使用
+globalThis.__api = {
+  initGame, getState: () => state, playCard, doAttack, endPlayerTurn,
+  effCost, effArmor, canTarget, buildRandomDeck, buildAIDeck, selectedDeck,
+  CARD_DEFS, GREEN_DRAGON,
+};
+</script>
+</body>
+</html>
