@@ -183,6 +183,9 @@
   .hand-card.race7, .minion.race7, .db-card.race7 { background: linear-gradient(160deg, #2a3a2a, #141f16); border-color: #4a6a4a; } /* 要塞 沼泽墨绿 */
   .hand-card.race8, .minion.race8, .db-card.race8 { background: linear-gradient(160deg, #7ab8d8, #4a7a9a); border-color: #a8d8f0; } /* 元素 银亮蓝 */
   .hand-card.race9, .minion.race9, .db-card.race9 { background: linear-gradient(160deg, #5a5248, #2e2a24); border-color: #9a9288; } /* 中立 灰褐 */
+  .hand-card.race10, .minion.race10, .db-card.race10 { background: linear-gradient(160deg, #2a6a8a, #12303f); border-color: #4a9ac0; } /* 港口 海蓝 */
+  .hand-card.race11, .minion.race11, .db-card.race11 { background: linear-gradient(160deg, #5a7a9a, #28394a); border-color: #8ab0d0; } /* 堡垒 冰蓝 */
+  .hand-card.race12, .minion.race12, .db-card.race12 { background: linear-gradient(160deg, #6a5a34, #2e2612); border-color: #a89058; } /* 工厂 黄铜 */
   /* 浅底色（城堡灰白 / 元素银亮蓝）：文字改深色保证可读 */
   .race0 .c-name, .race0 .m-name, .race8 .c-name, .race8 .m-name { color: #1c202a; }
   .race0 .c-spell, .race0 .m-spell, .race8 .c-spell, .race8 .m-spell { color: #2e4a42; }
@@ -201,6 +204,9 @@
   #detail .panel.race7 { border-color: #4a6a4a; }
   #detail .panel.race8 { border-color: #a8d8f0; }
   #detail .panel.race9 { border-color: #9a9288; }
+  #detail .panel.race10 { border-color: #4a9ac0; }
+  #detail .panel.race11 { border-color: #8ab0d0; }
+  #detail .panel.race12 { border-color: #a89058; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
     20% { transform: translateX(-6px); }
@@ -378,6 +384,30 @@
     align-items: center; justify-content: center; z-index: 10;
   }
   #overlay.show { display: flex; }
+
+  /* 墓地选取浮层（召唤骷髅兵） */
+  #grave-pick {
+    display: none; position: fixed; inset: 0; background: #000a;
+    align-items: center; justify-content: center; z-index: 32;
+  }
+  #grave-pick.show { display: flex; }
+  #grave-pick .panel {
+    background: #1e1e2e; border: 2px solid #d8b96a; border-radius: 12px;
+    padding: 20px 26px; max-width: 520px; max-height: 70vh; overflow-y: auto;
+  }
+  #grave-pick h3 { color: #d8b96a; font-size: 15px; margin-bottom: 10px; }
+  .gp-side { font-size: 12px; color: #8a8a9a; margin: 8px 0 4px; }
+  .gp-entry {
+    display: block; width: 100%; text-align: left; margin: 3px 0;
+    background: #26263a; color: #e8e4d8; border: 1px solid #4a4a68;
+    border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer;
+  }
+  .gp-entry:hover { border-color: #d8b96a; background: #32324a; }
+  .gp-cancel {
+    margin-top: 12px; background: #4a3b22; color: #e8d9a8; border: 1px solid #8a744a;
+    border-radius: 6px; padding: 6px 18px; cursor: pointer; font-size: 13px;
+  }
+  .gp-empty { font-size: 12px; color: #4a4a60; }
   #overlay .panel {
     background: #1e1e2e; border: 2px solid #d8b96a; border-radius: 12px;
     padding: 36px 60px; text-align: center;
@@ -614,7 +644,7 @@
       攻击规则（进攻阶段自动执行）：近战单位按「战场宽度」选目标——每张卡占 1 宽度（守备表示占 2），各排居中对齐，前排会遮挡正后方的区域；只有暴露宽度大于 0 的单位才能被近战攻击，且目标按暴露宽度加权随机选取（例：前排 1 卡 + 后排 2 卡时，命中概率为 50% / 25% / 25%；前后排各 1 卡时，后排卡在前排卡死前无法被近战攻击）。飞行单位漂浮在空中，不参与战场宽度计算（不遮挡也不被遮挡）。远程单位无视遮挡、可攻击任意一排。只有对方场上没有随从、或对方所有随从都无法成为你的合法目标时，才能攻击英雄本体——但只要对方还有守备表示的单位或远程单位，就必须先打完它们。飞行单位守备时暂时失去飞行效果。<br>
       反击规则：每个随从每战斗阶段有 1 次反击机会（进攻阶段开始时重置；「反击X」特性为 X 次，如皇家狮鹫反击2）。随从受到攻击造成的伤害（含溅射）且存活时，若还有反击机会、攻击力大于 0、且按射程规则能够到伤害来源（非远程只能够到对方最前排、远程任意排、飞行限制照旧），便立刻反击并消耗一次；够不到或 0 攻则不消耗，之后被能反击的攻击打中仍会反击。**远程单位的攻击不会触发反击**（无论站位）；带「不受反击」特性的单位（恶魔、大恶魔）同样不会触发反击。以上免反击只对普通反击有效——**攻击守备表示的单位时，必然同时受到守备单位攻击力的反击**（无视一切免反击特性）。反击造成的伤害不再触发反击。中毒等非攻击伤害不触发反击。<br>
       连击（神射手）：攻击随从时连续攻击 2 次，第二次不触发反击；目标已死于第一次攻击则第二次落空。复活（大天使）：战吼——将己方墓地中最后死亡的一张随从满状态复活到其原排。<br>
-      远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍；攻击不会触发反击。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍。骑兵：攻击骑兵以外的单位时不会被反击。拒马：可以对骑兵进行反击。<br>
+      远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍；攻击不会触发反击。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍。骑兵：攻击骑兵以外的单位时不会被反击。掠夺：攻击敌方英雄时获得 5 金币。拒马：可以对骑兵进行反击。<br>
       再生X：每轮部署阶段开始时恢复 X 点生命。毒LvX：被攻击造成伤害的随从中毒（重复取最高 Lv），中毒者在每轮部署阶段开始时受 X 点伤害。<br>
       单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）。和平：不会发起可能令自己死亡的攻击（若目标反击会致死则跳过）。死亡凝视（蛮牛）：攻击时 25% 概率直接消灭目标随从（无视生命与护甲）。护甲穿透X（比蒙系）：攻击无视目标 X 点护甲。守备表示：部署阶段可在攻击/守备之间切换；守备单位不主动攻击，但无限次反击且反击伤害与对手的攻击同时结算，被随机选取的概率 ×2（卡面变宽两倍）。翻面表示：手牌可盖放部署（默认守备表示，不触发战吼）；翻面单位不会成为攻击目标、不主动攻击、不反击，但仍每轮恢复法术、可吃到 buff；部署阶段可翻开（翻开时结算战吼；已在场的单位不能再盖回）。盖牌守备的单位会被选中攻击，并在被攻击前揭示。<br>
       法术卡牌：紫边卡牌（土/水/火/气四系），从手牌打出不入场、结算后进墓地（骨龙可减费）。无需目标的法术点击直接结算；需要目标的法术点击进入选目标模式（高亮合法目标，点击目标结算，点空白或再点该卡取消）。法术卡也可盖放：成为场上的盖牌（非单位、不被攻击），翻开时立即结算——需要目标的法术随机选合法目标，无合法目标则不生效。法术伤害受「法术护盾X」减免。<br>
@@ -649,6 +679,12 @@
   <div class="panel" id="detail-panel">
     <div id="detail-body"></div>
     <button class="btn" id="detail-close">关闭</button>
+  </div>
+</div>
+
+<div id="grave-pick">
+  <div class="panel">
+    <div id="grave-pick-body"></div>
   </div>
 </div>
 
@@ -918,13 +954,61 @@ const CARD_DEFS = [
   { name: '狂暴',     type: 'spell', race: '中立', cost: 3, school: '火', spellEffect: 'frenzy', target: 'friendlyUnit', rating: 55, art: { icon: '😡', hue: 0 } },
   { name: '龙卷风',   type: 'spell', race: '中立', cost: 3, school: '气', spellEffect: 'twister', target: 'none', rating: 55, art: { icon: '🌪️', hue: 180 } },
   { name: '大气神盾', type: 'spell', race: '中立', cost: 2, school: '气', spellEffect: 'airShield', target: 'friendlyUnit', rating: 56, art: { icon: '🛡️', hue: 190 } },
+  { name: '召唤骷髅兵', type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'raiseSkeletons', target: 'graveUnit', rating: 57, art: { icon: '💀', hue: 120 } },
+  { name: '召唤史莱姆', type: 'spell', race: '中立', cost: 0, school: '水', spellEffect: 'slimeSwarm', target: 'none', rating: 58, art: { icon: '🟢', hue: 120 } },
+  // ── HotA 新阵营（港口 Cove / 堡垒 Bulwark / 工厂 Factory）──
+  // 港口（海蓝）
+  { name: '泉水精灵', race: '港口',   cost: 1, atk: 1, arm: 0, hp: 2,  rating: 56, traits: [], art: { icon: '🧚', hue: 190 } },
+  { name: '海洋精灵', race: '港口',   cost: 2, atk: 1, arm: 0, hp: 3,  rating: 57, traits: [], spell: 'heal', spellParam: 2, art: { icon: '🌊', hue: 195 } },
+  { name: '水手',     race: '港口',   cost: 2, atk: 2, arm: 0, hp: 4,  rating: 56, traits: [], art: { icon: '⚓', hue: 200 } },
+  { name: '海员',     race: '港口',   cost: 2, atk: 3, arm: 0, hp: 3,  rating: 56, traits: [], art: { icon: '⛵', hue: 205 } },
+  { name: '海贼',     race: '港口',   cost: 3, atk: 3, arm: 0, hp: 3,  rating: 55, traits: ['骑兵'], art: { icon: '🏴‍☠️', hue: 210 } },
+  { name: '皇家海盗', race: '港口',   cost: 4, atk: 4, arm: 0, hp: 5,  rating: 59, traits: ['骑兵', '掠夺'], art: { icon: '🦜', hue: 200 } },
+  { name: '暴风鸟',   race: '港口',   cost: 4, atk: 3, arm: 0, hp: 5,  rating: 53, traits: ['飞行'], art: { icon: '🦅', hue: 195 } },
+  { name: '暴风雕',   race: '港口',   cost: 5, atk: 4, arm: 0, hp: 6,  rating: 51, traits: ['飞行'], art: { icon: '🌩️', hue: 200 } },
+  { name: '海洋女巫', race: '港口',   cost: 5, atk: 2, arm: 0, hp: 6,  rating: 66, traits: ['远程'], spell: 'prayer', art: { icon: '🧙‍♀️', hue: 190 } },
+  { name: '海洋术士', race: '港口',   cost: 6, atk: 3, arm: 0, hp: 7,  rating: 55, traits: ['远程'], actSpell: 'fireball', spellCost: 1, spellMana0: 2, spellManaMax: 2, art: { icon: '🔮', hue: 195 } },
+  { name: '鱼人',     race: '港口',   cost: 6, atk: 5, arm: 0, hp: 10, rating: 50, traits: [], art: { icon: '🐟', hue: 185 } },
+  { name: '鱼人战士', race: '港口',   cost: 7, atk: 6, arm: 0, hp: 12, rating: 50, traits: [], art: { icon: '🐠', hue: 190 } },
+  { name: '海蛇',     race: '港口',   cost: 8, atk: 7, arm: 0, hp: 13, rating: 52, traits: ['毒Lv2'], art: { icon: '🐍', hue: 180 } },
+  { name: '深渊海蛇', race: '港口',   cost: 9, atk: 8, arm: 0, hp: 15, rating: 54, traits: ['毒Lv3'], art: { icon: '🐉', hue: 185 } },
+  // 堡垒（冰蓝）
+  { name: '狗头人',   race: '堡垒',   cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '🐕', hue: 210 } },
+  { name: '狗头人工长', race: '堡垒', cost: 1, atk: 2, arm: 0, hp: 2,  rating: 58, traits: [], art: { icon: '⛏️', hue: 215 } },
+  { name: '山羚',     race: '堡垒',   cost: 2, atk: 2, arm: 0, hp: 2,  rating: 57, traits: ['骑兵'], art: { icon: '🐐', hue: 220 } },
+  { name: '雪羚',     race: '堡垒',   cost: 3, atk: 3, arm: 0, hp: 3,  rating: 55, traits: ['骑兵'], art: { icon: '🦌', hue: 215 } },
+  { name: '雪精灵',   race: '堡垒',   cost: 3, atk: 2, arm: 0, hp: 3,  rating: 56, traits: ['远程'], art: { icon: '🧝', hue: 210 } },
+  { name: '铁甲雪精灵', race: '堡垒', cost: 4, atk: 3, arm: 1, hp: 4,  rating: 58, traits: ['远程'], art: { icon: '🛡️', hue: 220 } },
+  { name: '雪怪',     race: '堡垒',   cost: 4, atk: 4, arm: 0, hp: 6,  rating: 52, traits: [], art: { icon: '❄️', hue: 200 } },
+  { name: '控符雪怪', race: '堡垒',   cost: 5, atk: 4, arm: 1, hp: 7,  rating: 52, traits: [], art: { icon: '🔤', hue: 210 } },
+  { name: '萨满',     race: '堡垒',   cost: 5, atk: 2, arm: 0, hp: 6,  rating: 66, traits: ['远程'], spell: 'prayer', art: { icon: '🙏', hue: 205 } },
+  { name: '萨满长老', race: '堡垒',   cost: 6, atk: 3, arm: 0, hp: 7,  rating: 64, traits: ['远程'], spell: 'prayer', art: { icon: '📿', hue: 215 } },
+  { name: '猛犸',     race: '堡垒',   cost: 6, atk: 5, arm: 0, hp: 11, rating: 57, traits: ['骑兵'], art: { icon: '🦣', hue: 210 } },
+  { name: '战斗猛犸', race: '堡垒',   cost: 7, atk: 6, arm: 0, hp: 13, rating: 57, traits: ['骑兵'], art: { icon: '🐘', hue: 215 } },
+  { name: '冰霜巨人', race: '堡垒',   cost: 8, atk: 7, arm: 0, hp: 14, rating: 50, traits: [], art: { icon: '🏔️', hue: 205 } },
+  { name: '冰霜领主', race: '堡垒',   cost: 9, atk: 8, arm: 0, hp: 16, rating: 54, traits: ['范围攻击'], art: { icon: '👑', hue: 210 } },
+  // 工厂（黄铜）
+  { name: '半身人',   race: '工厂',   cost: 1, atk: 1, arm: 0, hp: 1,  rating: 62, traits: ['远程'], art: { icon: '🧑', hue: 40 } },
+  { name: '掷弹半身人', race: '工厂', cost: 2, atk: 1, arm: 0, hp: 2,  rating: 64, traits: ['远程', '范围攻击'], art: { icon: '💣', hue: 45 } },
+  { name: '机械师',   race: '工厂',   cost: 2, atk: 2, arm: 0, hp: 3,  rating: 54, traits: [], art: { icon: '🔧', hue: 35 } },
+  { name: '工程师',   race: '工厂',   cost: 3, atk: 2, arm: 0, hp: 5,  rating: 52, traits: [], art: { icon: '⚙️', hue: 40 } },
+  { name: '坚甲兽',   race: '工厂',   cost: 3, atk: 2, arm: 2, hp: 5,  rating: 56, traits: [], art: { icon: '🦔', hue: 30 } },
+  { name: '坚甲兽头领', race: '工厂', cost: 4, atk: 3, arm: 2, hp: 7,  rating: 60, traits: [], art: { icon: '🛡️', hue: 35 } },
+  { name: '自行机器', race: '工厂',   cost: 4, atk: 3, arm: 0, hp: 6,  rating: 52, traits: ['再生1'], art: { icon: '🤖', hue: 45 } },
+  { name: '自行哨卫', race: '工厂',   cost: 5, atk: 3, arm: 1, hp: 7,  rating: 52, traits: ['再生1'], art: { icon: '🦾', hue: 40 } },
+  { name: '沙虫',     race: '工厂',   cost: 5, atk: 4, arm: 0, hp: 7,  rating: 50, traits: ['毒Lv1'], art: { icon: '🪱', hue: 30 } },
+  { name: '死亡沙虫', race: '工厂',   cost: 6, atk: 5, arm: 0, hp: 8,  rating: 50, traits: ['毒Lv2'], art: { icon: '🐛', hue: 35 } },
+  { name: '雇佣杀手', race: '工厂',   cost: 6, atk: 4, arm: 0, hp: 5,  rating: 56, traits: ['远程', '连击'], art: { icon: '🔫', hue: 40 } },
+  { name: '赏金猎人', race: '工厂',   cost: 7, atk: 5, arm: 0, hp: 6,  rating: 54, traits: ['远程', '连击'], art: { icon: '💰', hue: 45 } },
+  { name: '无畏机甲', race: '工厂',   cost: 8, atk: 7, arm: 0, hp: 15, rating: 56, traits: ['范围攻击'], art: { icon: '🚢', hue: 35 } },
+  { name: '主宰机甲', race: '工厂',   cost: 9, atk: 8, arm: 0, hp: 17, rating: 59, traits: ['范围攻击', '护甲穿透1'], art: { icon: '🏭', hue: 40 } },
 ];
 // token：不在牌池，仅由龙女变形产生
 const GREEN_DRAGON = { name: '绿龙', race: '壁垒', cost: 0, atk: 8, arm: 0, hp: 16, traits: [], token: true, art: { icon: '🐉', hue: 140 } };
 
-const RACES = ['城堡', '壁垒', '塔楼', '地狱', '墓园', '地下城', '据点', '要塞', '元素', '中立'];
+const RACES = ['城堡', '壁垒', '塔楼', '地狱', '墓园', '地下城', '据点', '要塞', '元素', '中立', '港口', '堡垒', '工厂'];
 // 阵营代表色（与卡面底色一致：灰白/绿/红褐/黑）
-const RACE_DOT = ['#8b9099', '#5a8a52', '#5a9aba', '#8a5a42', '#464650', '#6a4a8a', '#a89048', '#4a6a4a', '#7ab8d8', '#9a9288'];
+const RACE_DOT = ['#8b9099', '#5a8a52', '#5a9aba', '#8a5a42', '#464650', '#6a4a8a', '#a89048', '#4a6a4a', '#7ab8d8', '#9a9288', '#2a6a8a', '#7a9ab8', '#8a744a'];
 const CURVE_LABELS = ['0', '1', '2', '3', '4', '5', '6', '7+'];
 
 const SPELL_TEXT = {
@@ -948,6 +1032,7 @@ const TRAIT_TEXT = {
   '火系魔法免疫': '不受火系法术影响（火球术、地狱烈焰、末日审判、魔女火球等）',
   '飞行': '只能被远程或飞行单位攻击；被远程单位攻击时受到的伤害加倍',
   '骑兵': '攻击骑兵以外的单位时不会被反击',
+  '掠夺': '攻击敌方英雄时获得 5 金币',
   '连击': '攻击时连续攻击 2 次（第二次不触发反击）',
   '反击': '每战斗阶段可反击 X 次（X=等级，默认 1 次）',
   '拒马': '可以对骑兵进行反击（无视骑兵的免反击）',
@@ -1216,7 +1301,10 @@ function hostHandleAct(conn, msg) {
       if (i < 0) { ok = false; break; }
       const def2 = state.enemy.hand[i];
       if (def2.type === 'spell') {
-        ok = !!playCard('enemy', i, null, null, false, msg.targetUid == null ? null : msg.targetUid | 0);
+        // 墓地选目标法术（召唤骷髅兵）：传 graveSide/graveIndex 载荷；其余按 targetUid
+        const t2 = msg.graveSide ? { graveSide: msg.graveSide, graveIndex: msg.graveIndex | 0 }
+          : (msg.targetUid == null ? null : msg.targetUid | 0);
+        ok = !!playCard('enemy', i, null, null, false, t2);
         break;
       }
       const m2 = playCard('enemy', i, msg.row == null ? null : msg.row | 0, msg.beforeUid == null ? null : msg.beforeUid | 0);
@@ -1781,6 +1869,7 @@ function effCost(side, def) {
 function legalSpellTargets(side, def) {
   if (def.target === 'enemyUnit') return state[otherSide(side)].board.filter(m => !m.isSpellShell && !m.faceDown);
   if (def.target === 'friendlyUnit') return state[side].board.filter(m => !m.isSpellShell && !m.faceDown);
+  if (def.target === 'graveUnit') return state.player.graveyard.concat(state.enemy.graveyard).filter(g => !g._isSpell); // 双方墓地的单位（用于判定有无目标）
   return [];
 }
 
@@ -1804,7 +1893,7 @@ function discardSpellToGraveyard(side, def) {
 }
 
 function summonBuff(s) { if (!s) return; s.baseAtk += 1; s.atk += 1; s.baseMaxHp += 1; s.maxHp += 1; s.curHp += 1; }
-function resolveSpellEffect(side, def, target) {
+function resolveSpellEffect(side, def, target, costPaid) {
   const p = state[side], foeSide = otherSide(side), foe = state[foeSide];
   const highestAtk = arr => arr.slice().sort((a, b) => b.atk - a.atk)[0] || null;
   switch (def.spellEffect) {
@@ -2058,6 +2147,32 @@ function resolveSpellEffect(side, def, target) {
         log('【大气神盾】：【' + target.name + '】获得「法术护盾3」');
       }
       break;
+    case 'raiseSkeletons': {
+      // 除外目标墓地的一个单位，召唤 ceil(其费用/2)+1 个骷髅兵到我方前排
+      const g = state[target.graveSide].graveyard;
+      const dead = g.splice(target.graveIndex, 1)[0];
+      const x = dead.cost || 0;
+      const n = Math.ceil(x / 2) + 1;
+      let summoned = 0;
+      for (let i = 0; i < n && p.board.length < BOARD_CAP; i++) {
+        if (summonMinion(side, findDef('骷髅'), 0)) summoned++;
+      }
+      log('【召唤骷髅兵】：除外了' + (target.graveSide === side ? '我方' : '敌方') + '墓地的【' + dead.name + '】（费用 ' + x + '），召唤 ' + summoned + ' 个骷髅兵到前排');
+      break;
+    }
+    case 'slimeSwarm': {
+      // 消耗所有剩余法力（costPaid）：等量史莱姆到前排；>4 时每 4 个换 1 个巨型史莱姆
+      const x = costPaid || 0;
+      const giants = x > 4 ? Math.floor(x / 4) : 0;
+      const slimes = x - giants * 4;
+      let nSlime = 0, nGiant = 0;
+      for (let i = 0; i < slimes && p.board.length < BOARD_CAP; i++) if (summonMinion(side, findDef('史莱姆'), 0)) nSlime++;
+      for (let i = 0; i < giants && p.board.length < BOARD_CAP; i++) if (summonMinion(side, findDef('巨型史莱姆'), 0)) nGiant++;
+      log('【召唤史莱姆】：消耗全部 ' + x + ' 点法力，' +
+        (nGiant > 0 ? nGiant + ' 个巨型史莱姆' + (nSlime > 0 ? ' 和 ' : '') : '') +
+        (nSlime > 0 ? nSlime + ' 个史莱姆' : '') + '涌入前排！');
+      break;
+    }
   }
 }
 
@@ -2079,7 +2194,11 @@ function makeSpellShell(side, def, row) {
 function playSpellCard(side, idx, targetUid, faceDown) {
   const p = state[side];
   const def = p.hand[idx];
-  const cost = effCost(side, def);
+  let cost = effCost(side, def);
+  if (def.spellEffect === 'slimeSwarm') {
+    cost = p.mana; // 召唤史莱姆：消耗所有剩余法力
+    if (cost < 1) { if (state.mode === 'pvp' || side === 'player') log('【' + def.name + '】没有剩余法力可消耗'); return false; }
+  }
   if (cost > p.mana) return false;
   if (faceDown) {
     if (p.board.length >= BOARD_CAP) { if (state.mode === 'pvp' || side === 'player') log('场上使魔已达上限（' + BOARD_CAP + '）'); return false; }
@@ -2093,7 +2212,12 @@ function playSpellCard(side, idx, targetUid, faceDown) {
     return shell;
   }
   let target = null;
-  if (def.target !== 'none') {
+  if (def.target === 'graveUnit') {
+    // 墓地选目标：targetUid 为 {graveSide, graveIndex} 载荷
+    const g = targetUid && state[targetUid.graveSide] && state[targetUid.graveSide].graveyard;
+    if (!g || !g[targetUid.graveIndex] || g[targetUid.graveIndex]._isSpell) return false;
+    target = targetUid;
+  } else if (def.target !== 'none') {
     const pool = legalSpellTargets(side, def);
     if (pool.length === 0) { if (state.mode === 'pvp' || side === 'player') log('【' + def.name + '】没有合法目标'); return false; }
     target = pool.find(m => m.uid === targetUid) || null;
@@ -2103,7 +2227,7 @@ function playSpellCard(side, idx, targetUid, faceDown) {
   p.hand.splice(idx, 1);
   log(sideName(side) + '施放了法术【' + def.name + '】');
   sfx('spellcast');
-  resolveSpellEffect(side, def, target);
+  resolveSpellEffect(side, def, target, cost);
   discardSpellToGraveyard(side, def);
   cleanupDead('player');
   cleanupDead('enemy');
@@ -2180,6 +2304,8 @@ const SPELL_FX_TEXT = {
   frenzy: '目标友方单位攻击 +4 并中毒 Lv1',
   twister: '随机重排敌方阵型：地面单位随机分配到前/中/后三排（飞行单位不动）',
   airShield: '目标友方单位获得「法术护盾3」（重复无效）',
+  raiseSkeletons: '选择敌方或我方墓地任意一个单位除外，召唤（其费用÷2 向上取整 + 1）个骷髅兵到我方前排',
+  slimeSwarm: '消耗所有剩余法力，召唤等量史莱姆到前排；数量大于 4 时每 4 个史莱姆换成 1 个巨型史莱姆',
 };
 
 // 对方「最前排」：有随从的最小 row（盖放的法术壳不占排）
@@ -2307,6 +2433,8 @@ function recallMinion(uid, side) {
     if (m.playedRound === state.round && !m.recallable) log('【' + m.name + '】的入场效果已触发，无法收回');
     return false;
   }
+  // 带单位法术的卡：部署回合若已使用过法术则不可收回
+  if (m.actSpell && m._usedSpell) { log('【' + m.name + '】的法术已使用，无法收回'); return false; }
   if (p.hand.length >= HAND_LIMIT) { log('手牌已满，无法收回【' + m.name + '】'); return false; }
   p.board = p.board.filter(x => x !== m);
   p.hand.push(findDef(m.name)); // 不涉及墓地/亡语
@@ -2364,11 +2492,11 @@ function playCard(side, idx, row, beforeUid, faceDown, targetUid) {
     p.graveyard = [];
   }
   const m = makeMinion(def);
-  // 收回信息：仅无任何战吼/亡语等入场效果（def.spell == null）且无单位法术（actSpell）的随从可收回
-  // （骨龙打出即除外墓地无法回滚；带 actSpell 的卡在场上放过法术后收回重放可刷法术，一并排除）
+  // 收回信息：无战吼/亡语等入场效果（def.spell == null）的随从可收回；带单位法术（actSpell）的也可收回，
+  // 但部署回合使用过法术之后不可（recallMinion 里校验）。骨龙因打出即除外墓地无法回滚，仍排除（有 spell）。
   m.playedRound = state.round;
   m.costPaid = cost;
-  m.recallable = !def.spell && !def.actSpell;
+  m.recallable = !def.spell; // 带单位法术（actSpell）的卡也可收回——但若已使用过法术则不可（recallMinion 里校验）
   if (state.mode === 'ai' && side === 'enemy') {
     m.row = aiRowFor(def); // AI 按启发式选排
     p.board.push(m);
@@ -2660,6 +2788,12 @@ function doAttack(side, attackerUid, targetUid) {
     log('【' + attacker.name + '】攻击' + sideName(foeSide) + '英雄，造成 ' + attacker.atk + ' 点伤害');
     sfx('hit');
     if (attacker.traits.includes('吸血')) healHero(side, attacker.atk);
+    // 掠夺：攻击敌方英雄时额外获得 5 金币
+    if (attacker.traits.includes('掠夺')) {
+      gold += 5;
+      saveEconomy();
+      log('【' + attacker.name + '】掠夺：获得 5 金币（余额 ' + gold + '）');
+    }
     const burnLv = traitLv(attacker, '法力燃烧'); // 法力燃烧X：对方下轮法力 -X
     if (burnLv > 0) {
       foe.burned += burnLv;
@@ -2761,6 +2895,16 @@ function aiSpellDecision(def) {
       return foe.board.length ? highest(foe.board).uid : null;
     case 'heal': // 英雄受伤 ≥6 才用
       return me.hp <= me.maxHp - 6 ? true : null;
+    case 'slimeSwarm': // 召唤史莱姆：法力 ≥6 才倾泻
+      return me.mana >= 6 ? true : null;
+    case 'raiseSkeletons': { // 除外双方墓地中费用最高的单位
+      let best = null;
+      ['player', 'enemy'].forEach(sd => state[sd].graveyard.forEach((g, i) => {
+        if (g._isSpell) return;
+        if (!best || (g.cost || 0) > (best.g.cost || 0)) best = { g: g, sd: sd, i: i };
+      }));
+      return best ? { graveSide: best.sd, graveIndex: best.i } : null;
+    }
     case 'doom': // 敌方场上单位多于我方时用
       return foe.board.length > me.board.length ? true : null;
     case 'teleport': // 传送（收回自己单位）AI 不使用
@@ -2891,6 +3035,7 @@ function castUnitSpell(side, minionUid) {
     if (state[otherSide(side)].board.length === 0) return false; // 敌方无随从不可施放
   }
   m.spellMana -= m.spellCost;
+  m._usedSpell = true; // 标记已使用法术：本回合不可再收回
   if (m.actSpell === 'split') {
     const half = m.curHp / 2;
     const copy = Object.assign({}, m, { uid: ++uid, recallable: false, spellMana: 0 });
@@ -3075,6 +3220,8 @@ function startCombat() {
   if (!state || state.phase !== 'deploy' || state.gameOver) return;
   flushPendingClick(); // 开打前先结算未执行的单击出牌
   state.spellTargetMode = null; // 清除可能残留的法术选目标模式
+  const gp = document.getElementById('grave-pick');
+  if (gp) gp.classList.remove('show');
   state.phase = 'combat';
   log('—— 进攻阶段 ——');
   sfx('phase');
@@ -3122,9 +3269,9 @@ function minionHtml(m, isEnemy, ghost) {
     classes.push(state.moraleFx.kind === 'up' ? 'morale-up' : 'morale-down');
   }
   const draggable = !ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver;
-  // 本轮刚打出且无入场效果的随从可单击收回：青色虚线描边提示
+  // 本轮刚打出且无入场效果的随从可单击收回：青色虚线描边提示（已用法术的不再提示）
   const recallable = !ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver &&
-    m.recallable && m.playedRound === state.round;
+    m.recallable && m.playedRound === state.round && !(m.actSpell && m._usedSpell);
   if (recallable) classes.push('recallable');
   // 法术选目标模式：高亮合法目标
   if (!ghost && !m.faceDown && state.spellTargetMode) {
@@ -3269,6 +3416,31 @@ function boardHtml(side, isTop) {
   const air = rowHtml(AIR_ROW);
   // 空中区域悬浮在战场上方（靠近中线一侧）：上方半场放在最下，下方半场放在最上
   return isTop ? ground + air : air + ground;
+}
+
+// 墓地选取浮层（召唤骷髅兵）：展示双方墓地的单位供选择
+function showGravePick(mode) {
+  state.spellTargetMode = mode;
+  const as = activeSide();
+  let html = '<h3>【' + mode.def.name + '】：选择一个墓地单位除外</h3>';
+  ['player', 'enemy'].forEach(sd => {
+    const units = state[sd].graveyard.map((g, i) => ({ g: g, i: i })).filter(x => !x.g._isSpell);
+    html += '<div class="gp-side">' + (sd === as ? '我方墓地' : '敌方墓地') + '（' + units.length + '）</div>';
+    if (units.length === 0) html += '<div class="gp-empty">（空）</div>';
+    units.forEach(x => {
+      html += '<button class="gp-entry" data-action="grave-pick" data-gside="' + sd + '" data-gidx="' + x.i + '">' +
+        '【' + x.g.name + '】费用 ' + (x.g.cost || 0) + ' → ' + (Math.ceil((x.g.cost || 0) / 2) + 1) + ' 个骷髅兵</button>';
+    });
+  });
+  html += '<button class="gp-cancel" data-action="grave-cancel">取消</button>';
+  document.getElementById('grave-pick-body').innerHTML = html;
+  document.getElementById('grave-pick').classList.add('show');
+}
+
+function hideGravePick() {
+  const gp = document.getElementById('grave-pick');
+  if (gp) gp.classList.remove('show');
+  if (state) state.spellTargetMode = null;
 }
 
 // 牌库 / 墓地小区域
@@ -3750,6 +3922,24 @@ document.addEventListener('click', e => {
   if (NET.role === 'spectator') return; // 观战只读
 
   const as = activeSide(); // 本机玩家操作所用 side（ai=player；离线 pvp=部署方；联机=本机侧）
+  // 墓地选取浮层的两个动作
+  if (action === 'grave-pick') {
+    const mode = state.spellTargetMode;
+    const payload = { graveSide: el.dataset.gside, graveIndex: parseInt(el.dataset.gidx, 10) };
+    document.getElementById('grave-pick').classList.remove('show');
+    state.spellTargetMode = null;
+    if (!mode) { render(); return; }
+    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: mode.def.name, graveSide: payload.graveSide, graveIndex: payload.graveIndex }); render(); return; }
+    const gi = state[as].hand.indexOf(mode.def);
+    if (gi >= 0 && playCard(as, gi, null, null, false, payload)) render();
+    else render();
+    return;
+  }
+  if (action === 'grave-cancel') {
+    hideGravePick();
+    render();
+    return;
+  }
   // 法术选目标模式：点击合法目标结算，点击其他随从不动作（保持选目标模式）
   if (state.spellTargetMode && (action === 'select-minion' || action === 'attack-minion')) {
     const mode = state.spellTargetMode;
@@ -3824,6 +4014,11 @@ document.addEventListener('click', e => {
     if (effCost(as, def) > state[as].mana) { log('法力不足，无法打出【' + def.name + '】'); return; }
     // 法术卡牌：无目标的走单击延时直接结算；需要目标的进入选目标模式（再点一次取消）
     if (def.type === 'spell') {
+      if (def.target === 'graveUnit') { // 墓地选目标（召唤骷髅兵）：打开墓地选取浮层
+        if (legalSpellTargets(as, def).length === 0) { log('【' + def.name + '】双方墓地都没有单位'); return; }
+        showGravePick({ idx: idx, def: def });
+        return;
+      }
       if (def.target !== 'none') {
         if (state.spellTargetMode && state.spellTargetMode.def === def) state.spellTargetMode = null; // 再点取消
         else {
