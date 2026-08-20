@@ -1803,41 +1803,42 @@ function discardSpellToGraveyard(side, def) {
   state[side].graveyard.push({ _isSpell: true, name: def.name, cost: def.cost, atk: 0, arm: 0, maxHp: 0, row: -1 });
 }
 
+function summonBuff(s) { if (!s) return; s.baseAtk += 1; s.atk += 1; s.baseMaxHp += 1; s.maxHp += 1; s.curHp += 1; }
 function resolveSpellEffect(side, def, target) {
   const p = state[side], foeSide = otherSide(side), foe = state[foeSide];
   const highestAtk = arr => arr.slice().sort((a, b) => b.atk - a.atk)[0] || null;
   switch (def.spellEffect) {
     case 'stoneSkin':
-      target.baseArm += 2; target.arm += 2;
-      log('【护体石肤】：【' + target.name + '】护甲 +2');
+      target.baseArm += 3; target.arm += 3;
+      log('【护体石肤】：【' + target.name + '】护甲 +3');
       break;
     case 'slow':
-      target.baseAtk = Math.max(0, target.baseAtk - 2);
-      log('【迟缓】：【' + target.name + '】攻击 -2');
+      target.baseAtk = Math.max(0, target.baseAtk - 3);
+      log('【迟缓】：【' + target.name + '】攻击 -3');
       break;
     case 'earthSpikes': {
       const fr = frontRowOf(foeSide);
       const targets = foe.board.filter(m => m.row === fr);
       if (targets.length === 0) log('【地刺】：敌方前排没有单位，无效果');
-      targets.forEach(m => dealSpellDamage(def, m, 2));
+      targets.forEach(m => dealSpellDamage(def, m, 3));
       break;
     }
     case 'deathRipple': {
       const targets = [];
       ['player', 'enemy'].forEach(sd => state[sd].board.forEach(m => { if (m.race !== '墓园') targets.push(m); }));
       if (targets.length === 0) log('【死亡波纹】：场上没有非墓园单位，无效果');
-      targets.forEach(m => dealSpellDamage(def, m, 2));
+      targets.forEach(m => dealSpellDamage(def, m, 3));
       break;
     }
     case 'heal':
-      healHero(side, 6);
+      healHero(side, 7);
       break;
     case 'iceBolt':
-      dealSpellDamage(def, target, 3);
+      dealSpellDamage(def, target, 4);
       break;
     case 'bless':
-      p.board.forEach(m => { m.baseAtk += 1; });
-      log('【祝福】：全场友方单位 +1 攻击');
+      p.board.forEach(m => { m.baseAtk += 2; });
+      log('【祝福】：全场友方单位 +2 攻击');
       break;
     case 'dispel': {
       // 增益全部回到卡牌基础值（祭司祈祷等改 base 的增益也一并移除；当前生命不超过基础上限，不白嫖治疗），并解除中毒
@@ -1853,12 +1854,12 @@ function resolveSpellEffect(side, def, target) {
     case 'fireballSpell': {
       const roll = 1 + Math.floor(Math.random() * 6);
       log('【火球术】掷出 ' + roll);
-      dealSpellDamage(def, target, roll);
+      dealSpellDamage(def, target, roll + 1);
       break;
     }
     case 'bloodlust':
-      p.board.forEach(m => { m.baseAtk += 2; });
-      log('【嗜血奇术】：全场友方单位 +2 攻击');
+      p.board.forEach(m => { m.baseAtk += 3; });
+      log('【嗜血奇术】：全场友方单位 +3 攻击');
       break;
     case 'fireShield':
       if (target.traits.includes('反击2')) log('【烈火神盾】：【' + target.name + '】已有该效果，无效');
@@ -1869,32 +1870,33 @@ function resolveSpellEffect(side, def, target) {
       }
       break;
     case 'doom':
-      ['player', 'enemy'].forEach(sd => state[sd].board.slice().forEach(m => dealSpellDamage(def, m, 5)));
+      ['player', 'enemy'].forEach(sd => state[sd].board.slice().forEach(m => dealSpellDamage(def, m, 6)));
       break;
     case 'lightningBolt':
-      dealSpellDamage(def, target, 4);
+      dealSpellDamage(def, target, 5);
       break;
     case 'chainLightning': {
       const targets = foe.board.slice().sort((a, b) => b.atk - a.atk).slice(0, 3);
       if (targets.length === 0) log('【连锁闪电】：敌方没有单位，无效果');
-      targets.forEach(m => dealSpellDamage(def, m, 3));
+      targets.forEach(m => dealSpellDamage(def, m, 4));
       break;
     }
     case 'summonAir': {
       const s = summonMinion(side, findDef('气元素'), aiRowFor(findDef('气元素')));
+      summonBuff(s);
       if (s) log('【召唤气元素】：召唤了【气元素】（3/0/4 飞行）');
       else log('【召唤气元素】：场上已达上限，无效果');
       break;
     }
     case 'holyShield':
-      p.board.forEach(m => { m.baseArm += 1; m.arm += 1; });
-      log('【护体神盾】：全场友方单位护甲 +1');
+      p.board.forEach(m => { m.baseArm += 2; m.arm += 2; });
+      log('【护体神盾】：全场友方单位护甲 +2');
       break;
     case 'meteor': {
       // 目标及同排左右相邻各 3 伤（与范围攻击的相邻口径一致）
       const rowMins = foe.board.filter(o => o.row === target.row);
       const di = rowMins.indexOf(target);
-      [target, rowMins[di - 1], rowMins[di + 1]].forEach(o => { if (o) dealSpellDamage(def, o, 3); });
+      [target, rowMins[di - 1], rowMins[di + 1]].forEach(o => { if (o) dealSpellDamage(def, o, 4); });
       break;
     }
     case 'revive': {
@@ -1911,7 +1913,7 @@ function resolveSpellEffect(side, def, target) {
     case 'healingWave':
       p.board.forEach(m => {
         const before = m.curHp;
-        m.curHp = Math.min(m.maxHp, m.curHp + 3);
+        m.curHp = Math.min(m.maxHp, m.curHp + 4);
         if (m.curHp > before) log('【治疗波动】：【' + m.name + '】恢复 ' + (m.curHp - before) + ' 点生命');
       });
       break;
@@ -1933,14 +1935,14 @@ function resolveSpellEffect(side, def, target) {
       break;
     }
     case 'sear':
-      dealSpellDamage(def, target, 2);
+      dealSpellDamage(def, target, 3);
       break;
     case 'hellfire':
-      foe.board.slice().forEach(m => dealSpellDamage(def, m, 3));
+      foe.board.slice().forEach(m => dealSpellDamage(def, m, 4));
       break;
     case 'confuse':
-      target.morale = Math.max(-10, (target.morale || 0) - 5);
-      log('【混乱】：【' + target.name + '】士气 -5（当前 ' + target.morale + '）');
+      target.morale = Math.max(-10, (target.morale || 0) - 6);
+      log('【混乱】：【' + target.name + '】士气 -6（当前 ' + target.morale + '）');
       break;
     case 'tornado': {
       const flyers = foe.board.filter(m => isFlying(m));
@@ -1951,23 +1953,30 @@ function resolveSpellEffect(side, def, target) {
       break;
     }
     case 'inspire':
-      p.board.forEach(m => { m.morale = Math.min(10, (m.morale || 0) + 2); });
-      log('【鼓舞】：全场友方单位士气 +2');
+      p.board.forEach(m => { m.morale = Math.min(10, (m.morale || 0) + 3); });
+      log('【鼓舞】：全场友方单位士气 +3');
       break;
     case 'summonThunder': {
       const s = summonMinion(side, findDef('雷元素'), AIR_ROW);
+      summonBuff(s);
       if (s) log('【召唤雷元素】：在空中召唤了【雷元素】（3/0/5 飞行）');
       else log('【召唤雷元素】：场上已达上限，无效果');
       break;
     }
     case 'thunderBolt':
-      dealSpellDamage(def, target, 8);
+      dealSpellDamage(def, target, 9);
       break;
     case 'animateDead': {
-      // 复活己方墓地最后死亡的单位卡（跳过法术条目），以最大生命一半（向上取整）入场到原排
+      // 聚灵奇术只能复活墓园单位（H3 Animate Dead 原味）：从墓地末尾找最后死亡的墓园单位卡（跳过法术条目），
+      // 以最大生命一半（向上取整）入场到原排
       let idx = -1;
-      for (let i = p.graveyard.length - 1; i >= 0; i--) { if (!p.graveyard[i]._isSpell) { idx = i; break; } }
-      if (idx < 0) { log('【聚灵奇术】：墓地为空，无效果'); break; }
+      for (let i = p.graveyard.length - 1; i >= 0; i--) {
+        const g = p.graveyard[i];
+        if (g._isSpell) continue;
+        const gd = findDef(g.name);
+        if (gd && gd.race === '墓园') { idx = i; break; }
+      }
+      if (idx < 0) { log('【聚灵奇术】：墓地中没有墓园单位，无效果'); break; }
       if (p.board.length >= BOARD_CAP) { log('【聚灵奇术】：场上已达上限，无效果'); break; }
       const dead = p.graveyard.splice(idx, 1)[0];
       const s = summonMinion(side, findDef(dead.name), dead.row);
@@ -1979,7 +1988,8 @@ function resolveSpellEffect(side, def, target) {
     }
     case 'summonEarth': {
       const s = summonMinion(side, findDef('土元素'), aiRowFor(findDef('土元素')));
-      if (s) log('【召唤土元素】：召唤了【土元素】（4/1/6）');
+      summonBuff(s);
+      if (s) log('【召唤土元素】：召唤了【土元素】（5/1/7）');
       else log('【召唤土元素】：场上已达上限，无效果');
       break;
     }
@@ -1987,7 +1997,7 @@ function resolveSpellEffect(side, def, target) {
       const fr = frontRowOf(foeSide);
       const targets = foe.board.filter(m => m.row === fr);
       if (targets.length === 0) { log('【流沙】：敌方前排没有单位，无效果'); break; }
-      targets.forEach(m => { m.baseAtk = Math.max(0, m.baseAtk - 1); });
+      targets.forEach(m => { m.baseAtk = Math.max(0, m.baseAtk - 2); });
       log('【流沙】：敌方前排 ' + targets.length + ' 个单位攻击 -1');
       break;
     }
@@ -2002,6 +2012,7 @@ function resolveSpellEffect(side, def, target) {
     }
     case 'summonWater': {
       const s = summonMinion(side, findDef('水元素'), aiRowFor(findDef('水元素')));
+      summonBuff(s);
       if (s) log('【召唤水元素】：召唤了【水元素】（2/0/6）');
       else log('【召唤水元素】：场上已达上限，无效果');
       break;
@@ -2016,19 +2027,20 @@ function resolveSpellEffect(side, def, target) {
         pool.splice(pool.indexOf(t), 1);
       }
       if (targets.length === 0) log('【流星火雨】：敌方没有单位，无效果');
-      targets.forEach(m => dealSpellDamage(def, m, 4));
+      targets.forEach(m => dealSpellDamage(def, m, 5));
       break;
     }
     case 'summonFire': {
       const s = summonMinion(side, findDef('火元素'), aiRowFor(findDef('火元素')));
+      summonBuff(s);
       if (s) {
         s.traits.push('法术护盾2'); // 火系魔法免疫（近似：法术护盾2）
-        log('【召唤火元素】：召唤了【火元素】（4/0/4，火系魔法免疫）');
+        log('【召唤火元素】：召唤了【火元素】（5/0/5，火系魔法免疫）');
       } else log('【召唤火元素】：场上已达上限，无效果');
       break;
     }
     case 'frenzy':
-      target.baseAtk += 3;
+      target.baseAtk += 4;
       target.poison = Math.max(target.poison, 1);
       log('【狂暴】：【' + target.name + '】攻击 +3 并中毒 Lv1');
       break;
@@ -2040,10 +2052,10 @@ function resolveSpellEffect(side, def, target) {
       break;
     }
     case 'airShield':
-      if (target.traits.includes('法术护盾2')) log('【大气神盾】：【' + target.name + '】已有该效果，无效');
+      if (target.traits.includes('法术护盾3')) log('【大气神盾】：【' + target.name + '】已有该效果，无效');
       else {
-        target.traits.push('法术护盾2');
-        log('【大气神盾】：【' + target.name + '】获得「法术护盾2」');
+        target.traits.push('法术护盾3');
+        log('【大气神盾】：【' + target.name + '】获得「法术护盾3」');
       }
       break;
   }
@@ -2130,44 +2142,44 @@ const SCHOOL_INFO = {
   '气': { label: '气', color: '#4ad8c8' },
 };
 const SPELL_FX_TEXT = {
-  stoneSkin: '目标友方单位护甲 +2（永久）',
-  slow: '目标敌方单位攻击 -2（最低 0）',
-  earthSpikes: '对敌方前排所有单位造成 2 点伤害',
-  deathRipple: '对双方场上所有非墓园单位造成 2 点伤害',
-  heal: '己方英雄恢复 6 点生命',
-  iceBolt: '对目标敌方单位造成 3 点伤害',
-  bless: '全场友方单位 +1 攻击',
+  stoneSkin: '目标友方单位护甲 +3（永久）',
+  slow: '目标敌方单位攻击 -3（最低 0）',
+  earthSpikes: '对敌方前排所有单位造成 3 点伤害',
+  deathRipple: '对双方场上所有非墓园单位造成 3 点伤害',
+  heal: '己方英雄恢复 7 点生命',
+  iceBolt: '对目标敌方单位造成 4 点伤害',
+  bless: '全场友方单位 +2 攻击',
   dispel: '移除目标敌方单位全部增益并解除中毒',
-  fireballSpell: '对目标敌方单位造成 1~6 点伤害',
-  bloodlust: '全场友方单位 +2 攻击',
+  fireballSpell: '对目标敌方单位造成 2~7 点伤害',
+  bloodlust: '全场友方单位 +3 攻击',
   fireShield: '目标友方单位获得「反击2」（重复无效）',
-  doom: '对双方场上所有单位造成 5 点伤害',
-  lightningBolt: '对目标敌方单位造成 4 点伤害',
-  chainLightning: '对最多 3 个敌方单位各造成 3 点伤害（从攻击最高者开始）',
-  summonAir: '召唤一个【气元素】（3/0/4 飞行）',
-  holyShield: '全场友方单位护甲 +1',
-  meteor: '对目标及同排左右相邻单位各造成 3 点伤害',
+  doom: '对双方场上所有单位造成 6 点伤害',
+  lightningBolt: '对目标敌方单位造成 5 点伤害',
+  chainLightning: '对最多 3 个敌方单位各造成 4 点伤害（从攻击最高者开始）',
+  summonAir: '召唤一个【气元素】（4/0/5 飞行）',
+  holyShield: '全场友方单位护甲 +2',
+  meteor: '对目标及同排左右相邻单位各造成 4 点伤害',
   revive: '从己方墓地复活最后死亡的一张单位卡到其原排',
-  healingWave: '全场友方单位恢复 3 点生命',
+  healingWave: '全场友方单位恢复 4 点生命',
   mirror: '在同排召唤一个目标友方单位的复制（复制当前数值与姿态）',
   teleport: '将目标友方单位收回手牌（不退法力）',
-  sear: '对目标敌方单位造成 2 点伤害',
-  hellfire: '对敌方全场造成 3 点伤害',
-  confuse: '目标敌方单位士气 -5（最低 -10）',
+  sear: '对目标敌方单位造成 3 点伤害',
+  hellfire: '对敌方全场造成 4 点伤害',
+  confuse: '目标敌方单位士气 -6（最低 -10）',
   tornado: '消灭一个随机敌方飞行单位',
-  inspire: '全场友方单位士气 +2（最高 10）',
-  summonThunder: '在空中区域召唤一个【雷元素】（3/0/5 飞行）',
-  thunderBolt: '对目标敌方单位造成 8 点伤害',
-  animateDead: '复活己方墓地最后死亡的一张单位卡，以其最大生命一半（向上取整）的生命入场到原排',
-  summonEarth: '召唤一个【土元素】（4/1/6）',
-  quicksand: '敌方前排所有单位攻击 -1（最低 0）',
+  inspire: '全场友方单位士气 +3（最高 10）',
+  summonThunder: '在空中区域召唤一个【雷元素】（4/0/6 飞行）',
+  thunderBolt: '对目标敌方单位造成 9 点伤害',
+  animateDead: '复活己方墓地最后死亡的一张墓园单位卡，以其最大生命一半（向上取整）的生命入场到原排',
+  summonEarth: '召唤一个【土元素】（5/1/7）',
+  quicksand: '敌方前排所有单位攻击 -2（最低 0）',
   forget: '移除目标敌方单位的「远程」特性',
-  summonWater: '召唤一个【水元素】（2/0/6）',
-  meteorShower: '对随机至多 4 个敌方单位各造成 4 点伤害（守备加权，不重复）',
-  summonFire: '召唤一个【火元素】（4/0/4，带火系魔法免疫）',
-  frenzy: '目标友方单位攻击 +3 并中毒 Lv1',
+  summonWater: '召唤一个【水元素】（3/0/7）',
+  meteorShower: '对随机至多 4 个敌方单位各造成 5 点伤害（守备加权，不重复）',
+  summonFire: '召唤一个【火元素】（5/0/5，带火系魔法免疫）',
+  frenzy: '目标友方单位攻击 +4 并中毒 Lv1',
   twister: '随机重排敌方阵型：地面单位随机分配到前/中/后三排（飞行单位不动）',
-  airShield: '目标友方单位获得「法术护盾2」（重复无效）',
+  airShield: '目标友方单位获得「法术护盾3」（重复无效）',
 };
 
 // 对方「最前排」：有随从的最小 row（盖放的法术壳不占排）
