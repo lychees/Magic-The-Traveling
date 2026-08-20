@@ -202,6 +202,28 @@
   }
   .cast-btn:hover:not(:disabled) { filter: brightness(1.3); }
   .cast-btn:disabled { opacity: .4; cursor: not-allowed; }
+  /* 守备表示：卡面横向加宽（宽度×2），视觉上占据两个位置 */
+  .minion.defense { width: 208px; height: 108px; flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
+  .minion.defense .m-name { width: 100%; }
+  .def-btn {
+    font-size: 10px; background: #2a4a7a; color: #b0d0ff;
+    border: 1px solid #4a7aba; border-radius: 4px; padding: 1px 6px; cursor: pointer; width: 100%;
+  }
+  .def-btn:hover { filter: brightness(1.3); }
+  .m-cast-row .def-btn { flex: 1; }
+  /* 翻面表示（盖放）：卡背样式 */
+  .minion.face-down {
+    background: linear-gradient(135deg, #3a2f1f, #221a10) !important;
+    border-color: #8a744a; align-items: center; justify-content: center; cursor: default;
+  }
+  .minion.face-down .fd-back { font-size: 40px; color: #8a744a; text-align: center; width: 100%; }
+  .minion.face-down .fd-label { font-size: 11px; color: #a8906a; text-align: center; width: 100%; }
+  /* 手牌盖放按钮 */
+  .set-btn {
+    font-size: 10px; background: #4a3b22; color: #d8c8a0;
+    border: 1px solid #8a744a; border-radius: 4px; padding: 1px 6px; cursor: pointer; margin-top: 2px;
+  }
+  .set-btn:hover { filter: brightness(1.3); }
   .minion .m-name { text-align: center; font-weight: bold; color: #f0e6c8; margin-bottom: 2px; }
   .minion .m-traits { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; min-height: 16px; }
   .trait-badge {
@@ -511,12 +533,12 @@
       回合结构：每轮分两个阶段——部署阶段双方同时出牌布阵（你点「开始战斗」后 AI 一次性完成部署）；进攻阶段双方单位按 攻击+有效护甲+当前生命 的总和从高到低自动行动（并列随机先后），全部行动完进入下一轮。<br>
       阵型：场上分为 前排 / 中排 / 后排。点击手牌打出时近战默认放前排、远程默认放后排；部署阶段也可以直接把手牌拖到某一排的指定位置出牌（拖到排内空白放排尾，拖到某张随从上插入其前），并可拖拽己方场上随从在三排间移动或同排调整顺序。<br>
       收回：部署阶段单击本轮刚从手牌打出、且没有战吼/亡语等入场效果的随从，可将其收回手牌并退还实际支付的法力（手牌满时不可收回；召唤物与 token 不可收回）。<br>
-      攻击规则（进攻阶段自动执行）：非远程单位只能攻击对方「最前排」（对方有随从的最小排）的随从；远程单位可攻击任意一排；只有对方场上没有随从、或对方所有随从都无法成为你的合法目标（如对面全是飞行单位而你是近战）时，才能攻击英雄本体。<br>
+      攻击规则（进攻阶段自动执行）：非远程单位只能攻击对方「最前排」（对方有随从的最小排）的随从；远程单位可攻击任意一排；只有对方场上没有随从、或对方所有随从都无法成为你的合法目标（如对面全是飞行单位而你是近战）时，才能攻击英雄本体——但只要对方还有守备表示的单位，就必须先打完它们。飞行单位守备时暂时失去飞行效果。<br>
       反击规则：每个随从每战斗阶段有 1 次反击机会（进攻阶段开始时重置；「反击X」特性为 X 次，如皇家狮鹫反击2）。随从受到攻击造成的伤害（含溅射）且存活时，若还有反击机会、攻击力大于 0、且按射程规则能够到伤害来源（非远程只能够到对方最前排、远程任意排、飞行限制照旧），便立刻反击并消耗一次；够不到或 0 攻则不消耗，之后被能反击的攻击打中仍会反击。反击造成的伤害不再触发反击。中毒等非攻击伤害不触发反击。<br>
       连击（神射手）：攻击随从时连续攻击 2 次，第二次不触发反击；目标已死于第一次攻击则第二次落空。复活（大天使）：战吼——将己方墓地中最后死亡的一张随从满状态复活到其原排。<br>
       远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍。骑兵：攻击骑兵以外的单位时不会被反击。拒马：可以对骑兵进行反击。<br>
       再生X：每轮部署阶段开始时恢复 X 点生命。毒LvX：被攻击造成伤害的随从中毒（重复取最高 Lv），中毒者在每轮部署阶段开始时受 X 点伤害。<br>
-      单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）。和平：不会发起可能令自己死亡的攻击（若目标反击会致死则跳过）。<br>
+      单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）。和平：不会发起可能令自己死亡的攻击（若目标反击会致死则跳过）。死亡凝视（蛮牛）：攻击时 25% 概率直接消灭目标随从（无视生命与护甲）。护甲穿透X（比蒙系）：攻击无视目标 X 点护甲。守备表示：部署阶段可在攻击/守备之间切换；守备单位不主动攻击，但无限次反击且反击伤害与对手的攻击同时结算，被随机选取的概率 ×2（卡面变宽两倍）。翻面表示：手牌可盖放部署（不触发战吼）；翻面单位不会成为攻击目标、不主动攻击、不反击，但仍每轮恢复法术、可吃到 buff；部署阶段可翻开（翻开时结算战吼；已在场的单位不能再盖回）。<br>
       范围攻击：攻击随从时，对被攻击随从左右两边相邻的随从造成等量溅射（各自结算护甲，溅射受伤也会触发反击）。石化：生命未满时护甲视为 4。吸血：造成的伤害等量治疗己方英雄。法术护盾X：受到的法术伤害 -X。<br>
       法力燃烧X：攻击敌方英雄时对方下一轮法力 -X。驱魔（如圣骑士）：被该单位击杀的使魔不触发亡语。<br>
       检索类亡语（如骷髅、骷髅弓手）：从牌库检索一张同名卡置入手牌。魅魔：战吼——随机夺取一个敌方随从。死神：战吼——消灭攻击力最高的敌方随从。骨龙/骸骨巨龙：打出时除外己方墓地，每张除外牌费用 -1。<br>
@@ -737,7 +759,8 @@ const CARD_DEFS = [
   { name: '独眼巨人王', race: '据点', cost: 7, atk: 6, arm: 0, hp: 10, rating: 50, traits: ['范围攻击'], art: { icon: '🔨', hue: 50 } },
   { name: '雷鸟',     race: '据点',   cost: 6, atk: 4, arm: 0, hp: 8,  rating: 49, traits: ['飞行'], art: { icon: '🦅', hue: 55 } },
   { name: '闪电鸟',   race: '据点',   cost: 7, atk: 5, arm: 0, hp: 9,  rating: 47, traits: ['飞行'], art: { icon: '⚡', hue: 50 } },
-  { name: '比蒙',     race: '据点',   cost: 9, atk: 9, arm: 0, hp: 14, rating: 48, traits: [], art: { icon: '🦣', hue: 40 } },
+  { name: '比蒙',     race: '据点',   cost: 9, atk: 9, arm: 0, hp: 14, rating: 50, traits: ['护甲穿透1'], art: { icon: '🦣', hue: 40 } },
+  { name: '比蒙巨兽', race: '据点',   cost: 10, atk: 10, arm: 0, hp: 17, rating: 54, traits: ['护甲穿透2'], art: { icon: '🦣', hue: 20 } },
   // 要塞（沼泽墨绿）
   { name: '狼人',     race: '要塞',   cost: 2, atk: 2, arm: 0, hp: 3,  rating: 54, traits: [], art: { icon: '🐺', hue: 90 } },
   { name: '蜥蜴人',   race: '要塞',   cost: 2, atk: 1, arm: 1, hp: 3,  rating: 56, traits: [], art: { icon: '🦎', hue: 95 } },
@@ -746,7 +769,7 @@ const CARD_DEFS = [
   { name: '龙蝇',     race: '要塞',   cost: 4, atk: 3, arm: 0, hp: 4,  rating: 53, traits: ['飞行', '毒Lv1'], art: { icon: '🐉', hue: 95 } },
   { name: '石化蜥蜴', race: '要塞',   cost: 5, atk: 3, arm: 1, hp: 6,  rating: 51, traits: ['石化'], art: { icon: '🦎', hue: 105 } },
   { name: '巨蜥',     race: '要塞',   cost: 6, atk: 4, arm: 1, hp: 7,  rating: 49, traits: ['石化'], art: { icon: '🐊', hue: 100 } },
-  { name: '蛮牛',     race: '要塞',   cost: 6, atk: 5, arm: 0, hp: 7,  rating: 44, traits: [], art: { icon: '🐂', hue: 30 } },
+  { name: '蛮牛',     race: '要塞',   cost: 6, atk: 5, arm: 0, hp: 7,  rating: 56, traits: ['死亡凝视'], art: { icon: '🐂', hue: 30 } },
   { name: '野牛',     race: '要塞',   cost: 7, atk: 6, arm: 0, hp: 9,  rating: 44, traits: [], art: { icon: '🐃', hue: 35 } },
   { name: '双足飞龙', race: '要塞',   cost: 6, atk: 4, arm: 0, hp: 7,  rating: 47, traits: ['飞行'], art: { icon: '🐲', hue: 90 } },
   { name: '终极九头蛇', race: '要塞', cost: 9, atk: 6, arm: 0, hp: 20, rating: 58, traits: ['范围攻击'], art: { icon: '🐙', hue: 110 } },
@@ -803,6 +826,8 @@ const TRAIT_TEXT = {
   '拒马': '可以对骑兵进行反击（无视骑兵的免反击）',
   '恐狼光环': '同排左右相邻的友方随从 +1 攻击（多只可叠加）',
   '和平': '不会发起可能令自己死亡的攻击（若反击致死则跳过该攻击）',
+  '死亡凝视': '攻击时 25% 概率直接消灭目标随从（无视生命与护甲）',
+  '护甲穿透': '攻击无视目标 X 点护甲（X=等级）',
   '法力燃烧': '攻击英雄时对手下一轮法力 -X（X=等级）',
   '法力燃烧2': '攻击英雄时对手下一轮法力 -2',
   '驱魔': '被该单位击杀的使魔不触发亡语',
@@ -955,8 +980,17 @@ function serializeMinion(m) {
     actSpell: m.actSpell, spellCost: m.spellCost, spellMana: m.spellMana, spellManaMax: m.spellManaMax,
     row: m.row, poison: m.poison, canAttack: m.canAttack, counterLeft: m.counterLeft,
     recallable: m.recallable, playedRound: m.playedRound, costPaid: m.costPaid,
-    pendingTransform: !!m.pendingTransform,
+    pendingTransform: !!m.pendingTransform, defense: !!m.defense, faceDown: !!m.faceDown,
   };
+}
+
+// 对手/观战视角下的翻面卡打码：只暴露 uid/faceDown/row，不泄露卡名与数值
+function maskFaceDown(m) {
+  return { uid: m.uid, name: '？？？', cost: 0, atk: 0, arm: 0, baseAtk: 0, baseMaxHp: 1, maxHp: 1, curHp: 1,
+    traits: [], spell: null, spellParam: 0, actSpell: null, spellCost: 0, spellMana: 0, spellManaMax: 0,
+    row: m.row, poison: 0, canAttack: false, counterLeft: 0,
+    recallable: false, playedRound: 0, costPaid: 0,
+    pendingTransform: false, defense: false, faceDown: true };
 }
 
 // forSide：接收者所控制的 side（guest='enemy'）；null = 观战者（两边手牌/牌库都不可见）
@@ -976,7 +1010,7 @@ function makeSnapshot(forSide) {
       deckCount: p.deck.length, handCount: p.hand.length,
       hand: reveal ? p.hand.map(d => d.name) : null,
       deck: reveal ? p.deck.map(d => d.name) : null,
-      board: p.board.map(serializeMinion),
+      board: p.board.map(m => (!reveal && m.faceDown) ? maskFaceDown(m) : serializeMinion(m)),
       graveyard: p.graveyard.map(serializeMinion),
     };
   });
@@ -1058,6 +1092,15 @@ function hostHandleAct(conn, msg) {
     case 'move': ok = moveMinion(msg.uid | 0, msg.row | 0, msg.beforeUid == null ? null : msg.beforeUid | 0, 'enemy'); break;
     case 'recall': ok = recallMinion(msg.uid | 0, 'enemy'); break;
     case 'cast': ok = castUnitSpell('enemy', msg.uid | 0); break;
+    case 'defense': ok = toggleDefense('enemy', msg.uid | 0); break;
+    case 'flip': ok = flipUnit('enemy', msg.uid | 0); break;
+    case 'set': {
+      // 盖放：按卡名定位手牌，默认落位
+      const i = state.enemy.hand.findIndex(d => d.name === msg.name);
+      if (i < 0) { ok = false; break; }
+      ok = playCard('enemy', i, null, null, true);
+      break;
+    }
     case 'endDeploy': startCombat(); break;
     default: ok = false;
   }
@@ -1467,10 +1510,16 @@ function effArmor(m) {
   return m.arm;
 }
 
-// 攻击伤害 = max(0, 攻 - 目标有效护甲)；远程单位攻击飞行单位时伤害加倍
+// 有效飞行：守备表示的飞行单位暂时失去飞行效果（可被任何单位攻击、不再被远程加倍）
+function isFlying(m) {
+  return m.traits.includes('飞行') && !m.defense;
+}
+
+// 攻击伤害 = max(0, 攻 - (目标有效护甲 - 护甲穿透))；远程单位攻击飞行单位时伤害加倍
 function attackDamage(attacker, target) {
-  let dmg = Math.max(0, attacker.atk - effArmor(target));
-  if (attacker.traits.includes('远程') && target.traits.includes('飞行')) dmg *= 2;
+  const pen = traitLv(attacker, '护甲穿透'); // 护甲穿透X：攻击无视目标 X 点护甲
+  let dmg = Math.max(0, attacker.atk - Math.max(0, effArmor(target) - pen));
+  if (attacker.traits.includes('远程') && isFlying(target)) dmg *= 2;
   return dmg;
 }
 
@@ -1556,6 +1605,11 @@ function makeMinion(def) {
     // counterLeft = 本战斗阶段剩余反击次数；战斗阶段开始时由 startCombat 重置为 1，
     // 非战斗阶段开始时才重置的随从（如召唤物）默认为 0。
     poison: 0, canAttack: true, counterLeft: 0, _noDR: false,
+    // 守备表示：部署阶段可切换。守备时不主动攻击、无限次反击且反击同时结算、被随机选取概率×2、卡面变宽
+    defense: false,
+    // 翻面表示：盖放部署。不会成为攻击目标、不主动攻击；仍每轮恢复法术、可吃到 buff；
+    // 翻开时才触发战吼（pendingBattlecry）
+    faceDown: false, pendingBattlecry: false,
     // 收回相关：仅「从手牌打出」的随从由 playCard 填写；召唤物/token 保持默认值（不可收回）
     playedRound: 0, costPaid: 0, recallable: false,
   };
@@ -1598,12 +1652,15 @@ function legalMinionTargets(attacker, foeSide) {
   if (foe.board.length === 0) return [];
   const fr = frontRowOf(foeSide);
   const ranged = attacker.traits.includes('远程');
-  return foe.board.filter(t => canTarget(attacker, t) && (ranged || t.row === fr));
+  // 翻面表示的单位不会成为攻击目标
+  return foe.board.filter(t => !t.faceDown && canTarget(attacker, t) && (ranged || t.row === fr));
 }
 
 // 只有对方场上完全无随从时才能攻击英雄
 function canHitHero(attacker, foeSide) {
   if (state[foeSide].board.length === 0) return true;
+  // 必须打完所有守备表示的单位才能攻击英雄（守备墙；翻面状态的守备单位不计入——打不到它们，避免软锁）
+  if (state[foeSide].board.some(m => m.defense && !m.faceDown)) return false;
   // 对方场上所有随从都无法成为该攻击者的合法目标时（如对面全是飞行单位而攻击者是近战），
   // 可以直接攻击英雄——够不到的单位不构成对英雄的保护
   return legalMinionTargets(attacker, foeSide).length === 0;
@@ -1682,8 +1739,8 @@ function recalcAuras() {
 }
 
 // row / beforeUid 仅玩家侧有效：点击出牌不传（近战默认前排 row=0、远程默认后排 row=2），
-// 手牌拖拽落位时传入目标排与插入位置
-function playCard(side, idx, row, beforeUid) {
+// 手牌拖拽落位时传入目标排与插入位置；faceDown=true 为翻面表示盖放（不触发战吼，翻开时才触发）
+function playCard(side, idx, row, beforeUid, faceDown) {
   // 部署阶段外只有人机模式的 AI 部署能出牌；双人模式部署阶段仅当前部署方可出牌
   if (state.phase !== 'deploy' && !(state.mode === 'ai' && side === 'enemy')) return false;
   if (state.mode === 'pvp' && state.phase === 'deploy' && side !== state.deploySide) return false;
@@ -1718,9 +1775,16 @@ function playCard(side, idx, row, beforeUid) {
       p.board.push(m); // 该排末尾
     }
   }
-  log(sideName(side) + '召唤了【' + m.name + '】（' + m.atk + '/' + m.arm + '/' + m.curHp + '）到' + ROW_NAMES[m.row]);
+  if (faceDown) {
+    // 翻面表示盖放：不触发战吼（pendingBattlecry 待翻开时结算）；日志不公开卡名（对对手保密）
+    m.faceDown = true;
+    m.pendingBattlecry = !!def.spell;
+    log(sideName(side) + '盖放了一张牌到' + ROW_NAMES[m.row]);
+  } else {
+    log(sideName(side) + '召唤了【' + m.name + '】（' + m.atk + '/' + m.arm + '/' + m.curHp + '）到' + ROW_NAMES[m.row]);
+  }
   sfx('summon');
-  battlecry(side, m);
+  if (!faceDown) battlecry(side, m);
   cleanupDead('player');
   cleanupDead('enemy');
   recalcAuras();
@@ -1758,7 +1822,7 @@ function battlecry(side, m) {
     case 'charm': {
       if (foe.board.length === 0) { log('【魅魔】战吼：敌方没有随从，无效果'); break; }
       if (p.board.length >= BOARD_CAP) { log('【魅魔】战吼：我方场上已达上限，无效果'); break; }
-      const t = foe.board[Math.floor(Math.random() * foe.board.length)];
+      const t = weightedPick(foe.board); // 守备表示的单位被夺取概率 ×2
       foe.board = foe.board.filter(o => o !== t);
       t.canAttack = true; // 换边后本阶段尚未行动，可正常行动
       p.board.push(t);
@@ -1795,8 +1859,8 @@ function battlecry(side, m) {
 }
 
 function canTarget(attacker, defender) {
-  if (defender.traits.includes('飞行') &&
-      !attacker.traits.includes('远程') && !attacker.traits.includes('飞行')) return false;
+  if (isFlying(defender) &&
+      !attacker.traits.includes('远程') && !isFlying(attacker)) return false;
   return true;
 }
 
@@ -1817,22 +1881,32 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
   target.curHp -= dmg;
   shaken.push(target.uid);
   const remain = target.curHp > 0 ? '，【' + target.name + '】剩余 ' + target.curHp + ' 血' : '';
-  const antiAir = attacker.traits.includes('远程') && target.traits.includes('飞行') ? '（远程对飞行伤害加倍）' : '';
+  const antiAir = attacker.traits.includes('远程') && isFlying(target) ? '（远程对飞行伤害加倍）' : '';
   if (label === 'counter') log('【' + attacker.name + '】反击【' + target.name + '】，造成 ' + dmg + ' 点伤害（本阶段反击机会已用）' + antiAir + remain);
+  else if (label === 'defcounter') log('【' + attacker.name + '】反击【' + target.name + '】，造成 ' + dmg + ' 点伤害（守备表示·同时结算）' + antiAir + remain);
   else if (label === 'splash') log('【' + attacker.name + '】的溅射对【' + target.name + '】造成 ' + dmg + ' 点伤害' + antiAir + remain);
   else log('【' + attacker.name + '】攻击【' + target.name + '】，造成 ' + dmg + ' 点伤害' + antiAir + remain);
   applyPoison(attacker, target);
   if (attacker.traits.includes('吸血')) healHero(attackerSide, dmg);
   if (target.curHp <= 0 && attacker.traits.includes('驱魔')) target._noDR = true;
-  if (depth === 0 && target.curHp > 0 && target.counterLeft > 0 && target.atk > 0 &&
-      canCounter(target, attacker, attackerSide)) {
-    target.counterLeft--;
-    const back = attackDamage(target, attacker);
-    if (back <= 0) {
-      log('【' + target.name + '】反击【' + attacker.name + '】，伤害被护甲完全抵挡（本阶段反击机会已用）');
-    } else {
-      sfx('counter');
-      dealAttackDamage(target, otherSide(attackerSide), attacker, back, shaken, depth + 1, 'counter');
+  if (depth === 0 && !target.faceDown && target.atk > 0 && canCounter(target, attacker, attackerSide)) {
+    if (target.defense) {
+      // 守备表示：无限次反击、与对手攻击同时结算（即使被打死反击也生效），不消耗反击机会
+      const back = attackDamage(target, attacker);
+      if (back <= 0) log('【' + target.name + '】（守备）反击【' + attacker.name + '】，伤害被护甲完全抵挡');
+      else {
+        sfx('counter');
+        dealAttackDamage(target, otherSide(attackerSide), attacker, back, shaken, depth + 1, 'defcounter');
+      }
+    } else if (target.curHp > 0 && target.counterLeft > 0) {
+      target.counterLeft--;
+      const back = attackDamage(target, attacker);
+      if (back <= 0) {
+        log('【' + target.name + '】反击【' + attacker.name + '】，伤害被护甲完全抵挡（本阶段反击机会已用）');
+      } else {
+        sfx('counter');
+        dealAttackDamage(target, otherSide(attackerSide), attacker, back, shaken, depth + 1, 'counter');
+      }
     }
   }
 }
@@ -1864,10 +1938,18 @@ function doAttack(side, attackerUid, targetUid) {
   const shaken = []; // 本次攻击中受到伤害的随从 uid（用于晃动动画）
   if (defender) {
     sfx('hit');
+    // 死亡凝视：25% 概率直接消灭目标随从（无视生命与护甲；凝视未致死则正常结算攻击）
+    if (attacker.traits.includes('死亡凝视') && Math.random() < 0.25) {
+      defender.curHp = 0;
+      shaken.push(defender.uid);
+      log('【' + attacker.name + '】的死亡凝视发动：【' + defender.name + '】被直接消灭！');
+      sfx('death');
+    } else {
     // 主目标伤害（受伤者可能立刻反击）
     const mainDmg = attackDamage(attacker, defender);
     if (mainDmg <= 0) log('【' + attacker.name + '】攻击【' + defender.name + '】，伤害被护甲完全抵挡');
     dealAttackDamage(attacker, side, defender, mainDmg, shaken, 0);
+    }
     // 范围攻击：只溅射被攻击随从左右两边相邻的随从（同排内按站位取前后各一个；
     // 各自结算护甲；溅射受伤同样会反击）
     if (attacker.traits.includes('范围攻击')) {
@@ -2003,9 +2085,9 @@ function unitPower(m) {
   return m.atk + effArmor(m) + Math.max(0, m.curHp);
 }
 
-// 从「存活且本阶段尚未行动」的单位里挑总和最高者（并列随机）
+// 从「存活且本阶段尚未行动」的单位里挑总和最高者（并列随机）；守备/翻面表示的单位不主动攻击
 function nextActor() {
-  const all = state.player.board.concat(state.enemy.board).filter(m => m.canAttack);
+  const all = state.player.board.concat(state.enemy.board).filter(m => m.canAttack && !m.defense && !m.faceDown);
   if (all.length === 0) return null;
   let max = -Infinity;
   all.forEach(m => { const pw = unitPower(m); if (pw > max) max = pw; });
@@ -2019,8 +2101,9 @@ function nextActor() {
 // 和平：若攻击某目标会令自己在反击中死亡，则跳过该目标
 function suicidalTarget(m, t, side) {
   const dmg = attackDamage(m, t);
-  if (dmg >= t.curHp) return false; // 能直接击杀，无反击
-  if (!(t.counterLeft > 0 && t.atk > 0 && canCounter(t, m, side))) return false;
+  const counters = t.atk > 0 && canCounter(t, m, side) && (t.defense || t.counterLeft > 0);
+  if (!counters) return false;
+  if (dmg >= t.curHp && !t.defense) return false; // 普通目标被直接击杀则无反击；守备目标被杀也反击
   return attackDamage(t, m) >= m.curHp;
 }
 
@@ -2031,13 +2114,15 @@ function autoAttack(side, m) {
   if (m.traits.includes('和平')) targets = targets.filter(t => !suicidalTarget(m, t, side));
   // 远程优先打飞行
   if (m.traits.includes('远程')) {
-    const flying = targets.filter(t => t.traits.includes('飞行'));
+    const flying = targets.filter(t => isFlying(t));
     if (flying.length > 0) targets = flying;
   }
   const kill = targets.find(t => {
     const dmg = attackDamage(m, t);
     if (dmg < t.curHp) return false;
-    if (!(t.counterLeft > 0 && t.atk > 0 && canCounter(t, m, side))) return true;
+    // 守备表示的目标即使被击杀也会反击（同时结算）；普通目标只有存活且有反击机会才反击
+    const counters = t.atk > 0 && canCounter(t, m, side) && (t.defense || t.counterLeft > 0);
+    if (!counters) return true;
     return attackDamage(t, m) < m.curHp;
   });
   if (kill) return doAttack(side, m.uid, kill.uid);
@@ -2056,6 +2141,13 @@ const UNIT_SPELL_TEXT = {
   fireball: '火球：消耗 1 法力，对随机一个敌方随从造成 1~6 点法术伤害',
   harvest: '收获：消耗 4 法力，摸一张牌',
 };
+
+// 守备表示的单位被随机选取的概率 ×2（宽度变成两倍）：构建加权池后随机
+function weightedPick(arr) {
+  const pool = [];
+  arr.forEach(m => { pool.push(m); if (m.defense) pool.push(m); });
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 // 施放单位法术：校验阶段/部署方/法力/目标条件 → 扣法力 → 执行 → 日志 + 音效 + render
 function castUnitSpell(side, minionUid) {
@@ -2084,7 +2176,7 @@ function castUnitSpell(side, minionUid) {
     sfx('summon');
   } else if (m.actSpell === 'fireball') {
     const foe = state[otherSide(side)];
-    const t = foe.board[Math.floor(Math.random() * foe.board.length)];
+    const t = weightedPick(foe.board); // 守备表示的单位被火球选中概率 ×2
     const roll = 1 + Math.floor(Math.random() * 6);
     const shield = traitLv(t, '法术护盾'); // 法术护盾X：法术伤害 -X
     const dmg = Math.max(0, roll - shield);
@@ -2104,6 +2196,42 @@ function castUnitSpell(side, minionUid) {
   return true;
 }
 
+// 翻开翻面表示的单位（仅部署阶段、当前部署方；只能翻开，不能再盖回——盖放只能从手牌进行）。
+// 翻开时结算盖放时未触发的战吼。
+function flipUnit(side, minionUid) {
+  if (!state || state.gameOver) return false;
+  if (state.phase !== 'deploy') return false;
+  if (state.mode === 'pvp' && side !== state.deploySide) return false;
+  const m = state[side].board.find(x => x.uid === minionUid);
+  if (!m || !m.faceDown) return false; // 只有翻面表示的单位能翻开
+  m.faceDown = false;
+  log('【' + m.name + '】翻开！');
+  sfx('flip');
+  if (m.pendingBattlecry) { m.pendingBattlecry = false; battlecry(side, m); }
+  cleanupDead('player');
+  cleanupDead('enemy');
+  recalcAuras();
+  checkGameOver();
+  render();
+  return true;
+}
+
+// 切换攻击/守备表示（仅部署阶段、当前部署方的随从）。
+// 守备表示：不主动攻击；无限次反击且反击与对手攻击同时结算；被随机选取概率 ×2；卡面变宽。
+function toggleDefense(side, minionUid) {
+  if (!state || state.gameOver) return false;
+  if (state.phase !== 'deploy') return false;
+  if (state.mode === 'pvp' && side !== state.deploySide) return false;
+  const m = state[side].board.find(x => x.uid === minionUid);
+  if (!m) return false;
+  // 翻面单位也可切换守备表示（但依然不会主动进攻）；守备墙只计算正面的守备单位
+  m.defense = !m.defense;
+  log('【' + m.name + '】切换为' + (m.defense ? '守备表示（不主动攻击，无限次反击·同时结算）' : '攻击表示'));
+  sfx('phase');
+  render();
+  return true;
+}
+
 // AI 施放单位法术：火球——敌方有随从且法力够就放；分裂——偶数血且场上未满就放。
 // 每次施放都扣法力，法力有限自然终止（guard 仅兜底）
 function aiCastSpells() {
@@ -2115,6 +2243,18 @@ function aiCastSpells() {
     if (!m) return;
     castUnitSpell('enemy', m.uid);
   }
+}
+
+// AI 守备姿态：攻击力 ≤1 且生命较厚（≥5）的单位转为守备表示（无限反击·同时结算当肉盾），
+// 攻击力 ≥2 的确保攻击表示
+function aiSetDefense() {
+  state.enemy.board.forEach(m => {
+    const want = m.atk <= 1 && m.maxHp >= 5;
+    if (want !== m.defense) {
+      m.defense = want;
+      log('【' + m.name + '】切换为' + (want ? '守备表示' : '攻击表示'));
+    }
+  });
 }
 
 function combatTick() {
@@ -2167,6 +2307,7 @@ function startCombat() {
   sfx('phase');
   while (state.mode === 'ai' && aiPlayStep()) {} // AI 部署（仅人机模式）
   if (state.mode === 'ai') aiCastSpells(); // AI 施放单位法术
+  if (state.mode === 'ai') aiSetDefense(); // AI 守备姿态：攻击力 ≤1 的单位转为守备表示
   // 战斗阶段开始：双方所有随从重置反击机会（默认 1 次；反击X 特性为 X 次，如皇家狮鹫反击2）
   ['player', 'enemy'].forEach(s => state[s].board.forEach(m => { m.counterLeft = Math.max(1, traitLv(m, '反击')); }));
   render();
@@ -2198,7 +2339,7 @@ function raceClass(def) {
 function minionHtml(m, isEnemy, ghost) {
   const classes = ['minion'];
   const def = findDef(m.name);
-  classes.push(raceClass(def)); // 卡面底色按种族；敌我靠上下区域区分，不再用底色
+  classes.push(def ? raceClass(def) : 'race9'); // 卡面底色按种族；敌我靠上下区域区分（打码的翻面卡无 def 用中立色）
   // 攻击动画：攻击者突进、受伤者晃动
   if (state.anims && !ghost) {
     if (state.anims.attacker === m.uid) classes.push('lunge');
@@ -2210,17 +2351,29 @@ function minionHtml(m, isEnemy, ghost) {
     m.recallable && m.playedRound === state.round;
   if (recallable) classes.push('recallable');
   if (ghost) classes.push('dying');
+  if (m.defense) classes.push('defense'); // 守备表示：卡面横向加宽（宽度×2）
   const spell = m.spell ? '<div class="m-spell">' + SPELL_TEXT[m.spell] + '</div>' : '<div class="m-spell"></div>';
   const poisonBadge = m.poison > 0
     ? '<span class="trait-badge poison" title="中毒：每轮部署阶段开始时受到 ' + m.poison + ' 点伤害">中毒' + m.poison + '</span>' : '';
   const chargeBadge = m.pendingTransform
     ? '<span class="trait-badge" style="background:#7a5a2a;color:#ffe8b0;" title="下一轮准备阶段开始时变形为【绿龙】">蓄力中</span>' : '';
+  const defBadge = m.defense
+    ? '<span class="trait-badge" style="background:#2a4a7a;color:#b0d0ff;" title="守备表示：不主动攻击；无限次反击且反击同时结算；被随机选取概率×2">守备</span>' : '';
   const hpClass = m.maxHp > (def ? def.hp : m.maxHp) ? 'stat-hp buffed' : 'stat-hp';
   const action = ghost ? '' : ' data-action="' + (isEnemy ? 'attack-minion' : 'select-minion') + '" data-uid="' + m.uid + '"';
+  const mySide = state.player.board.indexOf(m) >= 0 ? 'player' : 'enemy';
+  // 翻面表示：渲染为卡背（对手不可见卡面）；所有者部署阶段可翻开
+  if (m.faceDown) {
+    let flipBtn = '';
+    if (!ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver && NET.role !== 'spectator' && localDeployAllowed(mySide)) {
+      flipBtn = '<button class="def-btn" data-action="flip-unit" data-uid="' + m.uid + '" title="翻开：转为正面表示并结算战吼">翻开</button>';
+    }
+    return '<div class="' + classes.join(' ') + ' face-down" draggable="false">' +
+      '<div class="fd-back">🂠</div><div class="fd-label">翻面表示</div>' + flipBtn + '</div>';
+  }
   // 单位法术：法力显示 + 施放按钮（部署阶段、下方半场=当前部署方可操作；直接执行不走单击延时）
   let castRow = '';
   if (!ghost && m.actSpell) {
-    const mySide = state.player.board.indexOf(m) >= 0 ? 'player' : 'enemy';
     const foe = state[otherSide(mySide)];
     const condOk = m.actSpell === 'fireball' ? foe.board.length > 0
       : (m.curHp > 0 && m.curHp % 2 === 0 && state[mySide].board.length < BOARD_CAP);
@@ -2231,11 +2384,19 @@ function minionHtml(m, isEnemy, ghost) {
           ' title="' + UNIT_SPELL_TEXT[m.actSpell] + '">✦' + (m.actSpell === 'split' ? '分裂' : '火球') + '（' + m.spellCost + '）</button>'
         : '') + '</div>';
   }
+  // 守备表示切换按钮（部署阶段、当前部署方可操作）
+  let defBtn = '';
+  if (!ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver && NET.role !== 'spectator' && localDeployAllowed(mySide)) {
+    defBtn = '<div class="m-cast-row"><button class="def-btn" data-action="toggle-defense" data-uid="' + m.uid + '"' +
+      ' title="守备表示：不主动攻击，但无限次反击且反击同时结算；被随机选取概率×2">' +
+      (m.defense ? '→ 攻击表示' : '→ 守备表示') + '</button></div>';
+  }
   return '<div class="' + classes.join(' ') + '" draggable="' + draggable + '"' + (recallable ? ' title="单击收回手牌（双击查看详情）"' : '') + action + '>' +
     '<div class="m-name">' + m.name + '</div>' +
     (def ? artHtml(def) : '') +
-    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + chargeBadge + '</div>' +
+    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + chargeBadge + defBadge + '</div>' +
     castRow +
+    defBtn +
     spell +
     '<div class="m-stats"><span class="stat-atk">攻' + m.atk + '</span><span class="stat-arm">甲' + effArmor(m) + '</span><span class="' + hpClass + '">血' + Math.max(0, m.curHp) + '</span></div>' +
   '</div>';
@@ -2250,6 +2411,8 @@ function handCardHtml(def, i, side) {
   const spellText = def.spell ? SPELL_TEXT[def.spell]
     : (def.actSpell ? '法术·' + UNIT_SPELL_TEXT[def.actSpell] : '');
   const spell = spellText ? '<div class="c-spell">' + spellText + '</div>' : '<div class="c-spell"></div>';
+  const setBtn = afford && NET.role !== 'spectator'
+    ? '<button class="set-btn" data-action="set-hand" data-idx="' + i + '" title="翻面表示盖放：不触发战吼；不会成为攻击目标、不主动攻击；仍可回蓝、吃 buff；之后可翻开">盖放</button>' : '';
   return '<div class="hand-card ' + raceClass(def) + (afford ? '' : ' unaffordable') + '" draggable="' + afford + '" data-action="play-hand" data-idx="' + i + '">' +
     '<div class="c-cost">' + cost + '</div>' +
     '<div class="c-name">' + def.name + '</div>' +
@@ -2257,6 +2420,7 @@ function handCardHtml(def, i, side) {
     '<div class="c-traits">' + traitsHtml(def.traits) + '</div>' +
     spell +
     '<div class="c-stats"><span class="stat-atk">攻' + def.atk + '</span><span class="stat-arm">甲' + def.arm + '</span><span class="stat-hp">血' + def.hp + '</span></div>' +
+    setBtn +
   '</div>';
 }
 
@@ -2724,6 +2888,28 @@ document.addEventListener('click', e => {
     castUnitSpell(as, u); // 直接执行，不走单击延时
     return;
   }
+  if (action === 'toggle-defense') {
+    const u = parseInt(el.dataset.uid, 10);
+    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'defense', uid: u }); return; } // guest 动作发给房主
+    toggleDefense(as, u);
+    return;
+  }
+  if (action === 'flip-unit') {
+    const u = parseInt(el.dataset.uid, 10);
+    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'flip', uid: u }); return; }
+    flipUnit(as, u);
+    return;
+  }
+  if (action === 'set-hand') {
+    if (state.phase !== 'deploy') return;
+    const idx = parseInt(el.dataset.idx, 10);
+    const def = state[as].hand[idx];
+    if (!def) return;
+    if (effCost(as, def) > state[as].mana) { log('法力不足，无法盖放【' + def.name + '】'); return; }
+    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'set', name: def.name }); return; }
+    if (playCard(as, idx, null, null, true)) render(); // 盖放：默认落位（近战前排/远程后排），直接执行需手动重绘
+    return;
+  }
   if (action === 'play-hand') {
     if (state.phase !== 'deploy') return; // 进攻阶段禁止出牌
     const idx = parseInt(el.dataset.idx, 10);
@@ -2979,7 +3165,7 @@ globalThis.__api = {
   initGame, getState: () => state, playCard, doAttack, startCombat,
   effCost, effArmor, canTarget, legalMinionTargets, canHitHero, frontRowOf, canCounter,
   moveMinion, aiRowFor, unitPower, nextActor, autoAttack, buildRandomDeck, buildAIDeck, selectedDeck,
-  flushPendingClick, showCardDetail, recallMinion, castUnitSpell, aiCastSpells, startRound,
+  flushPendingClick, showCardDetail, recallMinion, castUnitSpell, aiCastSpells, startRound, toggleDefense, weightedPick, flipUnit,
   tryAddCard, canStartBattle, selCount, builderSel, builderSel2, deckStats, deckFrom,
   makeMinion, cleanupDead, findDef, traitLv, attackDamage,
   onActionButton, confirmPass, showPassScreen, activeSide, viewSide, setBuilderMode,
