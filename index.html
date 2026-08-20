@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>使魔卡牌对战</title>
+<!-- 联机组件（公共云 broker；加载失败时本地模式不受影响） -->
+<script src="https://unpkg.com/peerjs@1.5.4/build/peerjs.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -145,23 +147,35 @@
   .minion.selected { border-color: #ffd700; box-shadow: 0 0 12px #ffd700; }
   .minion.targetable { border-color: #c0392b; box-shadow: 0 0 10px #c0392b88; cursor: pointer; }
 
-  /* ---------- 卡面底色按种族区分（敌我不再用底色，靠上下区域区分） ---------- */
-  .hand-card.race0, .minion.race0, .db-card.race0 { background: linear-gradient(160deg, #8b9099, #565b63); border-color: #aab0b8; }
-  .hand-card.race1, .minion.race1, .db-card.race1 { background: linear-gradient(160deg, #3a5a3c, #1e2e20); border-color: #5a8a52; }
-  .hand-card.race2, .minion.race2, .db-card.race2 { background: linear-gradient(160deg, #5a3626, #2e1a12); border-color: #8a5a42; }
-  .hand-card.race3, .minion.race3, .db-card.race3 { background: linear-gradient(160deg, #26262c, #101014); border-color: #464650; }
-  /* 人族灰白浅底：文字改深色保证可读 */
-  .race0 .c-name, .race0 .m-name { color: #1c202a; }
-  .race0 .c-spell, .race0 .m-spell { color: #2e4a42; }
-  .race0 .stat-atk { color: #7a4d08; }
-  .race0 .stat-arm { color: #3d5a6a; }
-  .race0 .stat-hp { color: #a82828; }
-  .race0 .stat-hp.buffed { color: #1e7a1e; }
-  /* 详情浮层面板描边随种族 */
+  /* ---------- 卡面底色按阵营区分（敌我不再用底色，靠上下区域区分） ---------- */
+  .hand-card.race0, .minion.race0, .db-card.race0 { background: linear-gradient(160deg, #8b9099, #565b63); border-color: #aab0b8; } /* 城堡 灰白 */
+  .hand-card.race1, .minion.race1, .db-card.race1 { background: linear-gradient(160deg, #3a5a3c, #1e2e20); border-color: #5a8a52; } /* 壁垒 绿 */
+  .hand-card.race2, .minion.race2, .db-card.race2 { background: linear-gradient(160deg, #3a6a8a, #1e3442); border-color: #5a9aba; } /* 塔楼 青蓝 */
+  .hand-card.race3, .minion.race3, .db-card.race3 { background: linear-gradient(160deg, #5a3626, #2e1a12); border-color: #8a5a42; } /* 地狱 红褐 */
+  .hand-card.race4, .minion.race4, .db-card.race4 { background: linear-gradient(160deg, #26262c, #101014); border-color: #464650; } /* 墓园 黑 */
+  .hand-card.race5, .minion.race5, .db-card.race5 { background: linear-gradient(160deg, #3a2a4a, #1e1426); border-color: #6a4a8a; } /* 地下城 暗紫 */
+  .hand-card.race6, .minion.race6, .db-card.race6 { background: linear-gradient(160deg, #6a5a2a, #332a12); border-color: #a89048; } /* 据点 土黄 */
+  .hand-card.race7, .minion.race7, .db-card.race7 { background: linear-gradient(160deg, #2a3a2a, #141f16); border-color: #4a6a4a; } /* 要塞 沼泽墨绿 */
+  .hand-card.race8, .minion.race8, .db-card.race8 { background: linear-gradient(160deg, #7ab8d8, #4a7a9a); border-color: #a8d8f0; } /* 元素 银亮蓝 */
+  .hand-card.race9, .minion.race9, .db-card.race9 { background: linear-gradient(160deg, #5a5248, #2e2a24); border-color: #9a9288; } /* 中立 灰褐 */
+  /* 浅底色（城堡灰白 / 元素银亮蓝）：文字改深色保证可读 */
+  .race0 .c-name, .race0 .m-name, .race8 .c-name, .race8 .m-name { color: #1c202a; }
+  .race0 .c-spell, .race0 .m-spell, .race8 .c-spell, .race8 .m-spell { color: #2e4a42; }
+  .race0 .stat-atk, .race8 .stat-atk { color: #7a4d08; }
+  .race0 .stat-arm, .race8 .stat-arm { color: #3d5a6a; }
+  .race0 .stat-hp, .race8 .stat-hp { color: #a82828; }
+  .race0 .stat-hp.buffed, .race8 .stat-hp.buffed { color: #1e7a1e; }
+  /* 详情浮层面板描边随阵营 */
   #detail .panel.race0 { border-color: #aab0b8; }
   #detail .panel.race1 { border-color: #5a8a52; }
-  #detail .panel.race2 { border-color: #8a5a42; }
-  #detail .panel.race3 { border-color: #464650; }
+  #detail .panel.race2 { border-color: #5a9aba; }
+  #detail .panel.race3 { border-color: #8a5a42; }
+  #detail .panel.race4 { border-color: #464650; }
+  #detail .panel.race5 { border-color: #6a4a8a; }
+  #detail .panel.race6 { border-color: #a89048; }
+  #detail .panel.race7 { border-color: #4a6a4a; }
+  #detail .panel.race8 { border-color: #a8d8f0; }
+  #detail .panel.race9 { border-color: #9a9288; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
     20% { transform: translateX(-6px); }
@@ -341,6 +355,23 @@
   /* ---------- 模式切换 / 交机隐私屏 ---------- */
   .mode-btn { margin-left: 6px; }
   .mode-btn.active { border-color: #d8b96a; color: #ffe8b0; box-shadow: 0 0 8px #d8b96a55; }
+
+  /* ---------- 联机面板 ---------- */
+  #net-panel {
+    background: #1c1c2b; border: 1px solid #3a3a52; border-radius: 10px;
+    padding: 10px 14px; margin-top: 8px;
+  }
+  .net-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
+  .net-input {
+    background: #101018; border: 1px solid #3a3a52; border-radius: 6px;
+    color: #e8e4d8; padding: 5px 10px; font-size: 13px; width: 170px;
+  }
+  .net-input:focus { outline: none; border-color: #8a744a; }
+  #net-room-code {
+    font-size: 20px; font-weight: bold; color: #ffd700; letter-spacing: 4px;
+    cursor: pointer; user-select: all;
+  }
+  #net-status { font-size: 12px; color: #9ac8ff; }
   #pass-screen {
     display: none; position: fixed; inset: 0; background: #101018;
     align-items: center; justify-content: center; z-index: 40;
@@ -387,6 +418,9 @@
   .pack-face.r3 { border-color: #ffd700; box-shadow: 0 0 18px #ffd700bb; }
   .pack-face .c-name { text-align: center; font-weight: bold; margin: 10px 0 2px; }
   .pack-face .c-stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; margin-top: auto; }
+  /* 人族（race0）文字为深色，需要浅色底才能看清（其他种族用默认深色底） */
+  .pack-face.race0 { background: linear-gradient(160deg, #8b9099, #565b63); }
+  .pack-face:not(.race0) { background: linear-gradient(160deg, #262636, #181822); }
   #pack-summary { font-size: 13px; color: #cfc8b8; line-height: 1.8; margin-bottom: 10px; min-height: 20px; }
   #pack-screen .btn { margin: 0 4px; }
 </style>
@@ -401,6 +435,22 @@
       <button class="btn" id="open-pack">开卡包（100🪙）</button>
       <button class="btn mode-btn active" id="mode-ai">人机对战</button>
       <button class="btn mode-btn" id="mode-pvp">双人对战</button>
+      <button class="btn mode-btn" id="mode-net">联机对战</button>
+    </div>
+  </div>
+  <!-- 联机面板（选择「联机对战」模式时显示） -->
+  <div id="net-panel" style="display:none">
+    <div class="net-row">
+      <input id="net-name" class="net-input" placeholder="昵称（可空）">
+      <input id="net-pwd" class="net-input" placeholder="房间密码（可空）">
+      <input id="net-code-input" class="net-input" placeholder="房间码（加入/观战必填）">
+      <button class="btn" id="net-host">开房间</button>
+      <button class="btn" id="net-join">加入房间</button>
+      <button class="btn" id="net-watch">观战</button>
+    </div>
+    <div class="net-row">
+      <span id="net-room-code" title="点击复制房间码"></span>
+      <span id="net-status"></span>
     </div>
   </div>
   <div id="db-main">
@@ -461,16 +511,18 @@
       回合结构：每轮分两个阶段——部署阶段双方同时出牌布阵（你点「开始战斗」后 AI 一次性完成部署）；进攻阶段双方单位按 攻击+有效护甲+当前生命 的总和从高到低自动行动（并列随机先后），全部行动完进入下一轮。<br>
       阵型：场上分为 前排 / 中排 / 后排。点击手牌打出时近战默认放前排、远程默认放后排；部署阶段也可以直接把手牌拖到某一排的指定位置出牌（拖到排内空白放排尾，拖到某张随从上插入其前），并可拖拽己方场上随从在三排间移动或同排调整顺序。<br>
       收回：部署阶段单击本轮刚从手牌打出、且没有战吼/亡语等入场效果的随从，可将其收回手牌并退还实际支付的法力（手牌满时不可收回；召唤物与 token 不可收回）。<br>
-      攻击规则（进攻阶段自动执行）：非远程单位只能攻击对方「最前排」（对方有随从的最小排）的随从；远程单位可攻击任意一排；只有对方场上完全没有随从时才能攻击英雄本体。<br>
-      反击规则：每个随从每战斗阶段有 1 次反击机会（进攻阶段开始时重置）。随从受到攻击造成的伤害（含九头怪溅射）且存活时，若还有反击机会、攻击力大于 0、且按射程规则能够到伤害来源（非远程只能够到对方最前排、远程任意排、飞行限制照旧），便立刻反击并消耗本次机会；够不到或 0 攻则不消耗，之后被能反击的攻击打中仍会反击。反击造成的伤害不再触发反击。中毒等非攻击伤害不触发反击。<br>
-      远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍。骑兵：攻击骑兵以外的单位时不会被反击。<br>
+      攻击规则（进攻阶段自动执行）：非远程单位只能攻击对方「最前排」（对方有随从的最小排）的随从；远程单位可攻击任意一排；只有对方场上没有随从、或对方所有随从都无法成为你的合法目标（如对面全是飞行单位而你是近战）时，才能攻击英雄本体。<br>
+      反击规则：每个随从每战斗阶段有 1 次反击机会（进攻阶段开始时重置；「反击X」特性为 X 次，如皇家狮鹫反击2）。随从受到攻击造成的伤害（含溅射）且存活时，若还有反击机会、攻击力大于 0、且按射程规则能够到伤害来源（非远程只能够到对方最前排、远程任意排、飞行限制照旧），便立刻反击并消耗一次；够不到或 0 攻则不消耗，之后被能反击的攻击打中仍会反击。反击造成的伤害不再触发反击。中毒等非攻击伤害不触发反击。<br>
+      连击（神射手）：攻击随从时连续攻击 2 次，第二次不触发反击；目标已死于第一次攻击则第二次落空。复活（大天使）：战吼——将己方墓地中最后死亡的一张随从满状态复活到其原排。<br>
+      远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍。骑兵：攻击骑兵以外的单位时不会被反击。拒马：可以对骑兵进行反击。<br>
       再生X：每轮部署阶段开始时恢复 X 点生命。毒LvX：被攻击造成伤害的随从中毒（重复取最高 Lv），中毒者在每轮部署阶段开始时受 X 点伤害。<br>
-      单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。<br>
+      单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）。和平：不会发起可能令自己死亡的攻击（若目标反击会致死则跳过）。<br>
       范围攻击：攻击随从时，对被攻击随从左右两边相邻的随从造成等量溅射（各自结算护甲，溅射受伤也会触发反击）。石化：生命未满时护甲视为 4。吸血：造成的伤害等量治疗己方英雄。法术护盾X：受到的法术伤害 -X。<br>
       法力燃烧X：攻击敌方英雄时对方下一轮法力 -X。驱魔（如圣骑士）：被该单位击杀的使魔不触发亡语。<br>
       检索类亡语（如骷髅、骷髅弓手）：从牌库检索一张同名卡置入手牌。魅魔：战吼——随机夺取一个敌方随从。死神：战吼——消灭攻击力最高的敌方随从。骨龙/骸骨巨龙：打出时除外己方墓地，每张除外牌费用 -1。<br>
       每轮部署阶段开始时双方各摸一张牌，法力水晶上限 10。英雄生命 30，先击倒对方英雄者胜。牌库抽空后每次摸牌受到递增的疲劳伤害。随从死亡进入墓地。<br>
-      收藏与卡包：对局结束获得金币（胜 100 / 平 50 / 负 30）；100 金币开一包（5 张全卡池随机，稀有度按评分着色：灰/蓝/紫/金）。组牌只能使用收藏中已拥有的卡，每种携带数不超过拥有数（最多 4 张）；首次运行赠送全部白板卡各 2 张与 200 金币。
+      收藏与卡包：对局结束获得金币（胜 100 / 平 50 / 负 30）；100 金币开一包（5 张全卡池随机，稀有度按评分着色：灰/蓝/紫/金）。组牌只能使用收藏中已拥有的卡，每种携带数不超过拥有数（最多 4 张）；首次运行赠送全部白板卡各 2 张与 200 金币。<br>
+      联机对战：基于 PeerJS 公共云 P2P（无自有服务器）。开房间生成 6 位房间码（可设密码），对方凭房间码加入或观战；房主浏览器权威执行全部规则并广播个性化快照（对手只见自己的手牌，观战不见任何手牌）。密码只是轻量校验、非安全方案；公共 P2P 与 NAT 穿透不保证 100% 可达，连接失败请重试或换网络。
     </div>
   </details>
 </div>
@@ -524,98 +576,207 @@
 // ---------- 卡牌数据 ----------
 const CARD_DEFS = [
   // 人族（钢蓝色系）
-  { name: '枪兵',     race: '人族',   cost: 1, atk: 2, arm: 0, hp: 3, rating: 60,  traits: [], art: { icon: '🗡️', hue: 210 } },
-  { name: '农夫约翰', race: '人族',   cost: 1, atk: 1, arm: 0, hp: 2, rating: 56,  traits: [], spell: 'draw', art: { icon: '🧑‍🌾', hue: 35 } },
-  { name: '弓箭手',   race: '人族',   cost: 2, atk: 1, arm: 0, hp: 2, rating: 60,  traits: ['远程'], art: { icon: '🏹', hue: 200 } },
-  { name: '戟兵',     race: '人族',   cost: 2, atk: 3, arm: 0, hp: 5, rating: 60,  traits: [], art: { icon: '⚔️', hue: 215 } },
-  { name: '狮鹫',     race: '人族',   cost: 3, atk: 3, arm: 0, hp: 7, rating: 63,  traits: ['飞行'], art: { icon: '🦅', hue: 45 } },
-  { name: '十字军',   race: '人族',   cost: 4, atk: 5, arm: 1, hp: 7, rating: 60,  traits: [], art: { icon: '🛡️', hue: 220 } },
-  { name: '圣骑士',   race: '人族',   cost: 5, atk: 4, arm: 0, hp: 8, rating: 58,  traits: ['法力燃烧2', '驱魔'], art: { icon: '⚜️', hue: 50 } },
-  { name: '祭司',     race: '人族',   cost: 5, atk: 2, arm: 0, hp: 6, rating: 66,  traits: ['远程'], spell: 'prayer', art: { icon: '🙏', hue: 260 } },
-  { name: '骑兵',     race: '人族',   cost: 6, atk: 3, arm: 0, hp: 12, rating: 58, traits: ['骑兵'], art: { icon: '🐎', hue: 205 } },
-  { name: '女武神',   race: '人族',   cost: 7, atk: 8, arm: 0, hp: 15, rating: 60, traits: [], art: { icon: '👼', hue: 55 } },
+  { name: '枪兵',     race: '城堡',   cost: 1, atk: 2, arm: 0, hp: 3, rating: 61,  traits: ['拒马'], art: { icon: '🗡️', hue: 210 } },
+  { name: '农夫约翰', race: '中立',   cost: 1, atk: 1, arm: 0, hp: 2, rating: 56,  traits: ['和平'], actSpell: 'harvest', spellCost: 4, spellMana0: 3, spellManaMax: 4, art: { icon: '🧑‍🌾', hue: 35 } },
+  { name: '弓箭手',   race: '城堡',   cost: 2, atk: 1, arm: 0, hp: 2, rating: 60,  traits: ['远程'], art: { icon: '🏹', hue: 200 } },
+  { name: '戟兵',     race: '城堡',   cost: 2, atk: 3, arm: 0, hp: 5, rating: 60,  traits: [], art: { icon: '⚔️', hue: 215 } },
+  { name: '狮鹫',     race: '城堡',   cost: 3, atk: 3, arm: 0, hp: 7, rating: 63,  traits: ['飞行'], art: { icon: '🦅', hue: 45 } },
+  { name: '十字军',   race: '城堡',   cost: 4, atk: 5, arm: 1, hp: 7, rating: 60,  traits: [], art: { icon: '🛡️', hue: 220 } },
+  { name: '圣骑士',   race: '城堡',   cost: 5, atk: 4, arm: 0, hp: 8, rating: 58,  traits: ['法力燃烧2', '驱魔'], art: { icon: '⚜️', hue: 50 } },
+  { name: '祭司',     race: '城堡',   cost: 5, atk: 2, arm: 0, hp: 6, rating: 66,  traits: ['远程'], spell: 'prayer', art: { icon: '🙏', hue: 260 } },
+  { name: '骑兵',     race: '城堡',   cost: 6, atk: 3, arm: 0, hp: 12, rating: 58, traits: ['骑兵'], art: { icon: '🐎', hue: 205 } },
+  { name: '女武神',   race: '城堡',   cost: 7, atk: 8, arm: 0, hp: 15, rating: 60, traits: [], art: { icon: '👼', hue: 55 } },
   // 精灵族（翠绿色系）
-  { name: '小精灵',   race: '精灵族', cost: 0, atk: 1, arm: 0, hp: 1, rating: 58,  traits: [], spell: 'wisp', art: { icon: '🧚', hue: 90 } },
-  { name: '史莱姆',   race: '精灵族', cost: 1, atk: 1, arm: 0, hp: 2, rating: 57,  traits: ['再生1'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🟢', hue: 120 } },
-  { name: '半人马',   race: '精灵族', cost: 1, atk: 1, arm: 0, hp: 3, rating: 63,  traits: ['骑兵'], art: { icon: '🏇', hue: 100 } },
-  { name: '精灵',     race: '精灵族', cost: 3, atk: 0, arm: 0, hp: 3, rating: 53,  traits: [], spell: 'elfHeal', art: { icon: '🧝', hue: 140 } },
-  { name: '石头人',   race: '精灵族', cost: 3, atk: 4, arm: 0, hp: 7, rating: 60,  traits: [], art: { icon: '🪨', hue: 30 } },
-  { name: '棕熊',     race: '精灵族', cost: 4, atk: 5, arm: 0, hp: 9, rating: 60,  traits: [], art: { icon: '🐻', hue: 25 } },
-  { name: '魔女',     race: '精灵族', cost: 4, atk: 1, arm: 0, hp: 6, rating: 58,  traits: ['远程'], actSpell: 'fireball', spellCost: 1, spellMana0: 2, spellManaMax: 2, art: { icon: '🧙‍♀️', hue: 280 } },
-  { name: '巨型史莱姆', race: '精灵族', cost: 4, atk: 3, arm: 0, hp: 6, rating: 51, traits: ['再生1'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🫠', hue: 110 } },
-  { name: '龙女',     race: '精灵族', cost: 7, atk: 0, arm: 0, hp: 6, rating: 55,  traits: [], spell: 'dragoness', art: { icon: '🐲', hue: 150 } },
-  { name: '独角兽骑士', race: '精灵族', cost: 6, atk: 3, arm: 0, hp: 9, rating: 56, traits: ['骑兵', '法术护盾2'], art: { icon: '🦄', hue: 160 } },
+  { name: '小精灵',   race: '壁垒', cost: 0, atk: 1, arm: 0, hp: 1, rating: 58,  traits: [], spell: 'wisp', art: { icon: '🧚', hue: 90 } },
+  { name: '史莱姆',   race: '壁垒', cost: 1, atk: 1, arm: 0, hp: 2, rating: 57,  traits: ['再生1'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🟢', hue: 120 } },
+  { name: '半人马',   race: '壁垒', cost: 1, atk: 1, arm: 0, hp: 3, rating: 63,  traits: ['骑兵'], art: { icon: '🏇', hue: 100 } },
+  { name: '精灵',     race: '壁垒', cost: 3, atk: 0, arm: 0, hp: 3, rating: 53,  traits: [], spell: 'elfHeal', art: { icon: '🧝', hue: 140 } },
+  { name: '石头人',   race: '塔楼', cost: 3, atk: 4, arm: 0, hp: 7, rating: 60,  traits: [], art: { icon: '🪨', hue: 30 } },
+  { name: '棕熊',     race: '壁垒', cost: 4, atk: 5, arm: 0, hp: 9, rating: 60,  traits: [], art: { icon: '🐻', hue: 25 } },
+  { name: '魔女',     race: '壁垒', cost: 4, atk: 1, arm: 0, hp: 6, rating: 58,  traits: ['远程'], actSpell: 'fireball', spellCost: 1, spellMana0: 2, spellManaMax: 2, art: { icon: '🧙‍♀️', hue: 280 } },
+  { name: '巨型史莱姆', race: '壁垒', cost: 4, atk: 3, arm: 0, hp: 6, rating: 51, traits: ['再生1'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🫠', hue: 110 } },
+  { name: '龙女',     race: '壁垒', cost: 7, atk: 0, arm: 0, hp: 6, rating: 55,  traits: [], spell: 'dragoness', art: { icon: '🐲', hue: 150 } },
+  { name: '独角兽骑士', race: '壁垒', cost: 6, atk: 3, arm: 0, hp: 9, rating: 56, traits: ['骑兵', '法术护盾2'], art: { icon: '🦄', hue: 160 } },
   // 魔物族（暗紫红色系）
-  { name: '蛇',       race: '魔物族', cost: 1, atk: 1, arm: 0, hp: 3, rating: 60,  traits: ['毒Lv1'], art: { icon: '🐍', hue: 90 } },
-  { name: '鹰身女妖R', race: '魔物族', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 0 } },
-  { name: '鹰身女妖G', race: '魔物族', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 120 } },
-  { name: '鹰身女妖B', race: '魔物族', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 220 } },
-  { name: '钻石人',   race: '魔物族', cost: 4, atk: 4, arm: 1, hp: 8, rating: 60,  traits: [], art: { icon: '💎', hue: 190 } },
-  { name: '蝎狮',     race: '魔物族', cost: 6, atk: 5, arm: 0, hp: 14, rating: 62, traits: ['毒Lv3'], art: { icon: '🦂', hue: 20 } },
-  { name: '魅魔',     race: '魔物族', cost: 6, atk: 1, arm: 0, hp: 4, rating: 61,  traits: [], spell: 'charm', art: { icon: '😈', hue: 320 } },
-  { name: '九头怪',   race: '魔物族', cost: 7, atk: 3, arm: 0, hp: 18, rating: 60, traits: ['范围攻击'], art: { icon: '🐙', hue: 280 } },
+  { name: '蛇',       race: '要塞', cost: 1, atk: 1, arm: 0, hp: 3, rating: 60,  traits: ['毒Lv1'], art: { icon: '🐍', hue: 90 } },
+  { name: '鹰身女妖R', race: '地下城', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 0 } },
+  { name: '鹰身女妖G', race: '地下城', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 120 } },
+  { name: '鹰身女妖B', race: '地下城', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 220 } },
+  { name: '钻石人',   race: '塔楼', cost: 4, atk: 4, arm: 1, hp: 8, rating: 60,  traits: [], art: { icon: '💎', hue: 190 } },
+  { name: '蝎狮',     race: '地下城', cost: 6, atk: 5, arm: 0, hp: 14, rating: 62, traits: ['毒Lv3'], art: { icon: '🦂', hue: 20 } },
+  { name: '魅魔',     race: '地狱', cost: 6, atk: 1, arm: 0, hp: 4, rating: 61,  traits: [], spell: 'charm', art: { icon: '😈', hue: 320 } },
+  { name: '九头怪',   race: '要塞', cost: 7, atk: 3, arm: 0, hp: 18, rating: 60, traits: ['范围攻击'], art: { icon: '🐙', hue: 280 } },
   // 不死族（青灰色系）
-  { name: '骷髅',     race: '不死族', cost: 1, atk: 1, arm: 0, hp: 2, rating: 55,  traits: [], spell: 'skeletonSearch', art: { icon: '💀', hue: 180 } },
-  { name: '石像鬼',   race: '不死族', cost: 2, atk: 2, arm: 1, hp: 2, rating: 59,  traits: ['石化'], art: { icon: '🗿', hue: 200 } },
-  { name: '木乃伊',   race: '不死族', cost: 2, atk: 2, arm: 0, hp: 6, rating: 66,  traits: [], spell: 'curse', art: { icon: '⚰️', hue: 170 } },
-  { name: '幽灵',     race: '不死族', cost: 3, atk: 3, arm: 0, hp: 5, rating: 59,  traits: ['再生2'], art: { icon: '👻', hue: 190 } },
-  { name: '吸血鬼',   race: '不死族', cost: 4, atk: 3, arm: 0, hp: 7, rating: 57,  traits: ['吸血'], art: { icon: '🧛', hue: 340 } },
-  { name: '死灵法师', race: '不死族', cost: 5, atk: 2, arm: 0, hp: 6, rating: 59,  traits: ['远程'], spell: 'necro', art: { icon: '🔮', hue: 270 } },
-  { name: '死神',     race: '不死族', cost: 6, atk: 2, arm: 0, hp: 4, rating: 58,  traits: [], spell: 'reaper', art: { icon: '☠️', hue: 240 } },
-  { name: '死亡骑士', race: '不死族', cost: 6, atk: 3, arm: 1, hp: 9, rating: 53,  traits: ['骑兵'], art: { icon: '🏴', hue: 210 } },
-  { name: '骨龙',     race: '不死族', cost: 7, atk: 3, arm: 0, hp: 9, rating: 58,  traits: [], spell: 'boneDragon', art: { icon: '🦴', hue: 160 } },
+  { name: '骷髅',     race: '墓园', cost: 1, atk: 1, arm: 0, hp: 2, rating: 55,  traits: [], spell: 'skeletonSearch', art: { icon: '💀', hue: 180 } },
+  { name: '石像鬼',   race: '塔楼', cost: 2, atk: 2, arm: 1, hp: 2, rating: 59,  traits: ['石化'], art: { icon: '🗿', hue: 200 } },
+  { name: '木乃伊',   race: '中立', cost: 2, atk: 2, arm: 0, hp: 6, rating: 66,  traits: [], spell: 'curse', art: { icon: '⚰️', hue: 170 } },
+  { name: '幽灵',     race: '墓园', cost: 3, atk: 3, arm: 0, hp: 5, rating: 59,  traits: ['再生2'], art: { icon: '👻', hue: 190 } },
+  { name: '吸血鬼',   race: '墓园', cost: 4, atk: 3, arm: 0, hp: 7, rating: 57,  traits: ['吸血'], art: { icon: '🧛', hue: 340 } },
+  { name: '死灵法师', race: '墓园', cost: 5, atk: 2, arm: 0, hp: 6, rating: 59,  traits: ['远程'], spell: 'necro', art: { icon: '🔮', hue: 270 } },
+  { name: '死神',     race: '墓园', cost: 6, atk: 2, arm: 0, hp: 4, rating: 58,  traits: [], spell: 'reaper', art: { icon: '☠️', hue: 240 } },
+  { name: '死亡骑士', race: '墓园', cost: 6, atk: 3, arm: 1, hp: 9, rating: 53,  traits: ['骑兵'], art: { icon: '🏴', hue: 210 } },
+  { name: '骨龙',     race: '墓园', cost: 7, atk: 3, arm: 0, hp: 9, rating: 58,  traits: [], spell: 'boneDragon', art: { icon: '🦴', hue: 160 } },
   // ── 扩充卡（第二批，全部复用现有机制）──
   // 人族
-  { name: '民兵',     race: '人族',   cost: 0, atk: 1, arm: 0, hp: 1, rating: 60,  traits: [], art: { icon: '🪖', hue: 200 } },
-  { name: '飞鹰',     race: '人族',   cost: 2, atk: 1, arm: 0, hp: 2, rating: 57,  traits: ['飞行'], art: { icon: '🕊️', hue: 50 } },
-  { name: '剑士',     race: '人族',   cost: 2, atk: 2, arm: 0, hp: 6, rating: 60,  traits: [], art: { icon: '🤺', hue: 215 } },
-  { name: '弩手',     race: '人族',   cost: 3, atk: 2, arm: 0, hp: 3, rating: 56,  traits: ['远程'], art: { icon: '🎯', hue: 205 } },
-  { name: '医护兵',   race: '人族',   cost: 3, atk: 1, arm: 0, hp: 4, rating: 53,  traits: [], spell: 'heal', spellParam: 3, art: { icon: '⛑️', hue: 0 } },
-  { name: '重装卫兵', race: '人族',   cost: 4, atk: 2, arm: 2, hp: 8, rating: 60,  traits: [], art: { icon: '💂', hue: 220 } },
-  { name: '游侠',     race: '人族',   cost: 4, atk: 3, arm: 0, hp: 4, rating: 54,  traits: ['远程'], art: { icon: '🪃', hue: 100 } },
-  { name: '圣殿骑士', race: '人族',   cost: 6, atk: 5, arm: 1, hp: 9, rating: 54,  traits: ['法术护盾1'], art: { icon: '🤴', hue: 45 } },
-  { name: '大祭司',   race: '人族',   cost: 6, atk: 3, arm: 0, hp: 8, rating: 64,  traits: ['远程'], spell: 'prayer', art: { icon: '📿', hue: 270 } },
-  { name: '龙骑士',   race: '人族',   cost: 7, atk: 6, arm: 0, hp: 10, rating: 56, traits: ['骑兵', '飞行'], art: { icon: '🐉', hue: 35 } },
+  { name: '民兵',     race: '城堡',   cost: 0, atk: 1, arm: 0, hp: 1, rating: 60,  traits: [], art: { icon: '🪖', hue: 200 } },
+  { name: '飞鹰',     race: '城堡',   cost: 2, atk: 1, arm: 0, hp: 2, rating: 57,  traits: ['飞行'], art: { icon: '🕊️', hue: 50 } },
+  { name: '剑士',     race: '城堡',   cost: 2, atk: 2, arm: 0, hp: 6, rating: 60,  traits: [], art: { icon: '🤺', hue: 215 } },
+  { name: '弩手',     race: '城堡',   cost: 3, atk: 2, arm: 0, hp: 3, rating: 56,  traits: ['远程'], art: { icon: '🎯', hue: 205 } },
+  { name: '医护兵',   race: '城堡',   cost: 3, atk: 1, arm: 0, hp: 4, rating: 53,  traits: [], spell: 'heal', spellParam: 3, art: { icon: '⛑️', hue: 0 } },
+  { name: '重装卫兵', race: '城堡',   cost: 4, atk: 2, arm: 2, hp: 8, rating: 60,  traits: [], art: { icon: '💂', hue: 220 } },
+  { name: '游侠',     race: '城堡',   cost: 4, atk: 3, arm: 0, hp: 4, rating: 54,  traits: ['远程'], art: { icon: '🪃', hue: 100 } },
+  { name: '圣殿骑士', race: '城堡',   cost: 6, atk: 5, arm: 1, hp: 9, rating: 54,  traits: ['法术护盾1'], art: { icon: '🤴', hue: 45 } },
+  { name: '大祭司',   race: '城堡',   cost: 6, atk: 3, arm: 0, hp: 8, rating: 64,  traits: ['远程'], spell: 'prayer', art: { icon: '📿', hue: 270 } },
+  { name: '龙骑士',   race: '城堡',   cost: 7, atk: 6, arm: 0, hp: 10, rating: 56, traits: ['骑兵', '飞行'], art: { icon: '🐉', hue: 35 } },
+  // 城堡兵种线补全（英雄无敌3 Castle 基础+升级 7 级 ×2）
+  { name: '神射手',   race: '城堡',   cost: 3, atk: 2, arm: 0, hp: 3,  rating: 62, traits: ['远程', '连击'], art: { icon: '🏹', hue: 195 } },
+  { name: '皇家狮鹫', race: '城堡',   cost: 4, atk: 4, arm: 0, hp: 8,  rating: 61, traits: ['飞行', '反击2'], art: { icon: '🦅', hue: 40 } },
+  { name: '僧侣',     race: '城堡',   cost: 4, atk: 2, arm: 0, hp: 5,  rating: 55, traits: ['远程'], art: { icon: '🧎', hue: 250 } },
+  { name: '骑士',     race: '城堡',   cost: 7, atk: 6, arm: 0, hp: 12, rating: 58, traits: ['骑兵'], art: { icon: '🐴', hue: 30 } },
+  { name: '天使',     race: '城堡',   cost: 8, atk: 7, arm: 0, hp: 14, rating: 58, traits: ['飞行'], art: { icon: '😇', hue: 55 } },
+  { name: '大天使',   race: '城堡',   cost: 9, atk: 8, arm: 0, hp: 16, rating: 66, traits: ['飞行'], spell: 'resurrect', art: { icon: '👼', hue: 48 } },
   // 精灵族
-  { name: '妖精',     race: '精灵族', cost: 0, atk: 0, arm: 0, hp: 1, rating: 56,  traits: [], spell: 'wisp', art: { icon: '🦋', hue: 100 } },
-  { name: '林狼',     race: '精灵族', cost: 2, atk: 2, arm: 0, hp: 2, rating: 57,  traits: ['骑兵'], art: { icon: '🐺', hue: 90 } },
-  { name: '毒藤',     race: '精灵族', cost: 2, atk: 1, arm: 0, hp: 3, rating: 56,  traits: ['毒Lv2'], art: { icon: '🌿', hue: 130 } },
-  { name: '树精',     race: '精灵族', cost: 3, atk: 1, arm: 1, hp: 6, rating: 58,  traits: ['再生1'], art: { icon: '🌳', hue: 140 } },
-  { name: '鹰骑士',   race: '精灵族', cost: 4, atk: 2, arm: 0, hp: 4, rating: 54,  traits: ['飞行', '骑兵'], art: { icon: '🦅', hue: 60 } },
-  { name: '精灵法师', race: '精灵族', cost: 4, atk: 2, arm: 0, hp: 4, rating: 62,  traits: ['远程'], actSpell: 'fireball', spellCost: 1, spellMana0: 2, spellManaMax: 2, art: { icon: '🧙‍♂️', hue: 290 } },
-  { name: '风行者',   race: '精灵族', cost: 5, atk: 3, arm: 0, hp: 5, rating: 55,  traits: ['远程', '骑兵'], art: { icon: '🌪️', hue: 170 } },
-  { name: '史莱姆王', race: '精灵族', cost: 5, atk: 4, arm: 0, hp: 8, rating: 57,  traits: ['再生2'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🫧', hue: 115 } },
-  { name: '远古树人', race: '精灵族', cost: 6, atk: 4, arm: 1, hp: 12, rating: 63, traits: ['再生2'], art: { icon: '🌲', hue: 135 } },
-  { name: '麒麟',     race: '精灵族', cost: 7, atk: 6, arm: 0, hp: 12, rating: 58, traits: ['再生2', '法术护盾2'], art: { icon: '🦌', hue: 80 } },
+  { name: '妖精',     race: '壁垒', cost: 0, atk: 0, arm: 0, hp: 1, rating: 56,  traits: [], spell: 'wisp', art: { icon: '🦋', hue: 100 } },
+  { name: '林狼',     race: '壁垒', cost: 2, atk: 2, arm: 0, hp: 2, rating: 57,  traits: ['骑兵'], art: { icon: '🐺', hue: 90 } },
+  { name: '恐狼',     race: '壁垒', cost: 2, atk: 2, arm: 0, hp: 2, rating: 57,  traits: ['恐狼光环'], art: { icon: '🐺', hue: 30 } },
+  { name: '毒藤',     race: '壁垒', cost: 2, atk: 1, arm: 0, hp: 3, rating: 56,  traits: ['毒Lv2'], art: { icon: '🌿', hue: 130 } },
+  { name: '树精',     race: '壁垒', cost: 3, atk: 1, arm: 1, hp: 6, rating: 58,  traits: ['再生1'], art: { icon: '🌳', hue: 140 } },
+  { name: '鹰骑士',   race: '壁垒', cost: 4, atk: 2, arm: 0, hp: 4, rating: 54,  traits: ['飞行', '骑兵'], art: { icon: '🦅', hue: 60 } },
+  { name: '精灵法师', race: '壁垒', cost: 4, atk: 2, arm: 0, hp: 4, rating: 62,  traits: ['远程'], actSpell: 'fireball', spellCost: 1, spellMana0: 2, spellManaMax: 2, art: { icon: '🧙‍♂️', hue: 290 } },
+  { name: '风行者',   race: '壁垒', cost: 5, atk: 3, arm: 0, hp: 5, rating: 55,  traits: ['远程', '骑兵'], art: { icon: '🌪️', hue: 170 } },
+  { name: '史莱姆王', race: '壁垒', cost: 5, atk: 4, arm: 0, hp: 8, rating: 57,  traits: ['再生2'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🫧', hue: 115 } },
+  { name: '远古树人', race: '壁垒', cost: 6, atk: 4, arm: 1, hp: 12, rating: 63, traits: ['再生2'], art: { icon: '🌲', hue: 135 } },
+  { name: '麒麟',     race: '壁垒', cost: 7, atk: 6, arm: 0, hp: 12, rating: 58, traits: ['再生2', '法术护盾2'], art: { icon: '🦌', hue: 80 } },
+  // 壁垒（Rampart）兵种线补全
+  { name: '半人马首领', race: '壁垒', cost: 1, atk: 2, arm: 0, hp: 3,  rating: 64, traits: ['骑兵'], art: { icon: '🏇', hue: 105 } },
+  { name: '矮人',     race: '壁垒', cost: 2, atk: 2, arm: 1, hp: 4,  rating: 62, traits: ['法术护盾1'], art: { icon: '🧔', hue: 35 } },
+  { name: '木精灵',   race: '壁垒', cost: 2, atk: 1, arm: 0, hp: 2,  rating: 60, traits: ['远程'], art: { icon: '🏹', hue: 130 } },
+  { name: '战斗矮人', race: '壁垒', cost: 3, atk: 3, arm: 1, hp: 5,  rating: 60, traits: ['法术护盾1'], art: { icon: '⚒️', hue: 40 } },
+  { name: '大精灵',   race: '壁垒', cost: 3, atk: 2, arm: 0, hp: 3,  rating: 62, traits: ['远程', '连击'], art: { icon: '🧝‍♀️', hue: 145 } },
+  { name: '飞马',     race: '壁垒', cost: 3, atk: 2, arm: 0, hp: 4,  rating: 55, traits: ['飞行'], art: { icon: '🪽', hue: 170 } },
+  { name: '银飞马',   race: '壁垒', cost: 4, atk: 3, arm: 0, hp: 5,  rating: 53, traits: ['飞行'], art: { icon: '❄️', hue: 180 } },
+  { name: '金龙',     race: '壁垒', cost: 8, atk: 7, arm: 0, hp: 14, rating: 61, traits: ['飞行', '法术护盾3'], art: { icon: '🐉', hue: 50 } },
   // 魔物族
-  { name: '小恶魔',   race: '魔物族', cost: 1, atk: 2, arm: 0, hp: 1, rating: 61,  traits: ['飞行'], art: { icon: '👿', hue: 300 } },
-  { name: '毒蜘蛛',   race: '魔物族', cost: 2, atk: 2, arm: 0, hp: 2, rating: 54,  traits: ['毒Lv1'], art: { icon: '🕷️', hue: 280 } },
-  { name: '吸血蝙蝠', race: '魔物族', cost: 2, atk: 1, arm: 0, hp: 2, rating: 62,  traits: ['飞行', '吸血'], art: { icon: '🦇', hue: 330 } },
-  { name: '双头犬',   race: '魔物族', cost: 3, atk: 5, arm: 0, hp: 6, rating: 60,  traits: [], art: { icon: '🐕', hue: 20 } },
-  { name: '石像魔',   race: '魔物族', cost: 4, atk: 3, arm: 2, hp: 5, rating: 59,  traits: ['石化'], art: { icon: '🧌', hue: 260 } },
-  { name: '火蜥蜴',   race: '魔物族', cost: 5, atk: 3, arm: 0, hp: 6, rating: 48,  traits: ['范围攻击'], art: { icon: '🦎', hue: 15 } },
-  { name: '鹰身女妖女王', race: '魔物族', cost: 5, atk: 3, arm: 0, hp: 7, rating: 62, traits: ['飞行', '三姐妹'], art: { icon: '👸', hue: 310 } },
-  { name: '地狱三头犬', race: '魔物族', cost: 6, atk: 5, arm: 0, hp: 8, rating: 50, traits: ['范围攻击'], art: { icon: '👹', hue: 0 } },
-  { name: '魅魔女王', race: '魔物族', cost: 7, atk: 2, arm: 0, hp: 6, rating: 64,  traits: [], spell: 'charm', art: { icon: '💋', hue: 340 } },
-  { name: '深渊巨口', race: '魔物族', cost: 8, atk: 10, arm: 0, hp: 16, rating: 60, traits: [], art: { icon: '🕳️', hue: 290 } },
+  { name: '小恶魔',   race: '地狱', cost: 1, atk: 2, arm: 0, hp: 1, rating: 61,  traits: ['飞行'], art: { icon: '👿', hue: 300 } },
+  { name: '毒蜘蛛',   race: '要塞', cost: 2, atk: 2, arm: 0, hp: 2, rating: 54,  traits: ['毒Lv1'], art: { icon: '🕷️', hue: 280 } },
+  { name: '吸血蝙蝠', race: '墓园', cost: 2, atk: 1, arm: 0, hp: 2, rating: 62,  traits: ['飞行', '吸血'], art: { icon: '🦇', hue: 330 } },
+  { name: '双头犬',   race: '地狱', cost: 3, atk: 5, arm: 0, hp: 6, rating: 60,  traits: [], art: { icon: '🐕', hue: 20 } },
+  { name: '石像魔',   race: '要塞', cost: 4, atk: 3, arm: 2, hp: 5, rating: 59,  traits: ['石化'], art: { icon: '🧌', hue: 260 } },
+  { name: '火蜥蜴',   race: '地狱', cost: 5, atk: 3, arm: 0, hp: 6, rating: 48,  traits: ['范围攻击'], art: { icon: '🦎', hue: 15 } },
+  { name: '鹰身女妖女王', race: '地下城', cost: 5, atk: 3, arm: 0, hp: 7, rating: 62, traits: ['飞行', '三姐妹'], art: { icon: '👸', hue: 310 } },
+  { name: '地狱三头犬', race: '地狱', cost: 6, atk: 5, arm: 0, hp: 8, rating: 50, traits: ['范围攻击'], art: { icon: '👹', hue: 0 } },
+  { name: '魅魔女王', race: '地狱', cost: 7, atk: 2, arm: 0, hp: 6, rating: 64,  traits: [], spell: 'charm', art: { icon: '💋', hue: 340 } },
+  { name: '深渊巨口', race: '地狱', cost: 8, atk: 10, arm: 0, hp: 16, rating: 60, traits: [], art: { icon: '🕳️', hue: 290 } },
+  // 地狱（Inferno）兵种线补全
+  { name: '魔童',     race: '地狱', cost: 1, atk: 1, arm: 0, hp: 2,  rating: 56, traits: [], art: { icon: '👾', hue: 280 } },
+  { name: '歌革',     race: '地狱', cost: 2, atk: 1, arm: 0, hp: 2,  rating: 60, traits: ['远程'], art: { icon: '🧿', hue: 285 } },
+  { name: '地狱猎犬', race: '地狱', cost: 3, atk: 3, arm: 0, hp: 3,  rating: 55, traits: ['骑兵'], art: { icon: '🦮', hue: 15 } },
+  { name: '玛各',     race: '地狱', cost: 4, atk: 2, arm: 0, hp: 4,  rating: 56, traits: ['远程', '范围攻击'], art: { icon: '🧨', hue: 5 } },
+  { name: '恶鬼',     race: '地狱', cost: 4, atk: 4, arm: 0, hp: 6,  rating: 52, traits: [], art: { icon: '🦹', hue: 25 } },
+  { name: '火精灵',   race: '地狱', cost: 5, atk: 4, arm: 0, hp: 6,  rating: 51, traits: ['飞行'], art: { icon: '🔥', hue: 15 } },
+  { name: '长角恶鬼', race: '地狱', cost: 5, atk: 5, arm: 0, hp: 7,  rating: 50, traits: [], art: { icon: '🐃', hue: 20 } },
+  { name: '邪神',     race: '地狱', cost: 5, atk: 4, arm: 1, hp: 7,  rating: 52, traits: [], art: { icon: '⛓️', hue: 300 } },
+  { name: '烈火精灵', race: '地狱', cost: 6, atk: 5, arm: 0, hp: 7,  rating: 49, traits: ['飞行'], art: { icon: '🎇', hue: 25 } },
+  { name: '邪神王',   race: '地狱', cost: 6, atk: 5, arm: 1, hp: 8,  rating: 50, traits: [], art: { icon: '🫅', hue: 320 } },
+  { name: '恶魔',     race: '地狱', cost: 7, atk: 6, arm: 0, hp: 11, rating: 58, traits: ['骑兵', '飞行'], art: { icon: '😈', hue: 350 } },
+  { name: '大恶魔',   race: '地狱', cost: 8, atk: 7, arm: 0, hp: 13, rating: 58, traits: ['骑兵', '飞行'], art: { icon: '🖤', hue: 340 } },
   // 不死族
-  { name: '骷髅弓手', race: '不死族', cost: 2, atk: 1, arm: 0, hp: 2, rating: 55,  traits: ['远程'], spell: 'skeletonSearch', art: { icon: '🏹', hue: 185 } },
-  { name: '僵尸',     race: '不死族', cost: 2, atk: 2, arm: 0, hp: 4, rating: 58,  traits: ['再生1'], art: { icon: '🧟', hue: 120 } },
-  { name: '怨灵',     race: '不死族', cost: 3, atk: 3, arm: 0, hp: 4, rating: 57,  traits: ['飞行'], art: { icon: '🌫️', hue: 195 } },
-  { name: '亡语者',   race: '不死族', cost: 3, atk: 2, arm: 0, hp: 3, rating: 53,  traits: [], spell: 'curse', art: { icon: '🕯️', hue: 230 } },
-  { name: '死灵学士', race: '不死族', cost: 3, atk: 1, arm: 0, hp: 3, rating: 54,  traits: [], spell: 'necro', art: { icon: '🎓', hue: 275 } },
-  { name: '尸巫',     race: '不死族', cost: 5, atk: 3, arm: 0, hp: 5, rating: 54,  traits: ['远程', '毒Lv2'], art: { icon: '🧪', hue: 150 } },
-  { name: '木乃伊王', race: '不死族', cost: 5, atk: 3, arm: 1, hp: 6, rating: 53,  traits: [], spell: 'curse', art: { icon: '📜', hue: 175 } },
-  { name: '吸血鬼伯爵', race: '不死族', cost: 6, atk: 4, arm: 0, hp: 8, rating: 54, traits: ['飞行', '吸血'], art: { icon: '🧛‍♂️', hue: 350 } },
-  { name: '憎恶',     race: '不死族', cost: 6, atk: 5, arm: 1, hp: 13, rating: 60, traits: [], art: { icon: '👺', hue: 140 } },
-  { name: '骸骨巨龙', race: '不死族', cost: 8, atk: 5, arm: 0, hp: 9, rating: 68, traits: ['飞行'], spell: 'boneDragon', art: { icon: '🩻', hue: 165 } },
+  { name: '骷髅弓手', race: '墓园', cost: 2, atk: 1, arm: 0, hp: 2, rating: 55,  traits: ['远程'], spell: 'skeletonSearch', art: { icon: '🏹', hue: 185 } },
+  { name: '僵尸',     race: '墓园', cost: 2, atk: 2, arm: 0, hp: 4, rating: 58,  traits: ['再生1'], art: { icon: '🧟', hue: 120 } },
+  { name: '怨灵',     race: '墓园', cost: 3, atk: 3, arm: 0, hp: 4, rating: 57,  traits: ['飞行'], art: { icon: '🌫️', hue: 195 } },
+  { name: '亡语者',   race: '墓园', cost: 3, atk: 2, arm: 0, hp: 3, rating: 53,  traits: [], spell: 'curse', art: { icon: '🕯️', hue: 230 } },
+  { name: '死灵学士', race: '墓园', cost: 3, atk: 1, arm: 0, hp: 3, rating: 54,  traits: [], spell: 'necro', art: { icon: '🎓', hue: 275 } },
+  { name: '尸巫',     race: '墓园', cost: 5, atk: 3, arm: 0, hp: 5, rating: 54,  traits: ['远程', '毒Lv2'], art: { icon: '🧪', hue: 150 } },
+  { name: '木乃伊王', race: '中立', cost: 5, atk: 3, arm: 1, hp: 6, rating: 53,  traits: [], spell: 'curse', art: { icon: '📜', hue: 175 } },
+  { name: '吸血鬼伯爵', race: '墓园', cost: 6, atk: 4, arm: 0, hp: 8, rating: 54, traits: ['飞行', '吸血'], art: { icon: '🧛‍♂️', hue: 350 } },
+  { name: '憎恶',     race: '墓园', cost: 6, atk: 5, arm: 1, hp: 13, rating: 60, traits: [], art: { icon: '👺', hue: 140 } },
+  { name: '骸骨巨龙', race: '墓园', cost: 8, atk: 5, arm: 0, hp: 9, rating: 68, traits: ['飞行'], spell: 'boneDragon', art: { icon: '🩻', hue: 165 } },
+  // 墓园（Necropolis）兵种线补全
+  { name: '行尸',     race: '墓园', cost: 2, atk: 2, arm: 0, hp: 5,  rating: 58, traits: [], art: { icon: '🚶', hue: 100 } },
+  { name: '骷髅勇士', race: '墓园', cost: 2, atk: 2, arm: 0, hp: 3,  rating: 54, traits: [], art: { icon: '💀', hue: 200 } },
+  { name: '阴魂',     race: '墓园', cost: 4, atk: 3, arm: 0, hp: 6,  rating: 54, traits: ['再生2'], art: { icon: '😶‍🌫️', hue: 200 } },
+  { name: '尸巫王',   race: '墓园', cost: 6, atk: 4, arm: 0, hp: 6,  rating: 52, traits: ['远程', '毒Lv2'], art: { icon: '🎭', hue: 260 } },
+  { name: '恐怖骑士', race: '墓园', cost: 7, atk: 5, arm: 1, hp: 10, rating: 53, traits: ['骑兵'], art: { icon: '🌑', hue: 220 } },
+  { name: '鬼龙',     race: '墓园', cost: 8, atk: 6, arm: 0, hp: 12, rating: 49, traits: ['飞行'], art: { icon: '💨', hue: 190 } },
+  // ── H3 十类阵营扩充（塔楼/地下城/据点/要塞/元素/中立）──
+  // 塔楼（青蓝）
+  { name: '小妖精',   race: '塔楼',   cost: 1, atk: 1, arm: 0, hp: 1,  rating: 60, traits: [], art: { icon: '🧚', hue: 200 } },
+  { name: '大妖精',   race: '塔楼',   cost: 2, atk: 2, arm: 0, hp: 2,  rating: 52, traits: [], art: { icon: '🧚‍♂️', hue: 210 } },
+  { name: '石人',     race: '塔楼',   cost: 3, atk: 2, arm: 1, hp: 5,  rating: 56, traits: [], art: { icon: '🗿', hue: 195 } },
+  { name: '铁人',     race: '塔楼',   cost: 4, atk: 3, arm: 2, hp: 5,  rating: 56, traits: [], art: { icon: '🤖', hue: 200 } },
+  { name: '法师',     race: '塔楼',   cost: 4, atk: 2, arm: 0, hp: 4,  rating: 52, traits: ['远程'], art: { icon: '🧙', hue: 215 } },
+  { name: '大法师',   race: '塔楼',   cost: 5, atk: 3, arm: 0, hp: 5,  rating: 50, traits: ['远程'], art: { icon: '🧙‍♂️', hue: 225 } },
+  { name: '灯神',     race: '塔楼',   cost: 5, atk: 4, arm: 0, hp: 6,  rating: 51, traits: ['飞行'], art: { icon: '🧞', hue: 230 } },
+  { name: '神怪',     race: '塔楼',   cost: 6, atk: 5, arm: 0, hp: 7,  rating: 49, traits: ['飞行'], art: { icon: '🧞‍♂️', hue: 240 } },
+  { name: '蛇女',     race: '塔楼',   cost: 6, atk: 5, arm: 0, hp: 9,  rating: 48, traits: [], art: { icon: '🐍', hue: 190 } },
+  { name: '蛇发女妖', race: '塔楼',   cost: 7, atk: 6, arm: 0, hp: 10, rating: 46, traits: [], art: { icon: '👩‍🎤', hue: 205 } },
+  { name: '巨人',     race: '塔楼',   cost: 7, atk: 6, arm: 0, hp: 12, rating: 50, traits: [], art: { icon: '🏔️', hue: 210 } },
+  { name: '泰坦',     race: '塔楼',   cost: 9, atk: 7, arm: 0, hp: 14, rating: 52, traits: ['远程'], art: { icon: '⚡', hue: 220 } },
+  // 地下城（暗紫）
+  { name: '穴居人',   race: '地下城', cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '🧌', hue: 270 } },
+  { name: '地狱穴居人', race: '地下城', cost: 2, atk: 3, arm: 0, hp: 2, rating: 54, traits: [], art: { icon: '👹', hue: 280 } },
+  { name: '邪眼',     race: '地下城', cost: 4, atk: 3, arm: 0, hp: 4,  rating: 54, traits: ['远程'], art: { icon: '👁️', hue: 260 } },
+  { name: '毒眼',     race: '地下城', cost: 5, atk: 3, arm: 0, hp: 5,  rating: 52, traits: ['远程', '毒Lv1'], art: { icon: '🧿', hue: 275 } },
+  { name: '美杜莎',   race: '地下城', cost: 4, atk: 2, arm: 0, hp: 5,  rating: 54, traits: ['远程'], art: { icon: '🐍', hue: 265 } },
+  { name: '美杜莎女王', race: '地下城', cost: 5, atk: 3, arm: 0, hp: 6, rating: 52, traits: ['远程'], art: { icon: '👸', hue: 285 } },
+  { name: '牛头人',   race: '地下城', cost: 5, atk: 5, arm: 0, hp: 6,  rating: 48, traits: [], art: { icon: '🐂', hue: 255 } },
+  { name: '牛头王',   race: '地下城', cost: 6, atk: 6, arm: 0, hp: 7,  rating: 46, traits: [], art: { icon: '🐃', hue: 265 } },
+  { name: '红龙',     race: '地下城', cost: 7, atk: 6, arm: 0, hp: 11, rating: 53, traits: ['飞行'], art: { icon: '🐉', hue: 0 } },
+  { name: '黑龙',     race: '地下城', cost: 9, atk: 8, arm: 0, hp: 14, rating: 57, traits: ['飞行', '法术护盾3'], art: { icon: '🐲', hue: 290 } },
+  // 据点（土黄）
+  { name: '大耳怪',   race: '据点',   cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '👂', hue: 40 } },
+  { name: '大耳怪王', race: '据点',   cost: 1, atk: 2, arm: 0, hp: 2,  rating: 58, traits: [], art: { icon: '👺', hue: 45 } },
+  { name: '狼骑兵',   race: '据点',   cost: 2, atk: 2, arm: 0, hp: 2,  rating: 57, traits: ['骑兵'], art: { icon: '🐺', hue: 35 } },
+  { name: '狼斗士',   race: '据点',   cost: 3, atk: 2, arm: 0, hp: 3,  rating: 63, traits: ['骑兵', '连击'], art: { icon: '🐕', hue: 40 } },
+  { name: '半兽人',   race: '据点',   cost: 2, atk: 1, arm: 0, hp: 3,  rating: 60, traits: ['远程'], art: { icon: '🏹', hue: 30 } },
+  { name: '半兽人首领', race: '据点', cost: 3, atk: 2, arm: 0, hp: 4,  rating: 58, traits: ['远程'], art: { icon: '🎯', hue: 35 } },
+  { name: '食人魔',   race: '据点',   cost: 4, atk: 4, arm: 0, hp: 7,  rating: 54, traits: [], art: { icon: '🫏', hue: 45 } },
+  { name: '巨魔',     race: '据点',   cost: 4, atk: 3, arm: 0, hp: 5,  rating: 52, traits: ['再生2'], art: { icon: '🧟‍♂️', hue: 50 } },
+  { name: '食人魔王', race: '据点',   cost: 5, atk: 5, arm: 0, hp: 8,  rating: 52, traits: [], art: { icon: '👹', hue: 40 } },
+  { name: '独眼巨人', race: '据点',   cost: 6, atk: 5, arm: 0, hp: 9,  rating: 48, traits: [], art: { icon: '👁️‍🗨️', hue: 45 } },
+  { name: '独眼巨人王', race: '据点', cost: 7, atk: 6, arm: 0, hp: 10, rating: 50, traits: ['范围攻击'], art: { icon: '🔨', hue: 50 } },
+  { name: '雷鸟',     race: '据点',   cost: 6, atk: 4, arm: 0, hp: 8,  rating: 49, traits: ['飞行'], art: { icon: '🦅', hue: 55 } },
+  { name: '闪电鸟',   race: '据点',   cost: 7, atk: 5, arm: 0, hp: 9,  rating: 47, traits: ['飞行'], art: { icon: '⚡', hue: 50 } },
+  { name: '比蒙',     race: '据点',   cost: 9, atk: 9, arm: 0, hp: 14, rating: 48, traits: [], art: { icon: '🦣', hue: 40 } },
+  // 要塞（沼泽墨绿）
+  { name: '狼人',     race: '要塞',   cost: 2, atk: 2, arm: 0, hp: 3,  rating: 54, traits: [], art: { icon: '🐺', hue: 90 } },
+  { name: '蜥蜴人',   race: '要塞',   cost: 2, atk: 1, arm: 1, hp: 3,  rating: 56, traits: [], art: { icon: '🦎', hue: 95 } },
+  { name: '蜥蜴勇士', race: '要塞',   cost: 3, atk: 2, arm: 1, hp: 4,  rating: 54, traits: [], art: { icon: '🛡️', hue: 100 } },
+  { name: '毒蝇',     race: '要塞',   cost: 3, atk: 2, arm: 0, hp: 3,  rating: 53, traits: ['飞行'], art: { icon: '🪰', hue: 85 } },
+  { name: '龙蝇',     race: '要塞',   cost: 4, atk: 3, arm: 0, hp: 4,  rating: 53, traits: ['飞行', '毒Lv1'], art: { icon: '🐉', hue: 95 } },
+  { name: '石化蜥蜴', race: '要塞',   cost: 5, atk: 3, arm: 1, hp: 6,  rating: 51, traits: ['石化'], art: { icon: '🦎', hue: 105 } },
+  { name: '巨蜥',     race: '要塞',   cost: 6, atk: 4, arm: 1, hp: 7,  rating: 49, traits: ['石化'], art: { icon: '🐊', hue: 100 } },
+  { name: '蛮牛',     race: '要塞',   cost: 6, atk: 5, arm: 0, hp: 7,  rating: 44, traits: [], art: { icon: '🐂', hue: 30 } },
+  { name: '野牛',     race: '要塞',   cost: 7, atk: 6, arm: 0, hp: 9,  rating: 44, traits: [], art: { icon: '🐃', hue: 35 } },
+  { name: '双足飞龙', race: '要塞',   cost: 6, atk: 4, arm: 0, hp: 7,  rating: 47, traits: ['飞行'], art: { icon: '🐲', hue: 90 } },
+  { name: '终极九头蛇', race: '要塞', cost: 9, atk: 6, arm: 0, hp: 20, rating: 58, traits: ['范围攻击'], art: { icon: '🐙', hue: 110 } },
+  // 元素（银亮蓝）
+  { name: '气元素',   race: '元素',   cost: 3, atk: 3, arm: 0, hp: 4,  rating: 57, traits: ['飞行'], art: { icon: '💨', hue: 195 } },
+  { name: '雷元素',   race: '元素',   cost: 4, atk: 3, arm: 0, hp: 5,  rating: 53, traits: ['飞行'], art: { icon: '⚡', hue: 200 } },
+  { name: '水元素',   race: '元素',   cost: 3, atk: 2, arm: 0, hp: 6,  rating: 54, traits: [], art: { icon: '💧', hue: 205 } },
+  { name: '冰元素',   race: '元素',   cost: 4, atk: 3, arm: 0, hp: 7,  rating: 52, traits: [], art: { icon: '🧊', hue: 195 } },
+  { name: '火元素',   race: '元素',   cost: 4, atk: 4, arm: 0, hp: 4,  rating: 48, traits: [], art: { icon: '🔥', hue: 20 } },
+  { name: '烈火元素', race: '元素',   cost: 5, atk: 5, arm: 0, hp: 5,  rating: 46, traits: [], art: { icon: '🎆', hue: 25 } },
+  { name: '土元素',   race: '元素',   cost: 4, atk: 3, arm: 1, hp: 6,  rating: 54, traits: [], art: { icon: '🪨', hue: 35 } },
+  { name: '石元素',   race: '元素',   cost: 5, atk: 4, arm: 1, hp: 7,  rating: 52, traits: [], art: { icon: '⛰️', hue: 40 } },
+  { name: '精神元素', race: '元素',   cost: 6, atk: 4, arm: 0, hp: 8,  rating: 48, traits: ['法术护盾2'], art: { icon: '✨', hue: 210 } },
+  { name: '魔法元素', race: '元素',   cost: 7, atk: 5, arm: 0, hp: 9,  rating: 46, traits: ['范围攻击'], art: { icon: '🔮', hue: 220 } },
+  { name: '火鸟',     race: '元素',   cost: 7, atk: 5, arm: 0, hp: 9,  rating: 49, traits: ['飞行', '再生1'], art: { icon: '🐦‍🔥', hue: 30 } },
+  { name: '凤凰',     race: '元素',   cost: 8, atk: 6, arm: 0, hp: 10, rating: 49, traits: ['飞行', '再生2'], art: { icon: '🐦‍🔥', hue: 40 } },
+  // 中立（灰褐）
+  { name: '盗贼',     race: '中立',   cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '🗡️', hue: 30 } },
+  { name: '游牧民',   race: '中立',   cost: 3, atk: 3, arm: 0, hp: 3,  rating: 55, traits: ['骑兵'], art: { icon: '🏇', hue: 35 } },
+  { name: '仙女龙',   race: '中立',   cost: 7, atk: 5, arm: 0, hp: 8,  rating: 49, traits: ['飞行', '法术护盾2'], art: { icon: '🧚‍♀️', hue: 160 } },
+  { name: '水晶龙',   race: '中立',   cost: 8, atk: 7, arm: 0, hp: 12, rating: 46, traits: [], art: { icon: '💎', hue: 185 } },
+  { name: '锈龙',     race: '中立',   cost: 8, atk: 6, arm: 0, hp: 14, rating: 52, traits: ['毒Lv2'], art: { icon: '🐉', hue: 25 } },
+  { name: '圣龙',     race: '中立',   cost: 9, atk: 8, arm: 0, hp: 16, rating: 54, traits: ['法术护盾2'], art: { icon: '🐲', hue: 55 } },
 ];
 // token：不在牌池，仅由龙女变形产生
-const GREEN_DRAGON = { name: '绿龙', race: '精灵族', cost: 0, atk: 8, arm: 0, hp: 16, traits: [], token: true, art: { icon: '🐉', hue: 140 } };
+const GREEN_DRAGON = { name: '绿龙', race: '壁垒', cost: 0, atk: 8, arm: 0, hp: 16, traits: [], token: true, art: { icon: '🐉', hue: 140 } };
 
-const RACES = ['人族', '精灵族', '魔物族', '不死族'];
+const RACES = ['城堡', '壁垒', '塔楼', '地狱', '墓园', '地下城', '据点', '要塞', '元素', '中立'];
 // 阵营代表色（与卡面底色一致：灰白/绿/红褐/黑）
-const RACE_DOT = ['#8b9099', '#5a8a52', '#8a5a42', '#464650'];
+const RACE_DOT = ['#8b9099', '#5a8a52', '#5a9aba', '#8a5a42', '#464650', '#6a4a8a', '#a89048', '#4a6a4a', '#7ab8d8', '#9a9288'];
 const CURVE_LABELS = ['0', '1', '2', '3', '4', '5', '6', '7+'];
 
 const SPELL_TEXT = {
@@ -630,12 +791,18 @@ const SPELL_TEXT = {
   necro: '战吼·招魂术：召唤一个【骷髅】',
   reaper: '战吼：消灭攻击力最高的敌方随从',
   boneDragon: '打出时除外己方墓地，每张除外牌使费用 -1',
+  resurrect: '战吼·复活：将墓地中最后死亡的一张随从满状态复活到其原排',
   heal: '战吼：己方英雄恢复 3 点生命',
 };
 const TRAIT_TEXT = {
   '远程': '可攻击对方任意一排；优先攻击飞行单位且对其伤害加倍；是否被反击取决于站位（站在我方最前排时会被近战反击）',
   '飞行': '只能被远程或飞行单位攻击；被远程单位攻击时受到的伤害加倍',
   '骑兵': '攻击骑兵以外的单位时不会被反击',
+  '连击': '攻击时连续攻击 2 次（第二次不触发反击）',
+  '反击': '每战斗阶段可反击 X 次（X=等级，默认 1 次）',
+  '拒马': '可以对骑兵进行反击（无视骑兵的免反击）',
+  '恐狼光环': '同排左右相邻的友方随从 +1 攻击（多只可叠加）',
+  '和平': '不会发起可能令自己死亡的攻击（若反击致死则跳过该攻击）',
   '法力燃烧': '攻击英雄时对手下一轮法力 -X（X=等级）',
   '法力燃烧2': '攻击英雄时对手下一轮法力 -2',
   '驱魔': '被该单位击杀的使魔不触发亡语',
@@ -716,6 +883,12 @@ function loadEconomy() {
       saveEconomy();
     }
   }
+  // 新卡补发：CARD_DEFS 中收藏缺失（undefined）的卡补 4 张，已有数量不动
+  let added = false;
+  CARD_DEFS.forEach(d => {
+    if (collection[d.name] === undefined) { collection[d.name] = 4; added = true; }
+  });
+  if (added) saveEconomy();
 }
 
 function ownedOf(name) { return collection[name] || 0; }
@@ -727,6 +900,292 @@ function maxCopiesOf(def) { return Math.min(MAX_COPIES, ownedOf(def.name)); }
 function rarityOf(def) {
   const r = def.rating == null ? 60 : def.rating;
   return r < 58 ? 0 : r <= 61 ? 1 : r <= 65 ? 2 : 3;
+}
+
+// ---------- 联机对战（PeerJS + 房主权威；transport 可注入以便测试） ----------
+const NET = {
+  role: null,        // null=离线 | 'host' | 'guest' | 'spectator'
+  peer: null,
+  roomCode: null,
+  pwd: '',
+  hostName: '', guestName: '',
+  guestConn: null,   // host → 玩家2 的连接
+  spectators: [],    // host → 观战连接
+  conn: null,        // client → 房主的连接
+  guestDeck: null,   // host：玩家2 提交的牌组（def 数组）
+  started: false,    // host：对局是否已开始
+};
+
+function netAvailable() { return typeof Peer !== 'undefined'; }
+function netLocalSide() { return NET.role === 'guest' ? 'enemy' : 'player'; }
+function genRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+  return c;
+}
+function netStatus(msg) {
+  const el = document.getElementById('net-status');
+  if (el) el.textContent = msg;
+}
+// 本机玩家在当前状态下能否执行部署动作
+function localDeployAllowed(side) {
+  if (!state || state.phase !== 'deploy' || state.gameOver) return false;
+  if (NET.role === 'spectator') return false;
+  if (state.mode === 'pvp') return state.deploySide === side;
+  return side === 'player';
+}
+
+// 房主初始化（不含 Peer 网络层，便于测试注入）
+function netHostInit(pwd, name) {
+  netLeave();
+  NET.role = 'host';
+  NET.pwd = pwd || '';
+  NET.hostName = name || '玩家1';
+  NET.roomCode = genRoomCode();
+  return NET.roomCode;
+}
+
+// ---------- 快照（按接收者个性化） ----------
+function serializeMinion(m) {
+  return {
+    uid: m.uid, name: m.name, cost: m.cost, atk: m.atk, arm: m.arm,
+    baseAtk: m.baseAtk, baseMaxHp: m.baseMaxHp, maxHp: m.maxHp, curHp: m.curHp,
+    traits: m.traits.slice(), spell: m.spell, spellParam: m.spellParam,
+    actSpell: m.actSpell, spellCost: m.spellCost, spellMana: m.spellMana, spellManaMax: m.spellManaMax,
+    row: m.row, poison: m.poison, canAttack: m.canAttack, counterLeft: m.counterLeft,
+    recallable: m.recallable, playedRound: m.playedRound, costPaid: m.costPaid,
+    pendingTransform: !!m.pendingTransform,
+  };
+}
+
+// forSide：接收者所控制的 side（guest='enemy'）；null = 观战者（两边手牌/牌库都不可见）
+function makeSnapshot(forSide) {
+  const snap = {
+    t: 'state', phase: state.phase, round: state.round, deploySide: state.deploySide,
+    gameOver: state.gameOver, anims: state.anims, logLines: logLines.slice(),
+    hostName: NET.hostName, guestName: NET.guestName,
+    sides: {},
+  };
+  ['player', 'enemy'].forEach(sd => {
+    const p = state[sd];
+    const reveal = forSide === sd;
+    snap.sides[sd] = {
+      hp: p.hp, maxHp: p.maxHp, mana: p.mana, maxMana: p.maxMana,
+      burned: p.burned, fatigue: p.fatigue,
+      deckCount: p.deck.length, handCount: p.hand.length,
+      hand: reveal ? p.hand.map(d => d.name) : null,
+      deck: reveal ? p.deck.map(d => d.name) : null,
+      board: p.board.map(serializeMinion),
+      graveyard: p.graveyard.map(serializeMinion),
+    };
+  });
+  return snap;
+}
+
+function netBroadcast() {
+  if (NET.role !== 'host' || !state) return;
+  try {
+    if (NET.guestConn) NET.guestConn.send(makeSnapshot('enemy'));
+    NET.spectators.forEach(c => c.send(makeSnapshot(null)));
+  } catch (e) {}
+}
+
+// ---------- 房主侧消息处理（join / deck / act） ----------
+function hostHandleData(conn, msg) {
+  if (!msg || !msg.t) return;
+  if (msg.t === 'join') hostHandleJoin(conn, msg);
+  else if (msg.t === 'deck') hostHandleDeck(conn, msg);
+  else if (msg.t === 'act') hostHandleAct(conn, msg);
+}
+
+function hostHandleJoin(conn, msg) {
+  if ((msg.pwd || '') !== NET.pwd) { conn.send({ t: 'reject', reason: '密码错误' }); return; }
+  if (msg.spectate) {
+    NET.spectators.push(conn);
+    conn.send({ t: 'accept', role: 'spectator', hostName: NET.hostName, guestName: NET.guestName });
+    if (NET.started && state) conn.send(makeSnapshot(null));
+    return;
+  }
+  if (NET.guestConn) { conn.send({ t: 'reject', reason: '房间已满' }); return; }
+  if (NET.started) { conn.send({ t: 'reject', reason: '对局已开始' }); return; }
+  NET.guestConn = conn;
+  NET.guestName = msg.name || '玩家2';
+  conn.send({ t: 'accept', role: 'guest', hostName: NET.hostName, guestName: NET.guestName });
+  netStatus('玩家 2（' + NET.guestName + '）已加入，等待双方提交牌组');
+}
+
+function validateDeckMsg(names) {
+  if (!Array.isArray(names) || names.length < DECK_MIN || names.length > DECK_MAX) return null;
+  const counts = {};
+  const deck = [];
+  for (let i = 0; i < names.length; i++) {
+    const d = findDef(names[i]);
+    if (!d) return null;
+    counts[d.name] = (counts[d.name] || 0) + 1;
+    if (counts[d.name] > MAX_COPIES) return null;
+    deck.push(d);
+  }
+  return deck;
+}
+
+function hostHandleDeck(conn, msg) {
+  if (conn !== NET.guestConn || NET.started) return;
+  const deck = validateDeckMsg(msg.deck);
+  if (!deck) { conn.send({ t: 'deckReject', reason: '牌组不合法（20–60 张、每种 ≤4、卡名有效）' }); return; }
+  NET.guestDeck = deck;
+  conn.send({ t: 'deckAccept' });
+  netStatus('玩家 2 牌组已就绪，可以点击「开始战斗」');
+  renderBuilder();
+}
+
+// 房主权威：guest 动作校验后执行，非法回 actReject
+function hostHandleAct(conn, msg) {
+  if (conn !== NET.guestConn || !state || state.gameOver) return;
+  if (state.phase !== 'deploy' || state.deploySide !== 'enemy') {
+    conn.send({ t: 'actReject', reason: '现在不是你的部署阶段' });
+    return;
+  }
+  let ok = true;
+  switch (msg.kind) {
+    case 'play': {
+      // 按卡名定位手牌（避免两端手牌顺序差异）
+      const i = state.enemy.hand.findIndex(d => d.name === msg.name);
+      if (i < 0) { ok = false; break; }
+      ok = playCard('enemy', i, msg.row == null ? null : msg.row | 0, msg.beforeUid == null ? null : msg.beforeUid | 0);
+      break;
+    }
+    case 'move': ok = moveMinion(msg.uid | 0, msg.row | 0, msg.beforeUid == null ? null : msg.beforeUid | 0, 'enemy'); break;
+    case 'recall': ok = recallMinion(msg.uid | 0, 'enemy'); break;
+    case 'cast': ok = castUnitSpell('enemy', msg.uid | 0); break;
+    case 'endDeploy': startCombat(); break;
+    default: ok = false;
+  }
+  if (!ok) conn.send({ t: 'actReject', reason: '动作无法执行' });
+  netBroadcast(); // 状态变化后广播（render 内部也会广播，这里兜底）
+}
+
+// 房主开始游戏（双方牌组就绪后）
+function netHostStartGame() {
+  if (NET.role !== 'host' || !NET.guestDeck) return false;
+  NET.started = true;
+  showGame();
+  initGame(deckFrom(builderSel), 'pvp', NET.guestDeck);
+  return true;
+}
+
+function hostConnClosed(conn) {
+  if (conn === NET.guestConn) {
+    NET.guestConn = null;
+    if (NET.started && state && !state.gameOver) {
+      state.gameOver = true;
+      document.getElementById('result-text').textContent = '对方已断线，对局结束';
+      document.getElementById('gold-gain').textContent = '';
+      document.getElementById('overlay').classList.add('show');
+    } else {
+      netStatus('玩家 2 已离开');
+      NET.guestDeck = null;
+    }
+  } else {
+    NET.spectators = NET.spectators.filter(c => c !== conn);
+  }
+}
+
+// ---------- 客户端（guest / spectator）侧 ----------
+function clientSend(msg) {
+  if (NET.conn) {
+    try { NET.conn.send(msg); } catch (e) {}
+  }
+}
+
+function clientHandleData(msg) {
+  if (!msg || !msg.t) return;
+  switch (msg.t) {
+    case 'accept':
+      NET.role = msg.role;
+      NET.hostName = msg.hostName || NET.hostName;
+      NET.guestName = msg.guestName || NET.guestName;
+      netStatus(msg.role === 'spectator' ? '已加入观战，等待房主开局…' : '已加入房间，请组牌后点击「提交牌组」');
+      renderBuilder();
+      break;
+    case 'reject':
+      netStatus('加入被拒：' + msg.reason);
+      NET.role = null;
+      break;
+    case 'deckAccept':
+      netStatus('牌组已提交，等待房主开始…');
+      break;
+    case 'deckReject':
+      netStatus('牌组被拒：' + msg.reason);
+      break;
+    case 'state':
+      applySnapshot(msg);
+      break;
+    case 'actReject':
+      netStatus('动作被拒：' + msg.reason);
+      break;
+    case 'peerLeft':
+    case 'closed':
+      if (state && !state.gameOver) showNetEndNotice(msg.t === 'closed' ? '房间已关闭' : '对方已断线，对局结束');
+      break;
+  }
+}
+
+function showNetEndNotice(text) {
+  if (state) state.gameOver = true;
+  document.getElementById('result-text').textContent = text;
+  document.getElementById('gold-gain').textContent = '';
+  document.getElementById('overlay').classList.add('show');
+}
+
+function clientConnClosed() {
+  if (state && !state.gameOver) showNetEndNotice('房间已关闭（房主已离开）');
+}
+
+// 瘦客户端：快照写入本地 state 再 render（不跑任何游戏逻辑）
+function applySnapshot(snap) {
+  NET.hostName = snap.hostName || NET.hostName;
+  NET.guestName = snap.guestName || NET.guestName;
+  const mkSide = sd => {
+    const s = snap.sides[sd];
+    return {
+      hp: s.hp, maxHp: s.maxHp, mana: s.mana, maxMana: s.maxMana,
+      burned: s.burned, fatigue: s.fatigue,
+      deck: s.deck ? s.deck.map(findDef) : new Array(s.deckCount).fill(null),
+      hand: s.hand ? s.hand.map(findDef) : new Array(s.handCount).fill(null),
+      board: s.board, graveyard: s.graveyard,
+    };
+  };
+  state = {
+    player: mkSide('player'), enemy: mkSide('enemy'),
+    mode: 'pvp', phase: snap.phase, round: snap.round, deploySide: snap.deploySide,
+    gameOver: snap.gameOver,
+    anims: snap.anims || { attacker: null, shaken: [], heroHit: null, dying: [] },
+  };
+  logLines = snap.logLines || [];
+  showGame();
+  render();
+  if (snap.gameOver) {
+    const pDead = snap.sides.player.hp <= 0, eDead = snap.sides.enemy.hp <= 0;
+    let text;
+    if (pDead && eDead) text = '同归于尽！';
+    else text = eDead ? sideName('player') + ' 获胜！' : sideName('enemy') + ' 获胜！';
+    document.getElementById('result-text').textContent = text;
+    document.getElementById('gold-gain').textContent = '';
+    document.getElementById('overlay').classList.add('show');
+  }
+}
+
+function netLeave() {
+  try {
+    if (NET.role === 'host') {
+      if (NET.guestConn) NET.guestConn.send({ t: 'closed' });
+      NET.spectators.forEach(c => c.send({ t: 'closed' }));
+    }
+    if (NET.peer) NET.peer.destroy();
+  } catch (e) {}
+  NET.role = null; NET.peer = null; NET.conn = null; NET.guestConn = null;
+  NET.spectators = []; NET.guestDeck = null; NET.started = false; NET.roomCode = null;
 }
 
 let uid = 0;
@@ -953,16 +1412,24 @@ function initGame(playerDeckDefs, mode, enemyDeckDefs) {
 }
 
 function sideName(side) {
-  if (state && state.mode === 'pvp') return side === 'player' ? '玩家1' : '玩家2';
+  if (state && state.mode === 'pvp') {
+    if (NET.role) return side === 'player' ? (NET.hostName || '玩家1') : (NET.guestName || '玩家2');
+    return side === 'player' ? '玩家1' : '玩家2';
+  }
   return side === 'player' ? '你' : '对手';
 }
 function otherSide(side) { return side === 'player' ? 'enemy' : 'player'; }
-// 当前可操作（部署）的一方
+// 本机玩家当前操作所用 side（实际权限由 playCard/castUnitSpell 内的 deploySide 校验兜底）
 function activeSide() {
+  if (NET.role === 'host') return 'player';
+  if (NET.role === 'guest') return 'enemy';
   return state.mode === 'pvp' ? state.deploySide : 'player';
 }
-// 当前视角（下方半场）所在方：双人部署阶段随部署方翻转，其余固定玩家1
+// 当前视角（下方半场）所在方：离线双人随部署方翻转；联机房主固定玩家1、guest 固定自己、观战随部署方
 function viewSide() {
+  if (NET.role === 'host') return 'player';
+  if (NET.role === 'guest') return 'enemy';
+  if (NET.role === 'spectator') return state.phase === 'deploy' ? state.deploySide : 'player';
   return state.mode === 'pvp' && state.phase === 'deploy' ? state.deploySide : 'player';
 }
 
@@ -1063,10 +1530,15 @@ function startRound() {
   });
   checkGameOver();
   render();
-  // 双人对战：每轮部署从玩家1 开始，先亮交机隐私屏
+  // 双人对战：每轮部署从玩家1 开始；本地热座亮交机隐私屏，联机房主直接广播等待部署
   if (state.mode === 'pvp' && !state.gameOver) {
     state.deploySide = 'player';
-    showPassScreen('第 ' + state.round + ' 轮部署 · 请把设备交给玩家 1', () => { render(); });
+    if (NET.role === 'host') {
+      log('—— 等待 ' + sideName('player') + ' 部署 ——');
+      render(); // 触发快照广播
+    } else {
+      showPassScreen('第 ' + state.round + ' 轮部署 · 请把设备交给玩家 1', () => { render(); });
+    }
   }
 }
 
@@ -1131,34 +1603,41 @@ function legalMinionTargets(attacker, foeSide) {
 
 // 只有对方场上完全无随从时才能攻击英雄
 function canHitHero(attacker, foeSide) {
-  return state[foeSide].board.length === 0;
+  if (state[foeSide].board.length === 0) return true;
+  // 对方场上所有随从都无法成为该攻击者的合法目标时（如对面全是飞行单位而攻击者是近战），
+  // 可以直接攻击英雄——够不到的单位不构成对英雄的保护
+  return legalMinionTargets(attacker, foeSide).length === 0;
 }
 
 // 反击合法性：攻击者在防守方的合法攻击目标集合内（非远程只能反击对方最前排、远程任意、飞行限制照旧）；
-// 骑兵攻击骑兵以外的单位时不会被反击。
+// 骑兵攻击骑兵以外的单位时不会被反击——除非防守方有「拒马」（可反击骑兵）。
 function canCounter(defender, attacker, attackerSide) {
-  if (attacker.traits.includes('骑兵') && !defender.traits.includes('骑兵')) return false;
+  if (attacker.traits.includes('骑兵') && !defender.traits.includes('骑兵') &&
+      !defender.traits.includes('拒马')) return false;
   return legalMinionTargets(defender, attackerSide).indexOf(attacker) >= 0;
 }
 
 // 拖拽布阵：移动随从到 row 排；beforeUid 非空则插入其前面，否则排到该排末尾。side 默认为当前部署方
 function moveMinion(uid, row, beforeUid, side) {
   const p = state[side || activeSide()];
+  if (state.mode === 'pvp' && side && side !== state.deploySide) return false; // 联机/热座：非部署方不可动
   const m = p.board.find(x => x.uid === uid);
   if (!m) return false;
   m.row = row;
   p.board = p.board.filter(x => x !== m);
   if (beforeUid != null) {
     const i = p.board.findIndex(x => x.uid === beforeUid);
-    if (i >= 0) { p.board.splice(i, 0, m); return true; }
+    if (i >= 0) { p.board.splice(i, 0, m); recalcAuras(); return true; }
   }
   p.board.push(m);
+  recalcAuras();
   return true;
 }
 
 // 收回：部署阶段把「本轮刚从手牌打出且无入场效果」的随从收回手牌，退还实际支付的法力。side 默认为当前部署方
 function recallMinion(uid, side) {
   if (!state || state.phase !== 'deploy' || state.gameOver) return false;
+  if (state.mode === 'pvp' && side && side !== state.deploySide) return false; // 非部署方不可收回
   const p = state[side || activeSide()];
   const m = p.board.find(x => x.uid === uid);
   if (!m) return false;
@@ -1177,6 +1656,15 @@ function recallMinion(uid, side) {
 }
 
 // 三姐妹光环：场上有 x 种鹰身女妖时，我方全体鹰身女妖 +(x-1)攻 / +(x-1)血上限
+// 恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）
+function adjAtkBonus(p, m) {
+  const rowMins = p.board.filter(o => o.row === m.row);
+  const i = rowMins.indexOf(m);
+  let n = 0;
+  [rowMins[i - 1], rowMins[i + 1]].forEach(o => { if (o && o.traits.includes('恐狼光环')) n++; });
+  return n;
+}
+
 function recalcAuras() {
   ['player', 'enemy'].forEach(side => {
     const p = state[side];
@@ -1188,7 +1676,7 @@ function recalcAuras() {
       const delta = newMax - m.maxHp;
       m.maxHp = newMax;
       if (delta !== 0) m.curHp = Math.max(1, m.curHp + delta);
-      m.atk = m.baseAtk + b;
+      m.atk = m.baseAtk + b + adjAtkBonus(p, m);
     });
   });
 }
@@ -1291,6 +1779,18 @@ function battlecry(side, m) {
       log('【死神】战吼：消灭了攻击力最高的【' + t.name + '】！');
       break;
     }
+    case 'resurrect': {
+      // 战吼·复活：取己方墓地最后进入的一张，满状态新实例复活到其原排（recallable=false 由 makeMinion 默认）
+      if (p.graveyard.length === 0) { log('【大天使】战吼·复活：墓地为空，无效果'); break; }
+      if (p.board.length >= BOARD_CAP) { log('【大天使】战吼·复活：场上已达上限，无效果'); break; }
+      const dead = p.graveyard.pop();
+      const s = summonMinion(side, findDef(dead.name), dead.row);
+      if (s) {
+        log('【大天使】战吼·复活：【' + s.name + '】在' + ROW_NAMES[s.row] + '复活归来！');
+        sfx('summon');
+      }
+      break;
+    }
   }
 }
 
@@ -1356,7 +1856,7 @@ function doAttack(side, attackerUid, targetUid) {
       return false;
     }
   } else if (!canHitHero(attacker, foeSide)) {
-    if (side === 'player') log('对方场上还有随从，无法攻击英雄本体');
+    if (side === 'player') log('对方场上还有可攻击的随从，无法攻击英雄本体');
     return false;
   }
 
@@ -1378,6 +1878,19 @@ function doAttack(side, attackerUid, targetUid) {
         const sd = attackDamage(attacker, o);
         dealAttackDamage(attacker, side, o, sd, shaken, 0, 'splash');
       });
+    }
+    // 连击：第一次攻击（含反击）结算后，对同一目标追加第二次攻击
+    // （第二次不触发反击——depth=1；目标已死则落空不转火；攻击者被反击致死则无第二次）
+    if (attacker.traits.includes('连击') && attacker.curHp > 0) {
+      if (defender.curHp > 0) {
+        sfx('hit');
+        log('【' + attacker.name + '】连击：发动第二次攻击！');
+        const dmg2 = attackDamage(attacker, defender);
+        if (dmg2 <= 0) log('【' + attacker.name + '】的第二次攻击被护甲完全抵挡');
+        dealAttackDamage(attacker, side, defender, dmg2, shaken, 1);
+      } else {
+        log('【' + attacker.name + '】连击：目标已被消灭，第二次攻击落空');
+      }
     }
   } else {
     foe.hp -= attacker.atk;
@@ -1503,9 +2016,19 @@ function nextActor() {
 // 自动攻击启发式（双方共用）：远程单位优先攻击飞行目标；合法目标里优先有利交换
 // （仅目标还有反击机会、攻>0 且够得着反击时才计入反击伤害），否则打剩余生命最低的
 // 合法目标，对方场空则打英雄；0 攻单位跳过行动
+// 和平：若攻击某目标会令自己在反击中死亡，则跳过该目标
+function suicidalTarget(m, t, side) {
+  const dmg = attackDamage(m, t);
+  if (dmg >= t.curHp) return false; // 能直接击杀，无反击
+  if (!(t.counterLeft > 0 && t.atk > 0 && canCounter(t, m, side))) return false;
+  return attackDamage(t, m) >= m.curHp;
+}
+
 function autoAttack(side, m) {
   const foeSide = otherSide(side);
   let targets = legalMinionTargets(m, foeSide);
+  // 和平：排除会令自己死亡的目标
+  if (m.traits.includes('和平')) targets = targets.filter(t => !suicidalTarget(m, t, side));
   // 远程优先打飞行
   if (m.traits.includes('远程')) {
     const flying = targets.filter(t => t.traits.includes('飞行'));
@@ -1518,7 +2041,7 @@ function autoAttack(side, m) {
     return attackDamage(t, m) < m.curHp;
   });
   if (kill) return doAttack(side, m.uid, kill.uid);
-  if (canHitHero(m, foeSide)) return doAttack(side, m.uid, null);
+  if (m.atk > 0 && canHitHero(m, foeSide)) return doAttack(side, m.uid, null);
   if (targets.length > 0 && m.atk > 0) {
     const t = targets.slice().sort((a, b) => a.curHp - b.curHp)[0];
     return doAttack(side, m.uid, t.uid);
@@ -1531,6 +2054,7 @@ function autoAttack(side, m) {
 const UNIT_SPELL_TEXT = {
   split: '分裂：消耗 1 法力，生命为偶数时一分为二（各半血，其它 buff/特效保留）',
   fireball: '火球：消耗 1 法力，对随机一个敌方随从造成 1~6 点法术伤害',
+  harvest: '收获：消耗 4 法力，摸一张牌',
 };
 
 // 施放单位法术：校验阶段/部署方/法力/目标条件 → 扣法力 → 执行 → 日志 + 音效 + render
@@ -1569,6 +2093,10 @@ function castUnitSpell(side, minionUid) {
     sfx('hit');
     cleanupDead('player');
     cleanupDead('enemy');
+  } else if (m.actSpell === 'harvest') {
+    log('【' + m.name + '】施放收获：' + sideName(side) + '摸一张牌');
+    sfx('flip');
+    drawCard(side);
   }
   recalcAuras();
   checkGameOver();
@@ -1599,9 +2127,25 @@ function combatTick() {
   if (!state.gameOver) setTimeout(combatTick, 650);
 }
 
-// 主按钮（开始战斗 / 完成部署）：ai 直接开打；pvp 先交机给玩家2，再由玩家2 开打
+// 主按钮（开始战斗 / 完成部署）：ai 直接开打；本地热座交机；联机房主/guest 各按部署方行动
 function onActionButton() {
+  if (NET.role === 'spectator') return;
+  if (NET.role === 'guest') {
+    // guest 的「完成部署」发消息给房主执行
+    if (state && !state.gameOver && state.phase === 'deploy' && state.deploySide === 'enemy') {
+      clientSend({ t: 'act', kind: 'endDeploy' });
+    }
+    return;
+  }
   if (!state || state.gameOver || state.phase !== 'deploy') return;
+  if (NET.role === 'host') {
+    if (state.deploySide === 'player') {
+      state.deploySide = 'enemy';
+      log('—— 等待 ' + sideName('enemy') + ' 部署 ——');
+      render(); // 触发快照广播，guest 随后开始部署
+    }
+    return; // deploySide==='enemy' 时等待 guest 的 endDeploy 消息
+  }
   if (state.mode === 'ai') { startCombat(); return; }
   if (state.deploySide === 'player') {
     showPassScreen('玩家 1 部署完毕 · 请把设备交给玩家 2', () => {
@@ -1623,8 +2167,8 @@ function startCombat() {
   sfx('phase');
   while (state.mode === 'ai' && aiPlayStep()) {} // AI 部署（仅人机模式）
   if (state.mode === 'ai') aiCastSpells(); // AI 施放单位法术
-  // 战斗阶段开始：双方所有随从重置本阶段唯一一次反击机会
-  ['player', 'enemy'].forEach(s => state[s].board.forEach(m => { m.counterLeft = 1; }));
+  // 战斗阶段开始：双方所有随从重置反击机会（默认 1 次；反击X 特性为 X 次，如皇家狮鹫反击2）
+  ['player', 'enemy'].forEach(s => state[s].board.forEach(m => { m.counterLeft = Math.max(1, traitLv(m, '反击')); }));
   render();
   setTimeout(combatTick, 650);
 }
@@ -1633,7 +2177,7 @@ function startCombat() {
 // 卡面立绘窗：种族/个体色系径向渐变底 + 居中大号符号
 function artBg(def) {
   const art = def.art || { icon: '❔', hue: 200 };
-  const sat = def.race === '不死族' ? 22 : 45;
+  const sat = def.race === '墓园' ? 22 : 45;
   return 'radial-gradient(circle at 35% 28%, hsla(' + art.hue + ',' + sat + '%,62%,.95), hsl(' + art.hue + ',' + sat + '%,20%))';
 }
 function artHtml(def) {
@@ -1680,9 +2224,9 @@ function minionHtml(m, isEnemy, ghost) {
     const foe = state[otherSide(mySide)];
     const condOk = m.actSpell === 'fireball' ? foe.board.length > 0
       : (m.curHp > 0 && m.curHp % 2 === 0 && state[mySide].board.length < BOARD_CAP);
-    const canCast = !isEnemy && state.phase === 'deploy' && !state.gameOver && m.spellMana >= m.spellCost && condOk;
+    const canCast = !isEnemy && localDeployAllowed(mySide) && m.spellMana >= m.spellCost && condOk;
     castRow = '<div class="m-cast-row"><span class="m-mana">法 ' + m.spellMana + '/' + m.spellManaMax + '</span>' +
-      (!isEnemy && state.phase === 'deploy' && !state.gameOver
+      (!isEnemy && state.phase === 'deploy' && !state.gameOver && NET.role !== 'spectator'
         ? '<button class="cast-btn" data-action="cast-spell" data-uid="' + m.uid + '"' + (canCast ? '' : ' disabled') +
           ' title="' + UNIT_SPELL_TEXT[m.actSpell] + '">✦' + (m.actSpell === 'split' ? '分裂' : '火球') + '（' + m.spellCost + '）</button>'
         : '') + '</div>';
@@ -1699,7 +2243,10 @@ function minionHtml(m, isEnemy, ghost) {
 
 function handCardHtml(def, i, side) {
   const cost = effCost(side, def);
-  const afford = state[side].mana >= cost && state.phase === 'deploy' && !state.gameOver;
+  // 可打出：费用够 + 部署阶段 + pvp 下是该侧的部署回合
+  const canAct = state.phase === 'deploy' && !state.gameOver &&
+    (state.mode !== 'pvp' || state.deploySide === side);
+  const afford = state[side].mana >= cost && canAct;
   const spellText = def.spell ? SPELL_TEXT[def.spell]
     : (def.actSpell ? '法术·' + UNIT_SPELL_TEXT[def.actSpell] : '');
   const spell = spellText ? '<div class="c-spell">' + spellText + '</div>' : '<div class="c-spell"></div>';
@@ -1755,6 +2302,7 @@ function pileHtml(side, kind) {
 }
 
 function render() {
+  netBroadcast(); // 联机房主：每次状态渲染后向 guest/观战广播个性化快照
   if (globalThis.__noRender) return; // 测试 hook：无头 harness 可关闭渲染（不影响游戏逻辑）
   // 视角翻转：双人部署阶段当前部署方在下方半场；其余情况玩家1 在下方
   const vs = viewSide();
@@ -1773,9 +2321,11 @@ function render() {
     '<span style="font-size:12px;color:#8a8a9a;">' + sideName(top) + '手牌 ' + state[top].hand.length + ' 张</span>' +
     state[top].hand.map(() => '<div class="card-back"></div>').join('');
   const showHand = state.mode === 'ai' || state.phase === 'deploy';
-  // 手牌按费用排序展示（直接排序手牌数组，保证渲染下标与出牌下标一致）
-  state[bot].hand.sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name));
-  document.getElementById('player-hand').innerHTML = showHand
+  // 联机瘦客户端：未 reveal 的手牌是 null 占位，此时盖卡背
+  const botHandReal = showHand && state[bot].hand.every(c => !!c);
+  // 手牌按费用排序展示（直接排序手牌数组，保证渲染下标与出牌下标一致；null 占位不排）
+  if (state[bot].hand.every(c => !!c)) state[bot].hand.sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name));
+  document.getElementById('player-hand').innerHTML = botHandReal
     ? state[bot].hand.map((c, i) => handCardHtml(c, i, bot)).join('')
     : ('<span style="font-size:12px;color:#8a8a9a;">' + sideName(bot) + '手牌 ' + state[bot].hand.length + ' 张</span>' +
        state[bot].hand.map(() => '<div class="card-back"></div>').join(''));
@@ -1796,11 +2346,27 @@ function render() {
 
   let phaseText = state.phase === 'deploy' ? '部署阶段' : '进攻阶段';
   if (state.mode === 'pvp' && state.phase === 'deploy') phaseText += ' · ' + sideName(state.deploySide);
+  // 联机：非己方部署时明确提示等待
+  if (NET.role && NET.role !== 'spectator' && state.phase === 'deploy' && !state.gameOver &&
+      state.deploySide !== netLocalSide()) phaseText = '等待 ' + sideName(state.deploySide) + ' 部署…';
   document.getElementById('turn-indicator').textContent = state.gameOver ? '游戏结束' : ('第 ' + state.round + ' 轮 · ' + phaseText);
   const btn = document.getElementById('end-turn');
-  btn.textContent = state.phase !== 'deploy' ? '战斗中…'
-    : (state.mode === 'pvp' && state.deploySide === 'player' ? '完成部署' : '开始战斗');
-  btn.disabled = state.phase !== 'deploy' || state.gameOver;
+  if (NET.role === 'spectator') {
+    btn.textContent = '观战中';
+    btn.disabled = true;
+  } else if (NET.role === 'guest') {
+    const myTurn = !state.gameOver && state.phase === 'deploy' && state.deploySide === 'enemy';
+    btn.textContent = state.phase !== 'deploy' ? '战斗中…' : (myTurn ? '完成部署' : '等待对方部署…');
+    btn.disabled = !myTurn;
+  } else if (NET.role === 'host') {
+    const myTurn = !state.gameOver && state.phase === 'deploy' && state.deploySide === 'player';
+    btn.textContent = state.phase !== 'deploy' ? '战斗中…' : (myTurn ? '完成部署' : '等待对方部署…');
+    btn.disabled = state.phase !== 'deploy' || state.gameOver || !myTurn;
+  } else {
+    btn.textContent = state.phase !== 'deploy' ? '战斗中…'
+      : (state.mode === 'pvp' && state.deploySide === 'player' ? '完成部署' : '开始战斗');
+    btn.disabled = state.phase !== 'deploy' || state.gameOver;
+  }
 }
 
 // ---------- 组牌 ----------
@@ -1963,6 +2529,10 @@ function renderBuilder() {
   if (ownedTotal() < DECK_MIN) {
     sb.textContent = '收藏不足 20 张，请先开卡包';
     sb.disabled = true;
+  } else if (builderMode === 'net') {
+    // 联机：房主=开始战斗（需 guest 已提交牌组）；guest=提交牌组；未连接不可用
+    sb.textContent = NET.role === 'guest' ? '提交牌组' : '开始战斗';
+    sb.disabled = !canStartBattle() || (NET.role !== 'host' && NET.role !== 'guest');
   } else {
     sb.textContent = builderMode === 'pvp' && builderStep === 1 ? '确认并交给玩家2' : '开始战斗';
     sb.disabled = !canStartBattle();
@@ -1973,9 +2543,10 @@ function renderBuilder() {
 function openViewer(side, kind) {
   const p = state[side];
   const who = state.mode === 'pvp' ? sideName(side) + '的' : (side === 'player' ? '我的' : '敌方');
-  // 牌库内容可见性：人机模式只有玩家能看自己的；双人模式仅部署阶段的当前部署方能看自己的（防窥）
-  const canSeeDeck = state.mode === 'ai' ? (side === 'player')
-    : (state.phase === 'deploy' && side === state.deploySide);
+  // 牌库内容可见性：人机模式只有玩家能看自己的；双人/联机仅部署阶段的当前部署方能看自己的；
+  // 末尾条件：联机瘦客户端未 reveal 的牌库是 null 占位，不可见
+  const canSeeDeck = (state.mode === 'ai' ? (side === 'player')
+    : (state.phase === 'deploy' && side === state.deploySide)) && p.deck.every(c => !!c);
   let title, list;
   if (kind === 'deck') {
     title = who + '牌库（剩余 ' + p.deck.length + ' 张）';
@@ -2076,6 +2647,7 @@ function scheduleClickAction(key, run) {
 }
 
 function showBuilder() {
+  netLeave(); // 联机：返回组牌即离开房间（host 会广播 closed）
   closeViewer();
   closeDetail();
   document.getElementById('pass-screen').classList.remove('show');
@@ -2096,6 +2668,9 @@ function setBuilderMode(mode) {
   curSel = builderSel;
   document.getElementById('mode-ai').classList.toggle('active', mode === 'ai');
   document.getElementById('mode-pvp').classList.toggle('active', mode === 'pvp');
+  document.getElementById('mode-net').classList.toggle('active', mode === 'net');
+  document.getElementById('net-panel').style.display = mode === 'net' ? 'block' : 'none';
+  if (mode === 'net' && !netAvailable()) netStatus('联机组件不可用（PeerJS CDN 加载失败），本地模式不受影响');
   renderBuilder();
 }
 
@@ -2140,10 +2715,13 @@ document.addEventListener('click', e => {
   }
 
   if (state.gameOver) return;
+  if (NET.role === 'spectator') return; // 观战只读
 
-  const as = activeSide(); // 当前可操作方（ai=player；pvp=当前部署方）
+  const as = activeSide(); // 本机玩家操作所用 side（ai=player；离线 pvp=部署方；联机=本机侧）
   if (action === 'cast-spell') {
-    castUnitSpell(as, parseInt(el.dataset.uid, 10)); // 施放按钮：直接执行，不走单击延时
+    const u = parseInt(el.dataset.uid, 10);
+    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'cast', uid: u }); return; } // guest 动作发给房主
+    castUnitSpell(as, u); // 直接执行，不走单击延时
     return;
   }
   if (action === 'play-hand') {
@@ -2155,6 +2733,7 @@ document.addEventListener('click', e => {
     // 单击延时执行（给双击留窗口）；执行时按 def 引用重新定位下标，避免手牌变动错位
     scheduleClickAction('hand:' + idx, () => {
       if (!state || state.phase !== 'deploy' || state.gameOver) return;
+      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: def.name }); return; } // guest 出牌发给房主（按卡名定位）
       const sd = activeSide();
       const i = state[sd].hand.indexOf(def);
       if (i < 0) return;
@@ -2169,6 +2748,7 @@ document.addEventListener('click', e => {
     // 单击延时执行收回（双击取消收回并打开详情）
     scheduleClickAction('recall:' + u, () => {
       if (!state || state.phase !== 'deploy' || state.gameOver) return;
+      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'recall', uid: u }); return; } // guest 收回发给房主
       const sd = activeSide();
       const m = state[sd].board.find(x => x.uid === u);
       if (!m) return;
@@ -2211,8 +2791,9 @@ document.addEventListener('keydown', e => {
 let dragUid = null;     // 拖拽中的场上随从 uid
 let dragHandIdx = null; // 拖拽中的手牌下标
 document.addEventListener('dragstart', e => {
-  if (!state || state.phase !== 'deploy' || state.gameOver) { e.preventDefault(); return; }
+  if (!state || state.phase !== 'deploy' || state.gameOver || NET.role === 'spectator') { e.preventDefault(); return; }
   const as = activeSide();
+  if (state.mode === 'pvp' && state.deploySide !== as) { e.preventDefault(); return; } // 非本机部署回合不给拖
   // 手牌拖拽出牌：法力不足不给拖
   const hc = e.target.closest('.hand-card');
   if (hc) {
@@ -2258,10 +2839,12 @@ document.addEventListener('drop', e => {
     // 手牌拖拽落位出牌：拖到排内空白放排尾，拖到某随从卡上插入其前
     const def = state[as].hand[dragHandIdx];
     if (!def) { /* 手牌已变化，忽略 */ }
+    else if (NET.role === 'guest') clientSend({ t: 'act', kind: 'play', name: def.name, row: r, beforeUid: beforeUid }); // guest 拖牌落位发给房主
     else if (effCost(as, def) > state[as].mana) log('法力不足，无法打出【' + def.name + '】');
     else playCard(as, dragHandIdx, r, beforeUid);
   } else if (beforeUid !== dragUid) {
-    moveMinion(dragUid, r, beforeUid, as);
+    if (NET.role === 'guest') clientSend({ t: 'act', kind: 'move', uid: dragUid, row: r, beforeUid: beforeUid }); // guest 布阵发给房主
+    else moveMinion(dragUid, r, beforeUid, as);
   }
   dragUid = null;
   dragHandIdx = null;
@@ -2301,6 +2884,20 @@ document.getElementById('start-battle').addEventListener('click', () => {
   sanitizeSel(builderSel); // 收藏变化后过滤不合法选择
   if (builderMode === 'pvp') sanitizeSel(builderSel2);
   if (!canStartBattle()) { renderBuilder(); return; }
+  // 联机：guest 提交牌组给房主；房主在 guest 牌组就绪后开局
+  if (builderMode === 'net') {
+    if (NET.role === 'guest') {
+      clientSend({ t: 'deck', deck: deckFrom(builderSel).map(d => d.name) });
+      netStatus('牌组已提交，等待房主开始…');
+      return;
+    }
+    if (NET.role === 'host') {
+      if (!netHostStartGame()) netStatus('等待玩家 2 提交牌组…');
+      return;
+    }
+    netStatus('请先开房间或加入房间');
+    return;
+  }
   if (builderMode === 'pvp' && builderStep === 1) {
     // 玩家1 组牌完成 → 交机给玩家2（复用同一组牌界面，玩家2 的选择独立保存）
     showPassScreen('玩家 1 已完成组牌 · 请把设备交给玩家 2', () => {
@@ -2325,6 +2922,54 @@ document.getElementById('pack-reveal-all').addEventListener('click', revealAll);
 document.getElementById('pack-commit').addEventListener('click', commitPack);
 document.getElementById('pack-done').addEventListener('click', closePack);
 
+// ---------- 联机入口（PeerJS 网络层；协议处理均在上方可注入函数里） ----------
+document.getElementById('mode-net').addEventListener('click', () => setBuilderMode('net'));
+
+document.getElementById('net-host').addEventListener('click', () => {
+  if (!netAvailable()) { netStatus('联机组件不可用（PeerJS CDN 加载失败）'); return; }
+  const pwd = document.getElementById('net-pwd').value || '';
+  const name = document.getElementById('net-name').value || '玩家1';
+  netHostInit(pwd, name);
+  netStatus('正在创建房间…');
+  NET.peer = new Peer('mtcg-' + NET.roomCode);
+  NET.peer.on('open', () => {
+    document.getElementById('net-room-code').textContent = NET.roomCode;
+    netStatus('房间已创建，等待玩家加入…');
+  });
+  NET.peer.on('connection', conn => {
+    conn.on('data', msg => hostHandleData(conn, msg));
+    conn.on('close', () => hostConnClosed(conn));
+  });
+  NET.peer.on('error', err => netStatus('连接错误：' + err.type + '（公共 P2P 网络不保证可达，可重试）'));
+});
+
+function netJoinCommon(spectate) {
+  if (!netAvailable()) { netStatus('联机组件不可用（PeerJS CDN 加载失败）'); return; }
+  const code = (document.getElementById('net-code-input').value || '').trim().toUpperCase();
+  if (!code) { netStatus('请输入房间码'); return; }
+  NET.pwd = document.getElementById('net-pwd').value || '';
+  const name = document.getElementById('net-name').value || (spectate ? '观战者' : '玩家2');
+  netStatus('正在连接房间 ' + code + '…');
+  NET.peer = new Peer();
+  NET.peer.on('error', err => netStatus('连接失败：' + err.type + '（房间不存在或网络不可达）'));
+  NET.peer.on('open', () => {
+    const conn = NET.peer.connect('mtcg-' + code);
+    NET.conn = conn;
+    conn.on('open', () => conn.send({ t: 'join', pwd: NET.pwd, name: name, spectate: spectate }));
+    conn.on('data', clientHandleData);
+    conn.on('close', clientConnClosed);
+  });
+}
+document.getElementById('net-join').addEventListener('click', () => netJoinCommon(false));
+document.getElementById('net-watch').addEventListener('click', () => netJoinCommon(true));
+document.getElementById('net-room-code').addEventListener('click', () => {
+  // 复制房间码（剪贴板不可用时静默）
+  try {
+    if (NET.roomCode && navigator.clipboard) navigator.clipboard.writeText(NET.roomCode);
+    netStatus('房间码 ' + NET.roomCode + ' 已复制');
+  } catch (e) {}
+});
+
 loadEconomy();
 showBuilder();
 updateMuteBtn();
@@ -2338,6 +2983,8 @@ globalThis.__api = {
   tryAddCard, canStartBattle, selCount, builderSel, builderSel2, deckStats, deckFrom,
   makeMinion, cleanupDead, findDef, traitLv, attackDamage,
   onActionButton, confirmPass, showPassScreen, activeSide, viewSide, setBuilderMode,
+  NET, netHostInit, netHostStartGame, hostHandleData, clientHandleData,
+  makeSnapshot, applySnapshot, netBroadcast, netLeave, localDeployAllowed, netLocalSide,
   getGold: () => gold, getCollection: () => collection, saveEconomy, loadEconomy, storage,
   ownedOf, ownedTotal, maxCopiesOf, rarityOf, sanitizeSel,
   buyPack, commitPack, revealPack, revealAll, closePack, getPackCards: () => packCards,
