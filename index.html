@@ -27,6 +27,22 @@
   /* ---------- 组牌界面 ---------- */
   #deckbuilder { max-width: 1180px; margin: 0 auto; padding: 10px 14px 30px; }
   #db-main { display: flex; gap: 14px; align-items: flex-start; margin-top: 8px; }
+  #pool-wrap { flex: 1; min-width: 0; }
+  /* 组牌筛选条 */
+  #pool-filter { padding: 4px 2px 8px; border-bottom: 1px solid #2e2e44; margin-bottom: 6px; }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 3px 0; }
+  .filter-label { font-size: 11px; color: #8a8a9a; width: 34px; flex-shrink: 0; }
+  .filter-chip {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px; cursor: pointer;
+    background: #2a3a2e; color: #b8e8c8; border: 1px solid #4a7a5a; user-select: none;
+  }
+  .filter-chip.off { background: #26262e; color: #5a5a70; border-color: #3a3a48; text-decoration: line-through; }
+  .filter-chip:hover { filter: brightness(1.25); }
+  .filter-reset {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px; cursor: pointer;
+    background: #4a3b22; color: #e8d9a8; border: 1px solid #8a744a; margin-left: auto;
+  }
+  .filter-toggle-all { background: #3a3a5e; color: #c8c8f0; border-color: #6a6a9a; }
   #card-pool { flex: 1; min-width: 0; }
   .race-section h2 {
     font-size: 15px; color: #d8b96a; margin: 12px 2px 6px;
@@ -403,11 +419,78 @@
     border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer;
   }
   .gp-entry:hover { border-color: #d8b96a; background: #32324a; }
+  .gp-entry.gp-on { border-color: #7ec87e; background: #2a3a2e; }
+  .gp-cancel:disabled { opacity: .4; cursor: not-allowed; }
   .gp-cancel {
     margin-top: 12px; background: #4a3b22; color: #e8d9a8; border: 1px solid #8a744a;
     border-radius: 6px; padding: 6px 18px; cursor: pointer; font-size: 13px;
   }
   .gp-empty { font-size: 12px; color: #4a4a60; }
+
+  /* 法术施放动画：全屏系别色闪光 + 目标高亮 */
+  #spell-flash {
+    display: none; position: fixed; inset: 0; pointer-events: none; z-index: 40;
+    align-items: center; justify-content: center;
+  }
+  #spell-flash.show { display: flex; animation: spellFlash .7s forwards; }
+  #spell-flash .sf-text {
+    font-size: 34px; font-weight: bold; letter-spacing: 4px;
+    text-shadow: 0 0 18px currentColor, 0 2px 6px #000;
+    animation: spellFlashText .7s forwards;
+  }
+  @keyframes spellFlash {
+    0% { opacity: 0; } 20% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; }
+  }
+  @keyframes spellFlashText {
+    0% { transform: translateY(24px) scale(.85); opacity: 0; }
+    25% { transform: translateY(0) scale(1.05); opacity: 1; }
+    80% { transform: translateY(-4px) scale(1); opacity: 1; }
+    100% { transform: translateY(-14px); opacity: 0; }
+  }
+  @keyframes spellHitGlow {
+    0%, 100% { filter: none; }
+    35% { filter: brightness(1.7); transform: scale(1.05); }
+  }
+  .minion.spell-hit { animation: spellHitGlow .6s; }
+
+  /* 高费单位降临动画：卡面巨像 zoom-in + 色相光环 + 卡位发光入场 */
+  #epic-fx {
+    display: none; position: fixed; inset: 0; pointer-events: none; z-index: 41;
+    align-items: center; justify-content: center; flex-direction: column;
+    --epic-color: #ffd700;
+  }
+  #epic-fx.show { display: flex; animation: epicBg .9s forwards; }
+  #epic-fx .epic-icon {
+    font-size: 128px; line-height: 1;
+    filter: drop-shadow(0 0 30px var(--epic-color)) drop-shadow(0 0 60px var(--epic-color));
+    animation: epicZoom .9s forwards;
+  }
+  #epic-fx .epic-name {
+    margin-top: 10px; font-size: 26px; font-weight: bold; letter-spacing: 3px;
+    color: var(--epic-color); text-shadow: 0 0 16px var(--epic-color), 0 2px 6px #000;
+    animation: epicName .9s forwards;
+  }
+  @keyframes epicBg {
+    0% { opacity: 0; background: #0000; } 20% { opacity: 1; background: radial-gradient(circle at 50% 50%, #0008, #0000 70%); }
+    80% { opacity: 1; } 100% { opacity: 0; background: #0000; }
+  }
+  @keyframes epicZoom {
+    0% { transform: scale(.1) rotate(-30deg); opacity: 0; }
+    45% { transform: scale(1.25) rotate(4deg); opacity: 1; }
+    65% { transform: scale(1) rotate(0); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes epicName {
+    0%, 30% { transform: translateY(16px); opacity: 0; }
+    55% { transform: translateY(0); opacity: 1; }
+    100% { opacity: 1; }
+  }
+  @keyframes epicIn {
+    0% { transform: scale(.3); box-shadow: 0 0 30px #ffd700, 0 0 12px #ffd700; }
+    60% { transform: scale(1.12); box-shadow: 0 0 24px #ffd700; }
+    100% { transform: scale(1); }
+  }
+  .minion.epic-in { animation: epicIn .9s; }
   #overlay .panel {
     background: #1e1e2e; border: 2px solid #d8b96a; border-radius: 12px;
     padding: 36px 60px; text-align: center;
@@ -581,7 +664,10 @@
     </div>
   </div>
   <div id="db-main">
-    <div id="card-pool"></div>
+    <div id="pool-wrap">
+      <div id="pool-filter"></div>
+      <div id="card-pool"></div>
+    </div>
     <div id="db-sidebar">
       <h3 id="deck-title">我的牌组</h3>
       <div id="deck-count">0 / 60</div>
@@ -590,6 +676,8 @@
       <div id="mana-curve"></div>
       <div class="sb-label">阵营统计</div>
       <div id="race-stats"></div>
+      <div class="sb-label">预设卡组</div>
+      <div id="preset-decks"></div>
       <button class="btn" id="random-deck">随机牌组</button>
       <button class="btn" id="clear-deck">清空</button>
       <button class="btn" id="start-battle" disabled>开始战斗</button>
@@ -644,7 +732,7 @@
       攻击规则（进攻阶段自动执行）：近战单位按「战场宽度」选目标——每张卡占 1 宽度（守备表示占 2），各排居中对齐，前排会遮挡正后方的区域；只有暴露宽度大于 0 的单位才能被近战攻击，且目标按暴露宽度加权随机选取（例：前排 1 卡 + 后排 2 卡时，命中概率为 50% / 25% / 25%；前后排各 1 卡时，后排卡在前排卡死前无法被近战攻击）。飞行单位漂浮在空中，不参与战场宽度计算（不遮挡也不被遮挡）。远程单位无视遮挡、可攻击任意一排。只有对方场上没有随从、或对方所有随从都无法成为你的合法目标时，才能攻击英雄本体——但只要对方还有守备表示的单位或远程单位，就必须先打完它们。飞行单位守备时暂时失去飞行效果。<br>
       反击规则：每个随从每战斗阶段有 1 次反击机会（进攻阶段开始时重置；「反击X」特性为 X 次，如皇家狮鹫反击2）。随从受到攻击造成的伤害（含溅射）且存活时，若还有反击机会、攻击力大于 0、且按射程规则能够到伤害来源（非远程只能够到对方最前排、远程任意排、飞行限制照旧），便立刻反击并消耗一次；够不到或 0 攻则不消耗，之后被能反击的攻击打中仍会反击。**远程单位的攻击不会触发反击**（无论站位）；带「不受反击」特性的单位（恶魔、大恶魔）同样不会触发反击。以上免反击只对普通反击有效——**攻击守备表示的单位时，必然同时受到守备单位攻击力的反击**（无视一切免反击特性）。反击造成的伤害不再触发反击。中毒等非攻击伤害不触发反击。<br>
       连击（神射手）：攻击随从时连续攻击 2 次，第二次不触发反击；目标已死于第一次攻击则第二次落空。复活（大天使）：战吼——将己方墓地中最后死亡的一张随从满状态复活到其原排。<br>
-      远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍；攻击不会触发反击。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍。骑兵：攻击骑兵以外的单位时不会被反击。掠夺：攻击敌方英雄时获得 5 金币。拒马：可以对骑兵进行反击。<br>
+      远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍；攻击不会触发反击。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍；悬浮于空中区域、不参与战场宽度；正面表示时可在 落地/起飞 间切换（落地暂时失去飞行、移到前排地面阵型，可用按钮或旋转 180° 切换）。骑兵：攻击骑兵以外的单位时不会被反击。掠夺：攻击敌方英雄时获得 5 金币。拒马：可以对骑兵进行反击。<br>
       再生X：每轮部署阶段开始时恢复 X 点生命。毒LvX：被攻击造成伤害的随从中毒（重复取最高 Lv），中毒者在每轮部署阶段开始时受 X 点伤害。<br>
       单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）。和平：不会发起可能令自己死亡的攻击（若目标反击会致死则跳过）。死亡凝视（蛮牛）：攻击时 25% 概率直接消灭目标随从（无视生命与护甲）。护甲穿透X（比蒙系）：攻击无视目标 X 点护甲。守备表示：部署阶段可在攻击/守备之间切换；守备单位不主动攻击，但无限次反击且反击伤害与对手的攻击同时结算，被随机选取的概率 ×2（卡面变宽两倍）。翻面表示：手牌可盖放部署（默认守备表示，不触发战吼）；翻面单位不会成为攻击目标、不主动攻击、不反击，但仍每轮恢复法术、可吃到 buff；部署阶段可翻开（翻开时结算战吼；已在场的单位不能再盖回）。盖牌守备的单位会被选中攻击，并在被攻击前揭示。<br>
       法术卡牌：紫边卡牌（土/水/火/气四系），从手牌打出不入场、结算后进墓地（骨龙可减费）。无需目标的法术点击直接结算；需要目标的法术点击进入选目标模式（高亮合法目标，点击目标结算，点空白或再点该卡取消）。法术卡也可盖放：成为场上的盖牌（非单位、不被攻击），翻开时立即结算——需要目标的法术随机选合法目标，无合法目标则不生效。法术伤害受「法术护盾X」减免。<br>
@@ -687,6 +775,12 @@
     <div id="grave-pick-body"></div>
   </div>
 </div>
+
+<!-- 法术施放全屏闪光 -->
+<div id="spell-flash"><div class="sf-text" id="spell-flash-text"></div></div>
+
+<!-- 高费单位降临动画 -->
+<div id="epic-fx"></div>
 
 <!-- 交机隐私屏（双人对战） -->
 <div id="pass-screen">
@@ -815,7 +909,7 @@ const CARD_DEFS = [
   { name: '长角恶鬼', race: '地狱', cost: 5, atk: 5, arm: 0, hp: 7,  rating: 50, traits: [], art: { icon: '🐃', hue: 20 } },
   { name: '邪神',     race: '地狱', cost: 5, atk: 4, arm: 1, hp: 7,  rating: 52, traits: [], art: { icon: '⛓️', hue: 300 } },
   { name: '烈火精灵', race: '地狱', cost: 6, atk: 5, arm: 0, hp: 7,  rating: 51, traits: ['飞行', '火系魔法免疫'], art: { icon: '🎇', hue: 25 } },
-  { name: '邪神王',   race: '地狱', cost: 6, atk: 5, arm: 1, hp: 8,  rating: 50, traits: [], art: { icon: '🫅', hue: 320 } },
+  { name: '邪神王',   race: '地狱', cost: 6, atk: 5, arm: 1, hp: 8,  rating: 55, traits: [], actSpell: 'summonDemon', spellCost: 4, spellMana0: 2, spellManaMax: 4, art: { icon: '🫅', hue: 320 } },
   { name: '恶魔',     race: '地狱', cost: 7, atk: 5, arm: 0, hp: 8,  rating: 56, traits: ['飞行', '不受反击'], art: { icon: '😈', hue: 350 } },
   { name: '大恶魔',   race: '地狱', cost: 8, atk: 6, arm: 0, hp: 10, rating: 56, traits: ['飞行', '不受反击'], art: { icon: '🖤', hue: 340 } },
   // 不死族
@@ -888,7 +982,7 @@ const CARD_DEFS = [
   { name: '蛮牛',     race: '要塞',   cost: 6, atk: 5, arm: 0, hp: 7,  rating: 56, traits: ['死亡凝视'], art: { icon: '🐂', hue: 30 } },
   { name: '野牛',     race: '要塞',   cost: 7, atk: 6, arm: 0, hp: 9,  rating: 44, traits: [], art: { icon: '🐃', hue: 35 } },
   { name: '双足飞龙', race: '要塞',   cost: 6, atk: 4, arm: 0, hp: 7,  rating: 47, traits: ['飞行'], art: { icon: '🐲', hue: 90 } },
-  { name: '终极九头蛇', race: '要塞', cost: 9, atk: 6, arm: 0, hp: 20, rating: 58, traits: ['范围攻击'], art: { icon: '🐙', hue: 110 } },
+  { name: '终极九头蛇', race: '要塞', cost: 10, atk: 6, arm: 0, hp: 20, rating: 56, traits: ['范围攻击'], art: { icon: '🐙', hue: 110 } },
   // 元素（银亮蓝）
   { name: '气元素',   race: '元素',   cost: 3, atk: 3, arm: 0, hp: 4,  rating: 57, traits: ['飞行'], art: { icon: '💨', hue: 195 } },
   { name: '雷元素',   race: '元素',   cost: 4, atk: 3, arm: 0, hp: 5,  rating: 53, traits: ['飞行'], art: { icon: '⚡', hue: 200 } },
@@ -916,7 +1010,7 @@ const CARD_DEFS = [
   { name: '地刺',     type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'earthSpikes', target: 'none', rating: 58, art: { icon: '🌋', hue: 25 } },
   { name: '死亡波纹', type: 'spell', race: '中立', cost: 5, school: '土', spellEffect: 'deathRipple', target: 'none', rating: 56, art: { icon: '💀', hue: 40 } },
   // 水系
-  { name: '治疗',     type: 'spell', race: '中立', cost: 2, school: '水', spellEffect: 'heal', target: 'none', rating: 55, art: { icon: '💧', hue: 200 } },
+  { name: '治疗',     type: 'spell', race: '中立', cost: 2, school: '水', spellEffect: 'heal', target: 'friendlyUnit', rating: 56, art: { icon: '💧', hue: 200 } },
   { name: '冰箭',     type: 'spell', race: '中立', cost: 2, school: '水', spellEffect: 'iceBolt', target: 'enemyUnit', rating: 58, art: { icon: '🧊', hue: 195 } },
   { name: '祝福',     type: 'spell', race: '中立', cost: 3, school: '水', spellEffect: 'bless', target: 'none', rating: 56, art: { icon: '🙏', hue: 210 } },
   { name: '驱散',     type: 'spell', race: '中立', cost: 2, school: '水', spellEffect: 'dispel', target: 'enemyUnit', rating: 55, art: { icon: '🌀', hue: 190 } },
@@ -944,7 +1038,7 @@ const CARD_DEFS = [
   { name: '召唤雷元素', type: 'spell', race: '中立', cost: 5, school: '气', spellEffect: 'summonThunder', target: 'none', rating: 56, art: { icon: '⚡', hue: 50 } },
   // ── 法术卡扩充（第三批 11 张 H3 经典）──
   { name: '雷鸣爆弹', type: 'spell', race: '中立', cost: 6, school: '土', spellEffect: 'thunderBolt', target: 'enemyUnit', rating: 62, art: { icon: '💥', hue: 45 } },
-  { name: '聚灵奇术', type: 'spell', race: '中立', cost: 5, school: '土', spellEffect: 'animateDead', target: 'none', rating: 58, art: { icon: '🧟', hue: 110 } },
+  { name: '聚灵奇术', type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'animateDead', target: 'graveUnit', rating: 58, art: { icon: '🧟', hue: 110 } },
   { name: '召唤土元素', type: 'spell', race: '中立', cost: 7, school: '土', spellEffect: 'summonEarth', target: 'none', rating: 56, art: { icon: '🪨', hue: 35 } },
   { name: '流沙',     type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'quicksand', target: 'none', rating: 55, art: { icon: '🏜️', hue: 40 } },
   { name: '失忆',     type: 'spell', race: '中立', cost: 4, school: '水', spellEffect: 'forget', target: 'enemyUnit', rating: 55, art: { icon: '🌫️', hue: 200 } },
@@ -966,12 +1060,13 @@ const CARD_DEFS = [
   { name: '皇家海盗', race: '港口',   cost: 4, atk: 4, arm: 0, hp: 5,  rating: 59, traits: ['骑兵', '掠夺'], art: { icon: '🦜', hue: 200 } },
   { name: '暴风鸟',   race: '港口',   cost: 4, atk: 3, arm: 0, hp: 5,  rating: 53, traits: ['飞行'], art: { icon: '🦅', hue: 195 } },
   { name: '暴风雕',   race: '港口',   cost: 5, atk: 4, arm: 0, hp: 6,  rating: 51, traits: ['飞行'], art: { icon: '🌩️', hue: 200 } },
-  { name: '海洋女巫', race: '港口',   cost: 5, atk: 2, arm: 0, hp: 6,  rating: 66, traits: ['远程'], spell: 'prayer', art: { icon: '🧙‍♀️', hue: 190 } },
-  { name: '海洋术士', race: '港口',   cost: 6, atk: 3, arm: 0, hp: 7,  rating: 55, traits: ['远程'], actSpell: 'fireball', spellCost: 1, spellMana0: 2, spellManaMax: 2, art: { icon: '🔮', hue: 195 } },
-  { name: '鱼人',     race: '港口',   cost: 6, atk: 5, arm: 0, hp: 10, rating: 50, traits: [], art: { icon: '🐟', hue: 185 } },
-  { name: '鱼人战士', race: '港口',   cost: 7, atk: 6, arm: 0, hp: 12, rating: 50, traits: [], art: { icon: '🐠', hue: 190 } },
+  { name: '海洋女巫', race: '港口',   cost: 5, atk: 2, arm: 0, hp: 6,  rating: 60, traits: ['远程'], actSpells: [{ key: 'bless', cost: 2 }, { key: 'iceBolt', cost: 2 }], spellMana0: 2, spellManaMax: 4, art: { icon: '🧙‍♀️', hue: 190 } },
+  { name: '海洋术士', race: '港口',   cost: 7, atk: 3, arm: 0, hp: 7,  rating: 62, traits: ['远程'], actSpells: [{ key: 'bless', cost: 2 }, { key: 'iceBolt', cost: 2 }], spellMana0: 4, spellManaMax: 4, art: { icon: '🔮', hue: 195 } },
+  { name: '鱼人',     race: '港口',   cost: 6, atk: 5, arm: 1, hp: 8,  rating: 53, traits: [], art: { icon: '🐟', hue: 185 } },
+  { name: '鱼人战士', race: '港口',   cost: 7, atk: 6, arm: 1, hp: 10, rating: 53, traits: [], art: { icon: '🐠', hue: 190 } },
   { name: '海蛇',     race: '港口',   cost: 8, atk: 7, arm: 0, hp: 13, rating: 52, traits: ['毒Lv2'], art: { icon: '🐍', hue: 180 } },
-  { name: '深渊海蛇', race: '港口',   cost: 9, atk: 8, arm: 0, hp: 15, rating: 54, traits: ['毒Lv3'], art: { icon: '🐉', hue: 185 } },
+  { name: '深渊海蛇', race: '港口',   cost: 10, atk: 8, arm: 0, hp: 15, rating: 56, traits: ['毒Lv2', '复仇1'], art: { icon: '🐉', hue: 185 } },
+  { name: '大王乌贼', race: '港口',   cost: 7, atk: 3, arm: 0, hp: 15, rating: 53, traits: ['再生1'], art: { icon: '🦑', hue: 280 } },
   // 堡垒（冰蓝）
   { name: '狗头人',   race: '堡垒',   cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '🐕', hue: 210 } },
   { name: '狗头人工长', race: '堡垒', cost: 1, atk: 2, arm: 0, hp: 2,  rating: 58, traits: [], art: { icon: '⛏️', hue: 215 } },
@@ -1002,6 +1097,10 @@ const CARD_DEFS = [
   { name: '赏金猎人', race: '工厂',   cost: 7, atk: 5, arm: 0, hp: 6,  rating: 54, traits: ['远程', '连击'], art: { icon: '💰', hue: 45 } },
   { name: '无畏机甲', race: '工厂',   cost: 8, atk: 7, arm: 0, hp: 15, rating: 56, traits: ['范围攻击'], art: { icon: '🚢', hue: 35 } },
   { name: '主宰机甲', race: '工厂',   cost: 9, atk: 8, arm: 0, hp: 17, rating: 59, traits: ['范围攻击', '护甲穿透1'], art: { icon: '🏭', hue: 40 } },
+  // ── 原创主角与招牌法术 ──
+  { name: '帕斯卡',   race: '港口',   cost: 5, atk: 3, arm: 0, hp: 8,  rating: 62, traits: ['高级水系魔法'], actSpell: 'tidalWave', spellCost: 2, spellMana0: 2, spellManaMax: 2, art: { icon: '🧝‍♀️', hue: 200 } },
+  { name: '艾达',     race: '中立',   cost: 4, atk: 2, arm: 0, hp: 6,  rating: 60, traits: ['高级学术'], actSpell: 'study', spellCost: 3, spellMana0: 3, spellManaMax: 3, art: { icon: '📖', hue: 220 } },
+  { name: '旋涡',     type: 'spell', race: '中立', cost: 4, school: '水', spellEffect: 'vortex', target: 'none', rating: 58, art: { icon: '🌀', hue: 190 } },
 ];
 // token：不在牌池，仅由龙女变形产生
 const GREEN_DRAGON = { name: '绿龙', race: '壁垒', cost: 0, atk: 8, arm: 0, hp: 16, traits: [], token: true, art: { icon: '🐉', hue: 140 } };
@@ -1030,9 +1129,12 @@ const TRAIT_TEXT = {
   '远程': '可攻击对方任意一排；优先攻击飞行单位且对其伤害加倍；攻击不触发普通反击（守备表示的反击除外）',
   '不受反击': '攻击不触发普通反击（守备表示的同时结算反击除外）',
   '火系魔法免疫': '不受火系法术影响（火球术、地狱烈焰、末日审判、魔女火球等）',
+  '复仇': '每次反击前攻击 +X（X=等级，永久累积）',
   '飞行': '只能被远程或飞行单位攻击；被远程单位攻击时受到的伤害加倍',
   '骑兵': '攻击骑兵以外的单位时不会被反击',
   '掠夺': '攻击敌方英雄时获得 5 金币',
+  '高级水系魔法': '你施放的水系法术卡费用 -1（最低 0）',
+  '高级学术': '你施放的法术卡费用 -1（最低 0）',
   '连击': '攻击时连续攻击 2 次（第二次不触发反击）',
   '反击': '每战斗阶段可反击 X 次（X=等级，默认 1 次）',
   '拒马': '可以对骑兵进行反击（无视骑兵的免反击）',
@@ -1193,7 +1295,7 @@ function serializeMinion(m) {
     row: m.row, poison: m.poison, canAttack: m.canAttack, counterLeft: m.counterLeft,
     recallable: m.recallable, playedRound: m.playedRound, costPaid: m.costPaid,
     pendingTransform: !!m.pendingTransform, defense: !!m.defense, faceDown: !!m.faceDown,
-    morale: m.morale || 0,
+    grounded: !!m.grounded, morale: m.morale || 0,
   };
 }
 
@@ -1203,7 +1305,7 @@ function maskFaceDown(m) {
     traits: [], spell: null, spellParam: 0, actSpell: null, spellCost: 0, spellMana: 0, spellManaMax: 0,
     row: m.row, poison: 0, canAttack: false, counterLeft: 0,
     recallable: false, playedRound: 0, costPaid: 0,
-    pendingTransform: false, defense: false, faceDown: true, morale: 0 };
+    pendingTransform: false, defense: false, faceDown: true, grounded: false, morale: 0 };
 }
 
 // forSide：接收者所控制的 side（guest='enemy'）；null = 观战者（两边手牌/牌库都不可见）
@@ -1301,8 +1403,10 @@ function hostHandleAct(conn, msg) {
       if (i < 0) { ok = false; break; }
       const def2 = state.enemy.hand[i];
       if (def2.type === 'spell') {
-        // 墓地选目标法术（召唤骷髅兵）：传 graveSide/graveIndex 载荷；其余按 targetUid
-        const t2 = msg.graveSide ? { graveSide: msg.graveSide, graveIndex: msg.graveIndex | 0 }
+        // 聚灵奇术多选载荷 picks；墓地单选传 graveSide/graveIndex；治疗可传 healHero；其余按 targetUid
+        const t2 = msg.picks ? { picks: msg.picks.map(pk => ({ graveSide: pk.graveSide, graveIndex: pk.graveIndex | 0 })) }
+          : msg.graveSide ? { graveSide: msg.graveSide, graveIndex: msg.graveIndex | 0 }
+          : msg.healHero ? { hero: true }
           : (msg.targetUid == null ? null : msg.targetUid | 0);
         ok = !!playCard('enemy', i, null, null, false, t2);
         break;
@@ -1314,7 +1418,11 @@ function hostHandleAct(conn, msg) {
     }
     case 'move': ok = moveMinion(msg.uid | 0, msg.row | 0, msg.beforeUid == null ? null : msg.beforeUid | 0, 'enemy'); break;
     case 'recall': ok = recallMinion(msg.uid | 0, 'enemy'); break;
-    case 'cast': ok = castUnitSpell('enemy', msg.uid | 0); break;
+    case 'cast': ok = castUnitSpell('enemy', msg.uid | 0,
+      msg.key ? { key: msg.key, targetUid: msg.targetUid | 0 }
+      : msg.graveIndex != null ? { key: 'summonDemon', graveIndex: msg.graveIndex | 0 }
+      : null); break;
+    case 'land': ok = toggleLand('enemy', msg.uid | 0, msg.value == null ? null : !!msg.value); break;
     case 'defense': ok = toggleDefense('enemy', msg.uid | 0, msg.value == null ? null : !!msg.value); break;
     case 'flip': ok = flipUnit('enemy', msg.uid | 0); break;
     case 'set': {
@@ -1634,6 +1742,8 @@ function sfx(name) {
     case 'pack': [330, 415, 494, 660].forEach((f, i) => tone(f, .12, { type: 'triangle', delay: i * .07, vol: .08 })); break;
     case 'flip': noiseBurst(2200, .06, .15); tone(520, .08, { type: 'sine', vol: .06 }); break;
     case 'spellcast': tone(520, .16, { type: 'sine', slideTo: 880, vol: .08 }); noiseBurst(1800, .08, .12); break;
+    // 高费单位降临：低音轰鸣 + 上行光辉
+    case 'epic': tone(65, .5, { type: 'sawtooth', slideTo: 130, vol: .12 }); noiseBurst(300, .3, .25); [523, 784, 1047].forEach((f, i) => tone(f, .3, { type: 'triangle', delay: .18 + i * .1, vol: .07 })); break;
     // 士气高涨（额外行动）：明亮上扬的号角式琶音
     case 'moraleUp': [392, 523, 659, 784, 1047].forEach((f, i) => tone(f, .12, { type: 'triangle', delay: i * .05, vol: .09 })); break;
     // 士气低落（无法行动/反击失败）：低沉不协和的下坠音
@@ -1739,8 +1849,9 @@ function effArmor(m) {
 }
 
 // 有效飞行：守备表示的飞行单位暂时失去飞行效果（可被任何单位攻击、不再被远程加倍）
+// 有效飞行：守备表示或处于「落地」形态的飞行单位暂时失去飞行效果
 function isFlying(m) {
-  return m.traits.includes('飞行') && !m.defense;
+  return m.traits.includes('飞行') && !m.defense && !m.grounded;
 }
 
 // 攻击伤害 = max(0, 攻 - (目标有效护甲 - 护甲穿透))；远程单位攻击飞行单位时伤害加倍
@@ -1838,6 +1949,7 @@ function makeMinion(def) {
     atk: def.atk, arm: def.arm, baseAtk: def.atk, baseArm: def.arm, baseMaxHp: def.hp,
     maxHp: def.hp, curHp: def.hp,
     traits: def.traits.slice(), spell: def.spell || null, spellParam: def.spellParam || 0,
+    actSpells: def.actSpells ? def.actSpells.map(e => ({ key: e.key, cost: e.cost })) : null, // 一单位多法术（如海洋女巫/海洋术士）
     // 单位法术：部署阶段主动施放（分裂/火球），法力每轮准备阶段开始恢复 1 点
     actSpell: def.actSpell || null, spellCost: def.spellCost || 0,
     spellMana: def.spellMana0 || 0, spellManaMax: def.spellManaMax || 0,
@@ -1848,6 +1960,8 @@ function makeMinion(def) {
     poison: 0, canAttack: true, counterLeft: 0, _noDR: false,
     // 守备表示：部署阶段可切换。守备时不主动攻击、无限次反击且反击同时结算、被随机选取概率×2、卡面变宽
     defense: false,
+    // 落地：飞行单位正面表示时可在 飞行/落地 两种形态间切换；落地时失去飞行效果、落到地面阵型
+    grounded: false,
     // 士气 [-10, 10]：正值每点 = 10% 概率额外行动一次；负值每点 = 10% 概率无法行动/无法反击
     morale: 0,
     // 翻面表示：盖放部署。不会成为攻击目标、不主动攻击；仍每轮恢复法术、可吃到 buff；
@@ -1861,6 +1975,12 @@ function makeMinion(def) {
 // 骨龙：打出时除外己方墓地，每张除外牌费用 -1（最低 0）
 function effCost(side, def) {
   if (def.spell === 'boneDragon') return Math.max(0, def.cost - state[side].graveyard.length);
+  if (def.type === 'spell') {
+    // 艾达「高级学术」：任意法术 -1；帕斯卡「高级水系魔法」：水系法术 -1。同类减费只判一次（最低 0）
+    const board = state[side].board;
+    if (board.some(m => m.traits.includes('高级学术'))) return Math.max(0, def.cost - 1);
+    if (def.school === '水' && board.some(m => m.traits.includes('高级水系魔法'))) return Math.max(0, def.cost - 1);
+  }
   return def.cost;
 }
 
@@ -1880,6 +2000,7 @@ function dealSpellDamage(def, m, n) {
     log('【' + m.name + '】火系魔法免疫，不受【' + def.name + '】影响');
     return 0;
   }
+  spellHitQueue.push(m.uid); // 记录命中目标（用于法术动画高亮）
   const shield = traitLv(m, '法术护盾');
   const dmg = Math.max(0, n - shield);
   m.curHp -= dmg;
@@ -1920,7 +2041,14 @@ function resolveSpellEffect(side, def, target, costPaid) {
       break;
     }
     case 'heal':
-      healHero(side, 7);
+      // 治疗：可对友方单位使用，也可治疗英雄
+      if (target && target.hero) healHero(side, 7);
+      else if (target) {
+        const before = target.curHp;
+        target.curHp = Math.min(target.maxHp, target.curHp + 7);
+        log('【治疗】：【' + target.name + '】恢复 ' + (target.curHp - before) + ' 点生命');
+        sfx('heal');
+      }
       break;
     case 'iceBolt':
       dealSpellDamage(def, target, 4);
@@ -2056,23 +2184,23 @@ function resolveSpellEffect(side, def, target, costPaid) {
       dealSpellDamage(def, target, 9);
       break;
     case 'animateDead': {
-      // 聚灵奇术只能复活墓园单位（H3 Animate Dead 原味）：从墓地末尾找最后死亡的墓园单位卡（跳过法术条目），
-      // 以最大生命一半（向上取整）入场到原排
-      let idx = -1;
-      for (let i = p.graveyard.length - 1; i >= 0; i--) {
-        const g = p.graveyard[i];
-        if (g._isSpell) continue;
-        const gd = findDef(g.name);
-        if (gd && gd.race === '墓园') { idx = i; break; }
-      }
-      if (idx < 0) { log('【聚灵奇术】：墓地中没有墓园单位，无效果'); break; }
-      if (p.board.length >= BOARD_CAP) { log('【聚灵奇术】：场上已达上限，无效果'); break; }
-      const dead = p.graveyard.splice(idx, 1)[0];
-      const s = summonMinion(side, findDef(dead.name), dead.row);
-      if (s) {
-        s.curHp = Math.ceil(s.maxHp / 2);
-        log('【聚灵奇术】：【' + s.name + '】以 ' + s.curHp + ' 点生命在' + ROW_NAMES[s.row] + '复活');
-      }
+      // 聚灵奇术：把选中的墓园单位从墓地直接召唤回场（满血新实例，双方墓地均可）
+      const picks = (target && target.picks) || [];
+      if (picks.length === 0) { log('【聚灵奇术】：没有选择任何单位'); break; }
+      const bySide = { player: [], enemy: [] };
+      picks.forEach(pk => bySide[pk.graveSide].push(pk.graveIndex));
+      let n = 0;
+      ['player', 'enemy'].forEach(sd => {
+        bySide[sd].sort((a, b) => b - a).forEach(gi => { // 从大到小 splice 防错位
+          const g = state[sd].graveyard.splice(gi, 1)[0];
+          if (!g) return;
+          if (p.board.length >= BOARD_CAP) { state[sd].graveyard.push(g); return; }
+          const s = summonMinion(side, findDef(g.name), g.row);
+          if (s) n++;
+          else state[sd].graveyard.push(g);
+        });
+      });
+      log('【聚灵奇术】：从墓地召唤了 ' + n + ' 个墓园单位回场（共消耗 ' + (costPaid || 0) + ' 点法力）！');
       break;
     }
     case 'summonEarth': {
@@ -2173,6 +2301,19 @@ function resolveSpellEffect(side, def, target, costPaid) {
         (nSlime > 0 ? nSlime + ' 个史莱姆' : '') + '涌入前排！');
       break;
     }
+    case 'vortex': {
+      // 旋涡：随机至多 2 个敌方单位各 3 伤（守备加权、不重复，流星火雨式选取）
+      const pool = foe.board.slice();
+      const targets = [];
+      while (targets.length < 2 && pool.length > 0) {
+        const t = weightedPick(pool);
+        targets.push(t);
+        pool.splice(pool.indexOf(t), 1);
+      }
+      if (targets.length === 0) log('【旋涡】：敌方没有单位，无效果');
+      targets.forEach(m => dealSpellDamage(def, m, 3));
+      break;
+    }
   }
 }
 
@@ -2212,27 +2353,53 @@ function playSpellCard(side, idx, targetUid, faceDown) {
     return shell;
   }
   let target = null;
-  if (def.target === 'graveUnit') {
+  if (def.spellEffect === 'animateDead') {
+    // 聚灵奇术多选载荷 {picks:[{graveSide, graveIndex}]}：逐项校验墓园单位且总费用 ≤ 剩余法力 ×2
+    const budget = Math.max(0, p.mana - cost) * 2;
+    const picks = targetUid && targetUid.picks;
+    let total = 0, valid = !!picks && picks.length > 0;
+    if (valid) picks.forEach(pk => {
+      const g = state[pk.graveSide] && state[pk.graveSide].graveyard[pk.graveIndex];
+      const gd = g && !g._isSpell && findDef(g.name);
+      if (!gd || gd.race !== '墓园') valid = false;
+      else total += g.cost || 0;
+    });
+    if (!valid || total > budget) return false;
+    // 选定后再消耗 ⌈所选费用总和/2⌉ 点法力（与预算等价双保险：须付得起）
+    const extraCost = Math.ceil(total / 2);
+    if (p.mana - cost < extraCost) return false;
+    cost = cost + extraCost;
+    target = { picks: picks, budget: budget, extraCost: extraCost };
+  } else if (def.target === 'graveUnit') {
     // 墓地选目标：targetUid 为 {graveSide, graveIndex} 载荷
     const g = targetUid && state[targetUid.graveSide] && state[targetUid.graveSide].graveyard;
     if (!g || !g[targetUid.graveIndex] || g[targetUid.graveIndex]._isSpell) return false;
     target = targetUid;
   } else if (def.target !== 'none') {
     const pool = legalSpellTargets(side, def);
-    if (pool.length === 0) { if (state.mode === 'pvp' || side === 'player') log('【' + def.name + '】没有合法目标'); return false; }
-    target = pool.find(m => m.uid === targetUid) || null;
-    if (!target) return false;
+    if (pool.length === 0 && !(def.spellEffect === 'heal' && targetUid && targetUid.hero)) { if (state.mode === 'pvp' || side === 'player') log('【' + def.name + '】没有合法目标'); return false; }
+    if (def.spellEffect === 'heal' && targetUid && targetUid.hero) target = { hero: true }; // 治疗可直接选英雄
+    else {
+      target = pool.find(m => m.uid === targetUid) || null;
+      if (!target) return false;
+    }
   }
   p.mana -= cost;
   p.hand.splice(idx, 1);
   log(sideName(side) + '施放了法术【' + def.name + '】');
   sfx('spellcast');
+  spellHitQueue = [];
   resolveSpellEffect(side, def, target, cost);
   discardSpellToGraveyard(side, def);
   cleanupDead('player');
   cleanupDead('enemy');
   recalcAuras();
   checkGameOver();
+  // 法术动画：全屏系别色闪光 + 命中目标高亮
+  const schColor = (SCHOOL_INFO[def.school] || {}).color || '#c9a0f0';
+  const fxTargets = spellHitQueue.slice();
+  if (target && target.uid != null && fxTargets.indexOf(target.uid) < 0) fxTargets.push(target.uid);
+  spellFx(schColor, def.name, fxTargets);
   render();
   return true;
 }
@@ -2243,6 +2410,7 @@ function summonMinion(side, def, row) {
   const m = makeMinion(def);
   m.row = row == null ? 0 : row;
   p.board.push(m);
+  if (isEpicUnit(def)) epicSummonFx(def, m); // 高费/巨型单位降临动画
   return m;
 }
 
@@ -2270,7 +2438,7 @@ const SPELL_FX_TEXT = {
   slow: '目标敌方单位攻击 -3（最低 0）',
   earthSpikes: '对敌方前排所有单位造成 3 点伤害',
   deathRipple: '对双方场上所有非墓园单位造成 3 点伤害',
-  heal: '己方英雄恢复 7 点生命',
+  heal: '恢复 7 点生命：选择一个友方单位治疗，或点击己方英雄治疗英雄',
   iceBolt: '对目标敌方单位造成 4 点伤害',
   bless: '全场友方单位 +2 攻击',
   dispel: '移除目标敌方单位全部增益并解除中毒',
@@ -2294,7 +2462,7 @@ const SPELL_FX_TEXT = {
   inspire: '全场友方单位士气 +3（最高 10）',
   summonThunder: '在空中区域召唤一个【雷元素】（4/0/6 飞行）',
   thunderBolt: '对目标敌方单位造成 9 点伤害',
-  animateDead: '复活己方墓地最后死亡的一张墓园单位卡，以其最大生命一半（向上取整）的生命入场到原排',
+  animateDead: '从双方墓地中至多选择费用总和不超过（剩余法力 ×2）的墓园单位，直接召唤回场上；选定后再消耗（所选费用总和 ÷2 向上取整）点法力',
   summonEarth: '召唤一个【土元素】（5/1/7）',
   quicksand: '敌方前排所有单位攻击 -2（最低 0）',
   forget: '移除目标敌方单位的「远程」特性',
@@ -2306,6 +2474,7 @@ const SPELL_FX_TEXT = {
   airShield: '目标友方单位获得「法术护盾3」（重复无效）',
   raiseSkeletons: '选择敌方或我方墓地任意一个单位除外，召唤（其费用÷2 向上取整 + 1）个骷髅兵到我方前排',
   slimeSwarm: '消耗所有剩余法力，召唤等量史莱姆到前排；数量大于 4 时每 4 个史莱姆换成 1 个巨型史莱姆',
+  vortex: '对随机至多 2 个敌方单位各造成 3 点伤害（守备加权，不重复）',
 };
 
 // 对方「最前排」：有随从的最小 row（盖放的法术壳不占排）
@@ -2520,6 +2689,7 @@ function playCard(side, idx, row, beforeUid, faceDown, targetUid) {
     log(sideName(side) + '召唤了【' + m.name + '】（' + m.atk + '/' + m.arm + '/' + m.curHp + '）到' + ROW_NAMES[m.row]);
   }
   sfx('summon');
+  if (!faceDown && isEpicUnit(def)) epicSummonFx(def, m); // 高费/巨型单位降临动画
   if (!faceDown) battlecry(side, m);
   cleanupDead('player');
   cleanupDead('enemy');
@@ -2610,6 +2780,33 @@ function applyPoison(src, dst) {
   }
 }
 
+// ---------- 法术施放动画 ----------
+// spellFx(color, text, targetUids)：全屏系别色闪光（带法术名）+ 受影响目标按系别色高亮
+let spellHitQueue = []; // 本次施放命中的随从 uid（dealSpellDamage 收集，施放方读取后清空）
+
+function spellFx(color, text, targetUids) {
+  const el = document.getElementById('spell-flash');
+  const txt = document.getElementById('spell-flash-text');
+  if (el && txt) {
+    el.style.background = 'radial-gradient(circle at 50% 55%, ' + color + '66, #0000 65%)';
+    txt.textContent = text;
+    txt.style.color = color;
+    el.classList.remove('show');
+    void el.offsetWidth; // 重启动画
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 750);
+  }
+  if (state && targetUids && targetUids.length) {
+    state.spellFx = { uids: targetUids.slice(), color: color };
+    setTimeout(() => { if (!state) return; state.spellFx = null; render(); }, 650);
+  }
+}
+
+// 单位法术的特效颜色
+function actSpellFxColor(actSpell) {
+  return { fireball: '#e05a3a', tidalWave: '#4a9ae8', study: '#4a9ae8', harvest: '#5a9a3a', summonDemon: '#b06ae8', split: '#5a9a3a', bless: '#4a9ae8', iceBolt: '#4a9ae8' }[actSpell] || '#c9a0f0';
+}
+
 // ---------- 士气系统 ----------
 // 每个单位士气 [-10, 10]。正士气 x：每次行动后有 x*10% 概率额外行动一次（每战斗阶段限一次）；
 // 负士气 x：|x|*10% 概率本回合无法行动，且（守备/正面）反击也有 |x|*10% 概率失败。
@@ -2678,6 +2875,8 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
         log('【' + target.name + '】士气低落，未能反击');
         moraleFx(target, 'down');
       } else {
+      const vg = traitLv(target, '复仇'); // 复仇X：每次反击前攻击 +X（永久累积）
+      if (vg > 0) { target.baseAtk += vg; target.atk += vg; log('【' + target.name + '】复仇：攻击 +' + vg + '（当前 ' + target.atk + '）'); }
       const back = attackDamage(target, attacker);
       if (back <= 0) log('【' + target.name + '】（守备）反击【' + attacker.name + '】，伤害被护甲完全抵挡');
       else {
@@ -2690,6 +2889,8 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
         log('【' + target.name + '】士气低落，未能反击（反击机会保留）');
         moraleFx(target, 'down');
       } else {
+      const vg2 = traitLv(target, '复仇'); // 复仇X：每次反击前攻击 +X（永久累积）
+      if (vg2 > 0) { target.baseAtk += vg2; target.atk += vg2; log('【' + target.name + '】复仇：攻击 +' + vg2 + '（当前 ' + target.atk + '）'); }
       target.counterLeft--;
       const back = attackDamage(target, attacker);
       if (back <= 0) {
@@ -2893,10 +3094,25 @@ function aiSpellDecision(def) {
     case 'slow': case 'iceBolt': case 'fireballSpell': case 'lightningBolt': case 'dispel':
     case 'sear': case 'meteor': case 'confuse': case 'thunderBolt': case 'forget': // 伤害/减益 → 敌方攻击最高单位
       return foe.board.length ? highest(foe.board).uid : null;
-    case 'heal': // 英雄受伤 ≥6 才用
-      return me.hp <= me.maxHp - 6 ? true : null;
+    case 'heal': // 英雄受伤 ≥6 奶英雄；否则奶最残的友方单位（缺口 ≥6 才用）
+      if (me.hp <= me.maxHp - 6) return { hero: true };
+      const wounded = me.board.filter(m => m.maxHp - m.curHp >= 6).sort((a, b) => (b.maxHp - b.curHp) - (a.maxHp - a.curHp))[0];
+      return wounded ? wounded.uid : null;
     case 'slimeSwarm': // 召唤史莱姆：法力 ≥6 才倾泻
       return me.mana >= 6 ? true : null;
+    case 'animateDead': { // 聚灵奇术：贪心选双方墓地费用最高的墓园单位（预算 = (法力-3)×2）
+      const budget = Math.max(0, me.mana - def.cost) * 2;
+      const units = [];
+      ['player', 'enemy'].forEach(sd => state[sd].graveyard.forEach((g, i) => {
+        const gd = !g._isSpell && findDef(g.name);
+        if (gd && gd.race === '墓园') units.push({ graveSide: sd, graveIndex: i, cost: g.cost || 0 });
+      }));
+      units.sort((a, b) => b.cost - a.cost);
+      const picks = [];
+      let total = 0;
+      units.forEach(u => { if (total + u.cost <= budget) { picks.push({ graveSide: u.graveSide, graveIndex: u.graveIndex }); total += u.cost; } });
+      return picks.length ? { picks: picks } : null;
+    }
     case 'raiseSkeletons': { // 除外双方墓地中费用最高的单位
       let best = null;
       ['player', 'enemy'].forEach(sd => state[sd].graveyard.forEach((g, i) => {
@@ -3009,6 +3225,11 @@ const UNIT_SPELL_TEXT = {
   split: '分裂：消耗 1 法力，生命为偶数时一分为二（各半血，其它 buff/特效保留）',
   fireball: '火球：消耗 1 法力，对随机一个敌方随从造成 1~6 点法术伤害',
   harvest: '收获：消耗 4 法力，摸一张牌',
+  tidalWave: '巨浪：消耗 2 法力，对敌方前排所有单位造成 2 点法术伤害',
+  study: '研读：消耗 3 法力，摸一张牌',
+  summonDemon: '召唤恶鬼：消耗 4 法力，选择己方墓地中的一张单位卡除外，在场上召唤一个【恶鬼】',
+  bless: '祝福：消耗 2 法力，使一个友方单位 +1攻/+2血',
+  iceBolt: '冰箭：消耗 2 法力，对一个敌方单位造成 4 点水系伤害',
 };
 
 // 守备表示的单位被随机选取的概率 ×2（宽度变成两倍）：构建加权池后随机
@@ -3019,24 +3240,44 @@ function weightedPick(arr) {
 }
 
 // 施放单位法术：校验阶段/部署方/法力/目标条件 → 扣法力 → 执行 → 日志 + 音效 + render
-function castUnitSpell(side, minionUid) {
+function castUnitSpell(side, minionUid, payload) {
   if (!state || state.gameOver) return false;
   // 与人机 AI 部署同规则：部署阶段外只有 ai 模式的 enemy（AI）可施放；pvp 仅当前部署方
   if (state.phase !== 'deploy' && !(state.mode === 'ai' && side === 'enemy')) return false;
   if (state.mode === 'pvp' && side !== state.deploySide) return false;
   const p = state[side];
   const m = p.board.find(x => x.uid === minionUid);
-  if (!m || !m.actSpell) return false;
-  if (m.spellMana < m.spellCost) return false;
-  if (m.actSpell === 'split') {
+  if (!m) return false;
+  // 确定施放的法术 key 与费用（多法术单位按 payload.key 选，单法术单位用 actSpell）
+  const key = (payload && payload.key) || m.actSpell;
+  if (!key) return false;
+  const entry = m.actSpells ? m.actSpells.find(e => e.key === key) : { key: key, cost: m.spellCost };
+  if (!entry) return false;
+  if (m.spellMana < entry.cost) return false;
+  if (key === 'split') {
     if (m.curHp <= 0 || m.curHp % 2 !== 0) return false; // 奇数血不可施放（不扣法力）
     if (p.board.length >= BOARD_CAP) { log('【' + m.name + '】生命为偶数，但场上已达上限，无法分裂'); return false; }
-  } else if (m.actSpell === 'fireball') {
+  } else if (key === 'fireball' || key === 'tidalWave') {
     if (state[otherSide(side)].board.length === 0) return false; // 敌方无随从不可施放
+  } else if (key === 'summonDemon') {
+    // 召唤恶鬼：需要己方墓地有单位卡 + 墓地载荷（由选取浮层提供）
+    if (p.board.length >= BOARD_CAP) { log('【' + m.name + '】场上已达上限，无法召唤'); return false; }
+    if (!p.graveyard.some(g => !g._isSpell)) return false;
+    const g = payload && p.graveyard[payload.graveIndex];
+    if (!payload || !g || g._isSpell) return false;
+  } else if (key === 'bless') {
+    // 祝福：需要指定友方单位目标
+    const t = payload && p.board.find(x => x.uid === payload.targetUid && !x.isSpellShell && !x.faceDown);
+    if (!t) return false;
+  } else if (key === 'iceBolt') {
+    // 冰箭：需要指定敌方单位目标
+    const t = payload && state[otherSide(side)].board.find(x => x.uid === payload.targetUid && !x.isSpellShell && !x.faceDown);
+    if (!t) return false;
   }
-  m.spellMana -= m.spellCost;
+  m.spellMana -= entry.cost;
   m._usedSpell = true; // 标记已使用法术：本回合不可再收回
-  if (m.actSpell === 'split') {
+  spellHitQueue = [];
+  if (key === 'split') {
     const half = m.curHp / 2;
     const copy = Object.assign({}, m, { uid: ++uid, recallable: false, spellMana: 0 });
     m.curHp = half;
@@ -3044,7 +3285,7 @@ function castUnitSpell(side, minionUid) {
     p.board.splice(p.board.indexOf(m) + 1, 0, copy); // 同一排，紧随其后
     log('【' + m.name + '】施放分裂：一分为二（各 ' + half + ' 血，其它特效不变）');
     sfx('summon');
-  } else if (m.actSpell === 'fireball') {
+  } else if (key === 'fireball') {
     const foe = state[otherSide(side)];
     const t = weightedPick(foe.board); // 守备表示的单位被火球选中概率 ×2
     if (t.traits.includes('火系魔法免疫')) {
@@ -3062,13 +3303,58 @@ function castUnitSpell(side, minionUid) {
     sfx('hit');
     cleanupDead('player');
     cleanupDead('enemy');
-  } else if (m.actSpell === 'harvest') {
+  } else if (key === 'harvest') {
     log('【' + m.name + '】施放收获：' + sideName(side) + '摸一张牌');
     sfx('flip');
     drawCard(side);
+  } else if (key === 'tidalWave') {
+    // 巨浪：对敌方前排所有单位造成 2 点法术伤害（地刺式结算，吃护盾减免）
+    const foeSide2 = otherSide(side);
+    const fr = frontRowOf(foeSide2);
+    const targets = state[foeSide2].board.filter(x => x.row === fr);
+    if (targets.length === 0) log('【' + m.name + '】施放巨浪：敌方前排没有单位，无效果');
+    targets.forEach(x => dealSpellDamage({ name: '巨浪' }, x, 2));
+    sfx('hit');
+    cleanupDead('player');
+    cleanupDead('enemy');
+  } else if (key === 'study') {
+    // 研读：摸一张牌（收获式结算）
+    log('【' + m.name + '】施放研读：' + sideName(side) + '摸一张牌');
+    sfx('flip');
+    drawCard(side);
+  } else if (key === 'summonDemon') {
+    // 召唤恶鬼：除外己方墓地一张单位卡，召唤【恶鬼】到同排
+    const g = p.graveyard.splice(payload.graveIndex, 1)[0];
+    const s = summonMinion(side, findDef('恶鬼'), m.row);
+    if (s) {
+      log('【' + m.name + '】施放召唤恶鬼：除外了【' + g.name + '】，召唤【恶鬼】在' + ROW_NAMES[s.row] + '入场！');
+      sfx('summon');
+    } else {
+      p.graveyard.push(g); // 召唤失败（满员，理论上前面已校验）则退回墓地并退蓝
+      m.spellMana += entry.cost;
+      m._usedSpell = false;
+      log('【' + m.name + '】场上已达上限，召唤失败');
+      return false;
+    }
+  } else if (key === 'bless') {
+    // 祝福：目标友方单位 +1攻/+2血
+    const t = p.board.find(x => x.uid === payload.targetUid);
+    t.baseAtk += 1; t.baseMaxHp += 2; t.maxHp += 2; t.curHp += 2;
+    log('【' + m.name + '】施放祝福：【' + t.name + '】+1攻/+2血');
+    sfx('heal');
+  } else if (key === 'iceBolt') {
+    // 冰箭：对目标敌方单位造成 4 点水系伤害
+    const t = state[otherSide(side)].board.find(x => x.uid === payload.targetUid);
+    dealSpellDamage({ name: '冰箭', school: '水' }, t, 4);
+    sfx('hit');
+    cleanupDead('player');
+    cleanupDead('enemy');
   }
   recalcAuras();
   checkGameOver();
+  // 单位法术动画
+  const labelMap = { split: '分裂', fireball: '火球', tidalWave: '巨浪', study: '研读', harvest: '收获', summonDemon: '召唤恶鬼', bless: '祝福', iceBolt: '冰箭' };
+  spellFx(actSpellFxColor(key), labelMap[key] || key, spellHitQueue);
   render();
   return true;
 }
@@ -3112,6 +3398,24 @@ function flipUnit(side, minionUid) {
   return true;
 }
 
+// 切换飞行单位的 落地/起飞 形态（仅部署阶段、当前部署方、正面表示的飞行单位）。
+// 落地：失去飞行效果、移到前排地面阵型；起飞：回到空中区域。
+function toggleLand(side, minionUid, setValue) {
+  if (!state || state.gameOver) return false;
+  if (state.phase !== 'deploy') return false;
+  if (state.mode === 'pvp' && side !== state.deploySide) return false;
+  const m = state[side].board.find(x => x.uid === minionUid);
+  if (!m || !m.traits.includes('飞行') || m.faceDown) return false;
+  const target = setValue == null ? !m.grounded : !!setValue;
+  if (target === m.grounded) return false;
+  m.grounded = target;
+  m.row = target ? 0 : AIR_ROW;
+  log('【' + m.name + '】' + (target ? '落地到前排（暂时失去飞行）' : '起飞回到空中'));
+  sfx('flip');
+  render();
+  return true;
+}
+
 // 切换攻击/守备表示（仅部署阶段、当前部署方的随从）。
 // 守备表示：不主动攻击；无限次反击且反击与对手攻击同时结算；被随机选取概率 ×2；卡面变宽。
 function toggleDefense(side, minionUid, setValue) {
@@ -3124,24 +3428,54 @@ function toggleDefense(side, minionUid, setValue) {
   const target = setValue == null ? !m.defense : !!setValue; // setValue 传入时为设置式（旋转热区），否则为切换式
   if (target === m.defense) return false;
   m.defense = target;
-  // 飞行单位：守备（失去飞行）落到前排队列；恢复攻击表示时回到空中
-  if (m.traits.includes('飞行')) m.row = m.defense ? 0 : AIR_ROW;
+  // 飞行单位：守备（失去飞行）落到前排队列；恢复攻击表示时回到空中（落地形态除外）
+  if (m.traits.includes('飞行')) m.row = m.defense ? 0 : (m.grounded ? 0 : AIR_ROW);
   log('【' + m.name + '】切换为' + (m.defense ? '守备表示（不主动攻击，无限次反击·同时结算）' : '攻击表示'));
   sfx('phase');
   render();
   return true;
 }
 
-// AI 施放单位法术：火球——敌方有随从且法力够就放；分裂——偶数血且场上未满就放。
+// AI 施放单位法术：火球/巨浪——敌方有随从且法力够就放；研读/收获——有蓝就放；分裂——偶数血且场上未满就放。
 // 每次施放都扣法力，法力有限自然终止（guard 仅兜底）
 function aiCastSpells() {
   let guard = 0;
   while (guard++ < 200) {
-    const m = state.enemy.board.find(x => x.actSpell && x.spellMana >= x.spellCost &&
-      (x.actSpell === 'fireball' ? state.player.board.length > 0
-        : (x.curHp > 0 && x.curHp % 2 === 0 && state.enemy.board.length < BOARD_CAP)));
-    if (!m) return;
-    castUnitSpell('enemy', m.uid);
+    const e = state.enemy;
+    let found = null;
+    for (const m of e.board) {
+      const entries = m.actSpells || (m.actSpell ? [{ key: m.actSpell, cost: m.spellCost }] : []);
+      for (const en of entries) {
+        if (m.spellMana < en.cost) continue;
+        const key = en.key;
+        if (key === 'split' && !(m.curHp > 0 && m.curHp % 2 === 0 && e.board.length < BOARD_CAP)) continue;
+        if ((key === 'fireball' || key === 'tidalWave' || key === 'iceBolt') && state.player.board.length === 0) continue;
+        if (key === 'summonDemon' && !(e.board.length < BOARD_CAP && e.graveyard.some(g => !g._isSpell))) continue;
+        if (key === 'bless' && !e.board.some(x => !x.isSpellShell && !x.faceDown)) continue;
+        found = { m: m, en: en };
+        break;
+      }
+      if (found) break;
+    }
+    if (!found) return;
+    const m = found.m, en = found.en;
+    if (en.key === 'summonDemon') {
+      // AI 召唤恶鬼：除外己方墓地费用最高的单位卡
+      let best = -1;
+      e.graveyard.forEach((g, i) => {
+        if (g._isSpell) return;
+        if (best < 0 || (g.cost || 0) > (e.graveyard[best].cost || 0)) best = i;
+      });
+      castUnitSpell('enemy', m.uid, { key: en.key, graveIndex: best });
+    } else if (en.key === 'bless') {
+      const t = e.board.filter(x => !x.isSpellShell && !x.faceDown).sort((a, b) => b.atk - a.atk)[0];
+      castUnitSpell('enemy', m.uid, { key: en.key, targetUid: t.uid });
+    } else if (en.key === 'iceBolt') {
+      const t = state.player.board.filter(x => !x.isSpellShell && !x.faceDown).sort((a, b) => b.atk - a.atk)[0];
+      castUnitSpell('enemy', m.uid, { key: en.key, targetUid: t.uid });
+    } else {
+      castUnitSpell('enemy', m.uid, { key: en.key });
+    }
   }
 }
 
@@ -3268,14 +3602,28 @@ function minionHtml(m, isEnemy, ghost) {
   if (!ghost && state.moraleFx && state.moraleFx.uid === m.uid) {
     classes.push(state.moraleFx.kind === 'up' ? 'morale-up' : 'morale-down');
   }
+  // 法术命中高亮（按系别色发光）
+  let spellHitStyle = '';
+  if (!ghost && state.spellFx && state.spellFx.uids.indexOf(m.uid) >= 0) {
+    classes.push('spell-hit');
+    spellHitStyle = 'box-shadow:0 0 16px ' + state.spellFx.color + ', 0 0 6px ' + state.spellFx.color + ';';
+  }
   const draggable = !ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver;
   // 本轮刚打出且无入场效果的随从可单击收回：青色虚线描边提示（已用法术的不再提示）
   const recallable = !ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver &&
     m.recallable && m.playedRound === state.round && !(m.actSpell && m._usedSpell);
   if (recallable) classes.push('recallable');
-  // 法术选目标模式：高亮合法目标
+  // 法术选目标模式：高亮合法目标（法术卡或单位法术 祝福/冰箭）
   if (!ghost && !m.faceDown && state.spellTargetMode) {
-    if (legalSpellTargets(activeSide(), state.spellTargetMode.def).indexOf(m) >= 0) classes.push('targetable');
+    const mode = state.spellTargetMode;
+    if (mode.unitSpell) {
+      const mySideT = state.player.board.indexOf(m) >= 0 ? 'player' : 'enemy';
+      const asT = activeSide();
+      const want = mode.key === 'bless' ? (mySideT === asT && !m.isSpellShell) : (mySideT !== asT && !m.isSpellShell);
+      if (want) classes.push('targetable');
+    } else if (mode.def && legalSpellTargets(activeSide(), mode.def).indexOf(m) >= 0) {
+      classes.push('targetable');
+    }
   }
   if (ghost) classes.push('dying');
   if (m.defense) classes.push('defense'); // 守备表示：卡面横向加宽（宽度×2）
@@ -3287,6 +3635,8 @@ function minionHtml(m, isEnemy, ghost) {
     ? '<span class="trait-badge" style="background:#7a5a2a;color:#ffe8b0;" title="下一轮准备阶段开始时变形为【绿龙】">蓄力中</span>' : '';
   const defBadge = m.defense
     ? '<span class="trait-badge" style="background:#2a4a7a;color:#b0d0ff;" title="守备表示：不主动攻击；无限次反击且反击同时结算；被随机选取概率×2">守备</span>' : '';
+  const landBadge = m.grounded
+    ? '<span class="trait-badge" style="background:#4a5a3a;color:#c8e0a0;" title="落地：暂时失去飞行效果，参与地面阵型；可再起飞">落地</span>' : '';
   const moraleBadge = (m.morale || 0) !== 0
     ? '<span class="trait-badge" style="background:' + (m.morale > 0 ? '#2a5e2a' : '#6e2a2a') + ';color:' + (m.morale > 0 ? '#a0e8a0' : '#f0a0a0') + ';" title="士气：正值每点 = 10% 概率额外行动一次；负值每点 = 10% 概率无法行动/反击失败">士' + (m.morale > 0 ? '+' : '') + m.morale + '</span>' : '';
   const hpClass = m.maxHp > (def ? def.hp : m.maxHp) ? 'stat-hp buffed' : 'stat-hp';
@@ -3309,15 +3659,23 @@ function minionHtml(m, isEnemy, ghost) {
   }
   // 单位法术：法力显示 + 施放按钮（部署阶段、下方半场=当前部署方可操作；直接执行不走单击延时）
   let castRow = '';
-  if (!ghost && m.actSpell) {
+  if (!ghost && (m.actSpell || m.actSpells)) {
     const foe = state[otherSide(mySide)];
-    const condOk = m.actSpell === 'fireball' ? foe.board.length > 0
-      : (m.curHp > 0 && m.curHp % 2 === 0 && state[mySide].board.length < BOARD_CAP);
-    const canCast = !isEnemy && localDeployAllowed(mySide) && m.spellMana >= m.spellCost && condOk;
+    const condOf = key => (key === 'fireball' || key === 'tidalWave') ? foe.board.length > 0
+      : key === 'split' ? (m.curHp > 0 && m.curHp % 2 === 0 && state[mySide].board.length < BOARD_CAP)
+      : key === 'summonDemon' ? (state[mySide].board.length < BOARD_CAP && state[mySide].graveyard.some(g => !g._isSpell))
+      : key === 'bless' ? state[mySide].board.some(x => !x.isSpellShell && !x.faceDown)
+      : key === 'iceBolt' ? foe.board.some(x => !x.isSpellShell && !x.faceDown)
+      : true; // 研读/收获等无条件
+    const labelOf = { split: '分裂', fireball: '火球', tidalWave: '巨浪', study: '研读', harvest: '收获', summonDemon: '召唤恶鬼', bless: '祝福', iceBolt: '冰箭' };
+    const entries = m.actSpells || [{ key: m.actSpell, cost: m.spellCost }];
+    const canAct = !isEnemy && state.phase === 'deploy' && !state.gameOver && NET.role !== 'spectator';
     castRow = '<div class="m-cast-row"><span class="m-mana">法 ' + m.spellMana + '/' + m.spellManaMax + '</span>' +
-      (!isEnemy && state.phase === 'deploy' && !state.gameOver && NET.role !== 'spectator'
-        ? '<button class="cast-btn" data-action="cast-spell" data-uid="' + m.uid + '"' + (canCast ? '' : ' disabled') +
-          ' title="' + UNIT_SPELL_TEXT[m.actSpell] + '">✦' + (m.actSpell === 'split' ? '分裂' : '火球') + '（' + m.spellCost + '）</button>'
+      (canAct
+        ? entries.map(e =>
+            '<button class="cast-btn" data-action="cast-spell" data-uid="' + m.uid + '" data-key="' + e.key + '"' +
+            (localDeployAllowed(mySide) && m.spellMana >= e.cost && condOf(e.key) ? '' : ' disabled') +
+            ' title="' + UNIT_SPELL_TEXT[e.key] + '">✦' + labelOf[e.key] + '（' + e.cost + '）</button>').join('')
         : '') + '</div>';
   }
   // 守备表示切换按钮（部署阶段、当前部署方可操作）
@@ -3326,14 +3684,20 @@ function minionHtml(m, isEnemy, ghost) {
   if (!ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver && NET.role !== 'spectator' && localDeployAllowed(mySide)) {
     defBtn = '<div class="m-cast-row"><button class="def-btn" data-action="toggle-defense" data-uid="' + m.uid + '"' +
       ' title="守备表示：不主动攻击，但无限次反击且反击同时结算；被随机选取概率×2">' +
-      (m.defense ? '→ 攻击表示' : '→ 守备表示') + '</button></div>';
+      (m.defense ? '→ 攻击表示' : '→ 守备表示') + '</button>' +
+      (m.traits.includes('飞行') && !m.faceDown
+        ? '<button class="def-btn" data-action="toggle-land" data-uid="' + m.uid + '"' +
+          ' title="落地：暂时失去飞行效果、移到地面阵型；可再起飞">' + (m.grounded ? '↑ 起飞' : '✈ 落地') + '</button>'
+        : '') + '</div>';
     // 旋转把手：按住拖动旋转卡牌（90° 步进），松手切换姿态
     corners = '<div class="corner c-r rot-handle" data-uid="' + m.uid + '" title="按住拖动旋转卡牌：90°=守备表示，回正=攻击表示">↻</div>';
   }
-  return '<div class="' + classes.join(' ') + '" draggable="' + draggable + '"' + (recallable ? ' title="单击收回手牌（双击查看详情）"' : '') + action + '>' +
+  if (!ghost && state.epicUid === m.uid) classes.push('epic-in'); // 高费单位入场发光
+  return '<div class="' + classes.join(' ') + '" draggable="' + draggable + '"' + (recallable ? ' title="单击收回手牌（双击查看详情）"' : '') +
+    (spellHitStyle ? ' style="' + spellHitStyle + '"' : '') + action + '>' +
     '<div class="m-name">' + m.name + '</div>' +
     (def ? artHtml(def) : '') +
-    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + chargeBadge + defBadge + moraleBadge + '</div>' +
+    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + chargeBadge + defBadge + landBadge + moraleBadge + '</div>' +
     castRow +
     defBtn +
     spell +
@@ -3418,22 +3782,49 @@ function boardHtml(side, isTop) {
   return isTop ? ground + air : air + ground;
 }
 
-// 墓地选取浮层（召唤骷髅兵）：展示双方墓地的单位供选择
-function showGravePick(mode) {
-  state.spellTargetMode = mode;
+// 墓地选取浮层：召唤骷髅兵单选 / 聚灵奇术多选（带预算）
+function renderGravePickBody(mode) {
   const as = activeSide();
-  let html = '<h3>【' + mode.def.name + '】：选择一个墓地单位除外</h3>';
-  ['player', 'enemy'].forEach(sd => {
-    const units = state[sd].graveyard.map((g, i) => ({ g: g, i: i })).filter(x => !x.g._isSpell);
+  const multi = !!mode.multi;
+  const sel = mode.sel || {};
+  let total = 0;
+  Object.keys(sel).forEach(k => { total += sel[k]; });
+  const sides = mode.onlySide ? [mode.onlySide] : ['player', 'enemy'];
+  let html = '<h3>' + (mode.title ||
+    ('【' + mode.def.name + '】' + (multi ? '：选择要召唤的墓园单位（总费用 ≤ ' + mode.budget + '）' : '：选择一个墓地单位除外'))) + '</h3>';
+  sides.forEach(sd => {
+    const units = state[sd].graveyard.map((g, i) => ({ g: g, i: i })).filter(x => {
+      if (x.g._isSpell) return false;
+      if (multi) { const gd = findDef(x.g.name); return gd && gd.race === '墓园'; }
+      return true;
+    });
     html += '<div class="gp-side">' + (sd === as ? '我方墓地' : '敌方墓地') + '（' + units.length + '）</div>';
     if (units.length === 0) html += '<div class="gp-empty">（空）</div>';
     units.forEach(x => {
-      html += '<button class="gp-entry" data-action="grave-pick" data-gside="' + sd + '" data-gidx="' + x.i + '">' +
-        '【' + x.g.name + '】费用 ' + (x.g.cost || 0) + ' → ' + (Math.ceil((x.g.cost || 0) / 2) + 1) + ' 个骷髅兵</button>';
+      if (multi) {
+        const key = sd + ':' + x.i;
+        const on = !!sel[key];
+        html += '<button class="gp-entry' + (on ? ' gp-on' : '') + '" data-action="grave-multi-toggle" data-key="' + key + '" data-cost="' + (x.g.cost || 0) + '">' +
+          (on ? '✔ ' : '') + '【' + x.g.name + '】费用 ' + (x.g.cost || 0) + '</button>';
+      } else {
+        html += '<button class="gp-entry" data-action="grave-pick" data-gside="' + sd + '" data-gidx="' + x.i + '">' +
+          '【' + x.g.name + '】费用 ' + (x.g.cost || 0) + (mode.unitSpell ? '' : ' → ' + (Math.ceil((x.g.cost || 0) / 2) + 1) + ' 个骷髅兵') + '</button>';
+      }
     });
   });
+  if (multi) {
+    html += '<div class="gp-side">已选总费用 ' + total + ' / ' + mode.budget + '（需再消耗 ' + Math.ceil(total / 2) + ' 点法力）</div>' +
+      '<button class="gp-cancel" data-action="grave-multi-confirm"' + (total === 0 ? ' disabled' : '') + '>确认召唤</button>';
+  }
   html += '<button class="gp-cancel" data-action="grave-cancel">取消</button>';
   document.getElementById('grave-pick-body').innerHTML = html;
+}
+
+// 墓地选取浮层（召唤骷髅兵）：展示双方墓地的单位供选择
+function showGravePick(mode) {
+  if (mode.multi && !mode.sel) mode.sel = {};
+  state.spellTargetMode = mode;
+  renderGravePickBody(mode);
   document.getElementById('grave-pick').classList.add('show');
 }
 
@@ -3442,6 +3833,26 @@ function hideGravePick() {
   if (gp) gp.classList.remove('show');
   if (state) state.spellTargetMode = null;
 }
+
+// ---------- 高费单位降临动画 ----------
+// 7 费以上（或三围总和 ≥20 的巨型 token）单位入场时：卡面巨像 zoom-in + 色相光环 + 卡位发光
+function epicSummonFx(def, m) {
+  const el = document.getElementById('epic-fx');
+  if (el && def && def.art) {
+    el.innerHTML = '<div class="epic-icon">' + def.art.icon + '</div><div class="epic-name">【' + def.name + '】降临！</div>';
+    el.style.setProperty('--epic-color', 'hsl(' + def.art.hue + ',75%,62%)');
+    el.classList.remove('show');
+    void el.offsetWidth; // 重启动画
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 950);
+  }
+  sfx('epic');
+  if (state && m) {
+    state.epicUid = m.uid;
+    setTimeout(() => { if (!state) return; if (state.epicUid === m.uid) state.epicUid = null; render(); }, 950);
+  }
+}
+function isEpicUnit(def) { return def && (def.cost >= 7 || (def.atk + def.arm + def.hp) >= 20); }
 
 // 牌库 / 墓地小区域
 function pileHtml(side, kind) {
@@ -3489,6 +3900,9 @@ function render() {
   const heroHit = state.anims && state.anims.heroHit;
   document.getElementById('enemy-hero').classList.toggle('shake', heroHit === top);
   document.getElementById('player-hero').classList.toggle('shake', heroHit === bot);
+  // 治疗选目标模式：己方英雄高亮可点
+  document.getElementById('player-hero').classList.toggle('targetable',
+    !!(state.spellTargetMode && state.spellTargetMode.def && state.spellTargetMode.def.spellEffect === 'heal'));
 
   // 区域标签
   document.getElementById('enemy-label').textContent = state.mode === 'pvp' ? sideName(top) : '敌方';
@@ -3653,8 +4067,124 @@ function dbCardHtml(def) {
   '</div>';
 }
 
+// ---------- 预设卡组 ----------
+const PRESET_DECKS = [
+  {
+    name: '帕斯卡 · 海精灵',
+    cards: {
+      '帕斯卡': 1, '泉水精灵': 2, '海洋精灵': 2, '水手': 2, '海员': 2, '海贼': 2,
+      '皇家海盗': 2, '暴风鸟': 2, '暴风雕': 2, '海洋女巫': 2, '海洋术士': 2,
+      '鱼人': 1, '大王乌贼': 1, '治疗': 2, '冰箭': 2, '镜像术': 1, '旋涡': 2,
+    },
+  },
+  {
+    name: '艾达 · 学者',
+    cards: {
+      '艾达': 1, '法师': 2, '大法师': 2, '僧侣': 2, '大祭司': 2, '魔女': 2, '精灵法师': 2,
+      '祭司': 1, '石像鬼': 2, '钻石人': 1, '泰坦': 1, '冰箭': 2, '闪电箭': 2, '火球术': 2,
+      '连锁闪电': 1, '祝福': 1, '驱散': 1, '镜像术': 1, '治疗': 1, '龙卷风': 1,
+    },
+  },
+];
+
+// ---------- 13 套阵营默认卡组（代码生成） ----------
+// 召唤类法术（召唤物会破坏同阵营士气纯度，默认卡组不带）
+const SUMMON_FX = ['summonAir', 'summonEarth', 'summonWater', 'summonFire', 'summonThunder',
+  'raiseSkeletons', 'slimeSwarm', 'mirror', 'revive', 'animateDead'];
+// 通用型法术（伤害/治疗/增益类，用于默认卡组法术位）
+const GENERIC_FX = ['sear', 'iceBolt', 'fireballSpell', 'lightningBolt', 'thunderBolt', 'meteor',
+  'earthSpikes', 'deathRipple', 'doom', 'hellfire', 'meteorShower', 'vortex', 'chainLightning',
+  'heal', 'healingWave', 'bless', 'bloodlust', 'holyShield', 'fireShield', 'stoneSkin',
+  'inspire', 'frenzy', 'airShield'];
+
+// 生成一套正好 30 张的阵营默认卡组：
+// 纯阵营单位按 rating 降序、费用分档携带（1–3费 4张 / 4–5费 3张 / 6–7费 2张 / 8费+ 1张）；
+// 超额从最高费（同费取 rating 最低）开始删；不足则低费卡（同费取 rating 高）补到满 4；
+// 法术位至多 6 张：通用型、排除召唤类，按 rating 降序。
+function buildRacePreset(race) {
+  const cards = {};
+  // 法术（至多 6 张）
+  const spells = CARD_DEFS.filter(d => d.type === 'spell' && GENERIC_FX.indexOf(d.spellEffect) >= 0)
+    .sort((a, b) => b.rating - a.rating || a.cost - b.cost);
+  let spellTotal = 0;
+  for (let i = 0; i < spells.length && spellTotal < 6; i++) {
+    const n = Math.min(4, 6 - spellTotal);
+    cards[spells[i].name] = n;
+    spellTotal += n;
+  }
+  // 纯阵营单位
+  const units = CARD_DEFS.filter(d => d.type !== 'spell' && d.race === race)
+    .sort((a, b) => b.rating - a.rating || a.cost - b.cost || (a.name < b.name ? -1 : 1));
+  const band = c => (c <= 3 ? 4 : c <= 5 ? 3 : c <= 7 ? 2 : 1);
+  units.forEach(d => { cards[d.name] = (cards[d.name] || 0) + band(d.cost); });
+  let total = Object.keys(cards).reduce((s, k) => s + cards[k], 0);
+  // 超过 30：从最高费开始删
+  const trimList = units.slice().sort((a, b) => b.cost - a.cost || a.rating - b.rating);
+  while (total > 30) {
+    const d = trimList.find(x => (cards[x.name] || 0) > 0);
+    if (!d) break;
+    cards[d.name]--;
+    if (cards[d.name] === 0) delete cards[d.name]; // 删到 0 直接移除，不留 ×0 占位
+    total--;
+  }
+  // 不够 30：低费卡补到满 4
+  const fillList = units.slice().sort((a, b) => a.cost - b.cost || b.rating - a.rating);
+  while (total < 30) {
+    const d = fillList.find(x => (cards[x.name] || 0) < 4);
+    if (!d) break;
+    cards[d.name] = (cards[d.name] || 0) + 1; total++;
+  }
+  return { name: race + ' · 标准', cards: cards };
+}
+RACES.forEach(r => PRESET_DECKS.push(buildRacePreset(r)));
+function applyPresetDeck(preset) {
+  Object.keys(curSel).forEach(k => { curSel[k] = 0; });
+  Object.keys(preset.cards).forEach(name => {
+    if (!findDef(name)) return;
+    for (let i = 0; i < preset.cards[name]; i++) {
+      if (!tryAddCard(name)) break;
+    }
+  });
+  renderBuilder();
+}
+
+// ---------- 组牌筛选 ----------
+// off 集合：默认全部显示，点击 chip 把该项加入 off（隐藏）
+const builderFilter = { races: {}, costs: {}, types: {}, schools: {} };
+const FILTER_GROUPS = [
+  { key: 'races', label: '阵营', vals: () => RACES.map(r => ({ v: r, t: r })) },
+  { key: 'costs', label: '费用', vals: () => [0, 1, 2, 3, 4, 5, 6, 7].map(c => ({ v: c, t: c === 7 ? '7+' : String(c) })) },
+  { key: 'types', label: '类型', vals: () => [{ v: 'unit', t: '单位' }, { v: 'spell', t: '法术' }] },
+  { key: 'schools', label: '派系', vals: () => ['土', '水', '火', '气'].map(s => ({ v: s, t: s + '系' })) },
+];
+
+function costBucket(cost) { return cost >= 7 ? 7 : cost; }
+
+function matchBuilderFilter(d) {
+  if (builderFilter.races[d.race]) return false;
+  if (builderFilter.costs[costBucket(d.cost)]) return false;
+  const ty = d.type === 'spell' ? 'spell' : 'unit';
+  if (builderFilter.types[ty]) return false;
+  if (ty === 'spell' && builderFilter.schools[d.school]) return false;
+  return true;
+}
+
+function renderPoolFilter() {
+  const html = FILTER_GROUPS.map(g => {
+    const anyOff = g.vals().some(x => builderFilter[g.key][x.v]);
+    return '<div class="filter-row"><span class="filter-label">' + g.label + '</span>' +
+      g.vals().map(x =>
+        '<span class="filter-chip' + (builderFilter[g.key][x.v] ? ' off' : '') + '" data-action="filter-chip" data-group="' + g.key + '" data-val="' + x.v + '">' + x.t + '</span>'
+      ).join('') +
+      '<span class="filter-chip filter-toggle-all" data-action="filter-toggle-all" data-group="' + g.key + '">' + (anyOff ? '全选' : '全不选') + '</span></div>';
+  }).join('') +
+  '<div class="filter-row"><button class="filter-reset" data-action="filter-reset">重置筛选</button></div>';
+  document.getElementById('pool-filter').innerHTML = html;
+}
+
 function renderBuilder() {
-  const owned = ownedDefs();
+  renderPoolFilter();
+  const owned = ownedDefs().filter(matchBuilderFilter);
   // 单位卡按阵营分区；法术卡单独一个「法术」大分区（按系别分组、组内按费用排序）
   const unitHtml = RACES.map(race => {
     const cards = owned.filter(d => d.race === race && d.type !== 'spell')
@@ -3710,6 +4240,11 @@ function renderBuilder() {
     r + ' ' + st.races[r].kinds + ' 种 · ' + st.races[r].total + ' 张</div>'
   ).join('') +
   '<div class="race-stat"><span class="race-dot" style="background:#b06ae8"></span>法术 ' + st.spells.kinds + ' 种 · ' + st.spells.total + ' 张</div>';
+
+  // 预设卡组：一键填充当前牌组选择
+  document.getElementById('preset-decks').innerHTML = PRESET_DECKS.map((p, i) =>
+    '<button class="btn" data-action="preset-deck" data-idx="' + i + '" style="width:100%;margin-top:4px;">' + p.name + '</button>'
+  ).join('');
 
   const sb = document.getElementById('start-battle');
   if (ownedTotal() < DECK_MIN) {
@@ -3891,7 +4426,33 @@ document.addEventListener('click', e => {
   const action = el.dataset.action;
 
   // 组牌界面（单击延时执行，双击打开详情并取消单击动作）
+  if (action === 'filter-chip') {
+    const g = el.dataset.group, v = el.dataset.val;
+    const key = g === 'costs' ? parseInt(v, 10) : v;
+    if (builderFilter[g][key]) delete builderFilter[g][key];
+    else builderFilter[g][key] = true;
+    renderBuilder();
+    return;
+  }
+  if (action === 'filter-reset') {
+    Object.keys(builderFilter).forEach(k => { builderFilter[k] = {}; });
+    renderBuilder();
+    return;
+  }
+  if (action === 'filter-toggle-all') {
+    const g = el.dataset.group;
+    const vals = FILTER_GROUPS.find(x => x.key === g).vals();
+    const anyOff = vals.some(x => builderFilter[g][x.v]);
+    builderFilter[g] = {};
+    if (!anyOff) vals.forEach(x => { builderFilter[g][x.v] = true; }); // 全不选
+    renderBuilder();
+    return;
+  }
   if (action === 'pack-reveal') { revealPack(parseInt(el.dataset.idx, 10)); return; }
+  if (action === 'preset-deck') {
+    applyPresetDeck(PRESET_DECKS[parseInt(el.dataset.idx, 10)]);
+    return;
+  }
   if (action === 'add-card') {
     const name = el.dataset.name;
     scheduleClickAction('add:' + name, () => {
@@ -3929,6 +4490,12 @@ document.addEventListener('click', e => {
     document.getElementById('grave-pick').classList.remove('show');
     state.spellTargetMode = null;
     if (!mode) { render(); return; }
+    // 单位法术（召唤恶鬼）：执行施放而非出牌
+    if (mode.unitSpell) {
+      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'cast', uid: mode.minionUid, graveSide: payload.graveSide, graveIndex: payload.graveIndex }); render(); return; }
+      castUnitSpell(as, mode.minionUid, payload);
+      return;
+    }
     if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: mode.def.name, graveSide: payload.graveSide, graveIndex: payload.graveIndex }); render(); return; }
     const gi = state[as].hand.indexOf(mode.def);
     if (gi >= 0 && playCard(as, gi, null, null, false, payload)) render();
@@ -3940,10 +4507,65 @@ document.addEventListener('click', e => {
     render();
     return;
   }
+  if (action === 'grave-multi-toggle') {
+    const mode = state.spellTargetMode;
+    if (!mode || !mode.multi) return;
+    const key = el.dataset.key, cost = parseInt(el.dataset.cost, 10);
+    mode.sel = mode.sel || {};
+    if (mode.sel[key]) delete mode.sel[key];
+    else {
+      let total = 0;
+      Object.keys(mode.sel).forEach(k => { total += mode.sel[k]; });
+      if (total + cost > mode.budget) { log('费用总和不能超过 ' + mode.budget); return; }
+      mode.sel[key] = cost;
+    }
+    renderGravePickBody(mode);
+    return;
+  }
+  if (action === 'grave-multi-confirm') {
+    const mode = state.spellTargetMode;
+    if (!mode || !mode.multi || !mode.sel || Object.keys(mode.sel).length === 0) return;
+    const picks = Object.keys(mode.sel).map(k => {
+      const parts = k.split(':');
+      return { graveSide: parts[0], graveIndex: parseInt(parts[1], 10) };
+    });
+    document.getElementById('grave-pick').classList.remove('show');
+    state.spellTargetMode = null;
+    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: mode.def.name, picks: picks }); render(); return; }
+    const gi = state[as].hand.indexOf(mode.def);
+    if (gi >= 0) playCard(as, gi, null, null, false, { picks: picks });
+    render();
+    return;
+  }
   // 法术选目标模式：点击合法目标结算，点击其他随从不动作（保持选目标模式）
+  if (state.spellTargetMode) {
+    const mode = state.spellTargetMode;
+    // 治疗：允许直接点击己方英雄治疗英雄
+    if (mode.def.spellEffect === 'heal' && e.target.closest('#player-hero')) {
+      state.spellTargetMode = null;
+      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: mode.def.name, healHero: true }); return; }
+      const hi = state[as].hand.indexOf(mode.def);
+      if (hi >= 0) playCard(as, hi, null, null, false, { hero: true });
+      render();
+      return;
+    }
+  }
   if (state.spellTargetMode && (action === 'select-minion' || action === 'attack-minion')) {
     const mode = state.spellTargetMode;
     const u = parseInt(el.dataset.uid, 10);
+    // 单位法术（祝福/冰箭）选目标结算
+    if (mode.unitSpell) {
+      const mySideT = state.player.board.find(m => m.uid === u) ? 'player' : 'enemy';
+      const want = mode.key === 'bless' ? mySideT === as : mySideT !== as;
+      const target = state[mySideT].board.find(m => m.uid === u && !m.isSpellShell && !m.faceDown);
+      state.spellTargetMode = null;
+      if (target && want) {
+        if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'cast', uid: mode.minionUid, key: mode.key, targetUid: u }); return; }
+        castUnitSpell(as, mode.minionUid, { key: mode.key, targetUid: u });
+      }
+      render();
+      return;
+    }
     const t = legalSpellTargets(as, mode.def).find(m => m.uid === u);
     state.spellTargetMode = null;
     if (t) {
@@ -3958,6 +4580,31 @@ document.addEventListener('click', e => {
   }
   if (action === 'cast-spell') {
     const u = parseInt(el.dataset.uid, 10);
+    const m = state[as].board.find(x => x.uid === u);
+    if (!m) return;
+    const key = el.dataset.key || m.actSpell;
+    // 祝福/冰箭：进入选目标模式（祝福点友方、冰箭点敌方）
+    if (key === 'bless' || key === 'iceBolt') {
+      const entry = m.actSpells ? m.actSpells.find(e2 => e2.key === key) : { cost: m.spellCost };
+      if (m.spellMana < entry.cost) { log('法力不足，无法施放'); return; }
+      const poolSide = key === 'bless' ? state[as] : state[otherSide(as)];
+      if (!poolSide.board.some(x => !x.isSpellShell && !x.faceDown)) { log('没有合法目标'); return; }
+      state.spellTargetMode = { unitSpell: true, minionUid: u, key: key };
+      render();
+      return;
+    }
+    // 召唤恶鬼：需要选择己方墓地单位卡——打开墓地选取浮层（仅己方）
+    if (key === 'summonDemon') {
+      const sdEntry = m.actSpells ? m.actSpells.find(e2 => e2.key === key) : { cost: m.spellCost };
+      if (m.spellMana < sdEntry.cost) { log('法力不足，无法施放'); return; }
+      if (state[as].board.length >= BOARD_CAP) { log('场上使魔已达上限（' + BOARD_CAP + '）'); return; }
+      if (!state[as].graveyard.some(g => !g._isSpell)) { log('己方墓地没有单位卡，无法召唤恶鬼'); return; }
+      showGravePick({
+        def: { name: '召唤恶鬼' }, minionUid: u, unitSpell: true, onlySide: as,
+        title: '【' + m.name + '】召唤恶鬼：选择己方墓地一张单位卡除外',
+      });
+      return;
+    }
     if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'cast', uid: u }); return; } // guest 动作发给房主
     castUnitSpell(as, u); // 直接执行，不走单击延时
     return;
@@ -3966,6 +4613,12 @@ document.addEventListener('click', e => {
     const u = parseInt(el.dataset.uid, 10);
     if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'defense', uid: u }); return; } // guest 动作发给房主
     toggleDefense(as, u);
+    return;
+  }
+  if (action === 'toggle-land') {
+    const u = parseInt(el.dataset.uid, 10);
+    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'land', uid: u }); return; }
+    toggleLand(as, u);
     return;
   }
   // 旋转热区：设置式切换姿态（非 toggle）
@@ -4014,6 +4667,15 @@ document.addEventListener('click', e => {
     if (effCost(as, def) > state[as].mana) { log('法力不足，无法打出【' + def.name + '】'); return; }
     // 法术卡牌：无目标的走单击延时直接结算；需要目标的进入选目标模式（再点一次取消）
     if (def.type === 'spell') {
+      if (def.spellEffect === 'animateDead') { // 聚灵奇术：多选墓地浮层（预算 = 剩余法力 ×2）
+        const hasNecro = state.player.graveyard.concat(state.enemy.graveyard)
+          .some(g => { const gd = !g._isSpell && findDef(g.name); return gd && gd.race === '墓园'; });
+        if (!hasNecro) { log('【聚灵奇术】：双方墓地都没有墓园单位'); return; }
+        const budget = Math.max(0, state[as].mana - effCost(as, def)) * 2;
+        if (budget <= 0) { log('【聚灵奇术】：剩余法力不足，预算为 0'); return; }
+        showGravePick({ idx: idx, def: def, multi: true, budget: budget });
+        return;
+      }
       if (def.target === 'graveUnit') { // 墓地选目标（召唤骷髅兵）：打开墓地选取浮层
         if (legalSpellTargets(as, def).length === 0) { log('【' + def.name + '】双方墓地都没有单位'); return; }
         showGravePick({ idx: idx, def: def });
@@ -4136,11 +4798,11 @@ document.addEventListener('dragend', () => {
 // 盖牌：转过 90° 即翻开。
 let rotGesture = null;
 
-function rotHintText(kind, snapped, faceDown) {
+function rotHintText(kind, snapped, faceDown, isFlyer, grounded) {
   if (faceDown) return snapped === 0 ? '回正（不翻开）' : '翻开！';
   if (kind === 'hand') return snapped === 0 ? '攻击表示入场' : (snapped === 180 ? '盖放（翻面守备）' : '守备表示入场');
   if (snapped === 0) return '攻击表示';
-  if (snapped === 180) return '（已在场不能盖回）';
+  if (snapped === 180) return isFlyer ? (grounded ? '起飞（恢复飞行）' : '落地（失去飞行）') : '（已在场不能盖回）';
   return '守备表示';
 }
 
@@ -4173,6 +4835,12 @@ function applyRotation(g, snapped) {
     return;
   }
   const wantDef = snapped === 90 || snapped === 270;
+  // 飞行单位转 180°：切换 落地/起飞
+  if (snapped === 180 && m.traits.includes('飞行')) {
+    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'land', uid: g.uid, value: !m.grounded }); return; }
+    toggleLand(as, g.uid, !m.grounded);
+    return;
+  }
   if (NET.role === 'guest') {
     if (wantDef !== m.defense) clientSend({ t: 'act', kind: 'defense', uid: g.uid, value: wantDef });
     return;
@@ -4194,6 +4862,7 @@ document.addEventListener('mousedown', e => {
     idx: h.dataset.idx != null ? parseInt(h.dataset.idx, 10) : null,
     kind: card.classList.contains('hand-card') ? 'hand' : 'minion',
     faceDown: card.classList.contains('face-down'),
+    minion: card.classList.contains('minion') && state ? state[activeSide()].board.find(x => x.uid === (h.dataset.uid != null ? parseInt(h.dataset.uid, 10) : null)) : null,
     cx: r.left + r.width / 2, cy: r.top + r.height / 2,
     a0: Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)),
     angle: 0, snapped: 0, hint: null,
@@ -4201,7 +4870,7 @@ document.addEventListener('mousedown', e => {
   card.style.zIndex = 20;
   const hint = document.createElement('div');
   hint.className = 'rot-hint';
-  hint.textContent = rotHintText(rotGesture.kind, 0, rotGesture.faceDown);
+  hint.textContent = rotHintText(rotGesture.kind, 0, rotGesture.faceDown, !!(rotGesture.minion && rotGesture.minion.traits.includes('飞行')), !!(rotGesture.minion && rotGesture.minion.grounded));
   card.appendChild(hint);
   rotGesture.hint = hint;
 });
@@ -4216,7 +4885,7 @@ document.addEventListener('mousemove', e => {
   const snapped = ((Math.round(deg / 90) * 90) % 360 + 360) % 360;
   g.snapped = snapped;
   g.card.style.transform = 'rotate(' + snapped + 'deg) scale(.94)'; // 90° 步进吸附预览
-  g.hint.textContent = rotHintText(g.kind, snapped, g.faceDown);
+  g.hint.textContent = rotHintText(g.kind, snapped, g.faceDown, !!(g.minion && g.minion.traits.includes('飞行')), !!(g.minion && g.minion.grounded));
 });
 
 document.addEventListener('mouseup', () => {
@@ -4403,8 +5072,8 @@ globalThis.__api = {
   initGame, getState: () => state, playCard, doAttack, startCombat, playSpellCard, legalSpellTargets, resolveSpellEffect,
   effCost, effArmor, canTarget, legalMinionTargets, canHitHero, frontRowOf, canCounter, meleeTargets, exposure,
   moveMinion, aiRowFor, unitPower, nextActor, autoAttack, buildRandomDeck, buildAIDeck, selectedDeck,
-  flushPendingClick, showCardDetail, recallMinion, castUnitSpell, aiCastSpells, startRound, toggleDefense, weightedPick, flipUnit,
-  tryAddCard, canStartBattle, selCount, builderSel, builderSel2, deckStats, deckFrom, renderBuilder,
+  flushPendingClick, showCardDetail, recallMinion, castUnitSpell, aiCastSpells, startRound, toggleDefense, weightedPick, flipUnit, toggleLand,
+  tryAddCard, canStartBattle, selCount, builderSel, builderSel2, deckStats, deckFrom, renderBuilder, PRESET_DECKS, applyPresetDeck, buildRacePreset,
   makeMinion, cleanupDead, findDef, traitLv, attackDamage,
   onActionButton, confirmPass, showPassScreen, activeSide, viewSide, setBuilderMode,
   NET, netHostInit, netHostStartGame, hostHandleData, clientHandleData,
