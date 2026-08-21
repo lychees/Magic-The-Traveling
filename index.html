@@ -14,7 +14,22 @@
     font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
     min-height: 100vh;
   }
-  #game { max-width: 1180px; margin: 0 auto; padding: 10px 14px 30px; }
+  #game { max-width: 1420px; margin: 0 auto; padding: 10px 14px 30px; display: flex; gap: 14px; align-items: flex-start; }
+  #layout-main { flex: 1; min-width: 0; }
+  #log-sidebar {
+    width: 280px; flex-shrink: 0; position: sticky; top: 10px;
+    display: flex; flex-direction: column; max-height: calc(100vh - 20px);
+    background: #101018; border: 1px solid #2e2e44; border-radius: 10px; overflow: hidden;
+  }
+  #log-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px; font-size: 13px; color: #d8b96a; border-bottom: 1px solid #2e2e44;
+    background: #16161f;
+  }
+  #log-header button {
+    background: #2e2e44; color: #d8b96a; border: 1px solid #5a5a78;
+    border-radius: 4px; font-size: 12px; padding: 0 7px; cursor: pointer;
+  }
   #topbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; }
   #topbar h1 { font-size: 20px; color: #d8b96a; letter-spacing: 2px; }
   .btn {
@@ -380,14 +395,13 @@
   #end-turn:disabled { opacity: .4; cursor: not-allowed; }
   #turn-indicator { font-size: 13px; color: #d8b96a; align-self: center; white-space: nowrap; }
   #log {
-    flex: 1; height: 76px; overflow-y: auto; background: #101018;
-    border: 1px solid #2e2e44; border-radius: 8px; padding: 6px 10px;
-    font-size: 12px; line-height: 1.5; color: #a8a8bc;
-    transition: height .2s, font-size .2s;
+    flex: 1; overflow-y: auto; padding: 6px 10px;
+    font-size: 12px; line-height: 1.6; color: #a8a8bc;
+    transition: font-size .2s;
   }
   /* 日志展开态：更大更高，便于回看 */
-  #log.expanded { height: 42vh; font-size: 15px; line-height: 1.7; }
-  #log-wrap { flex: 1; position: relative; display: flex; }
+  #log.expanded { font-size: 15px; line-height: 1.8; }
+
   #log-expand {
     position: absolute; top: 4px; right: 6px; z-index: 2;
     background: #2e2e44; color: #d8b96a; border: 1px solid #5a5a78;
@@ -491,6 +505,24 @@
     100% { transform: scale(1); }
   }
   .minion.epic-in { animation: epicIn .9s; }
+
+  /* 战术预览面板（长按卡牌显示 进攻/受击 目标分析） */
+  #tac-preview {
+    display: none; position: fixed; z-index: 45; max-width: 320px; min-width: 240px;
+    background: #16161fee; border: 1px solid #d8b96a; border-radius: 10px;
+    padding: 8px 10px; font-size: 12px; color: #e8e4d8; pointer-events: none;
+    box-shadow: 0 6px 24px #000c;
+  }
+  #tac-preview.show { display: block; }
+  #tac-preview .tp-title { color: #d8b96a; font-weight: bold; font-size: 13px; margin-bottom: 5px; }
+  #tac-preview .tp-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; line-height: 1.5; }
+  #tac-preview .tp-row .tp-prob { color: #7ab8ff; min-width: 44px; }
+  #tac-preview .tp-row .tp-dmg { color: #ffb84d; }
+  #tac-preview .tp-row .tp-kill { color: #ff6a6a; font-weight: bold; }
+  #tac-preview .tp-row .tp-counter { color: #7ec87e; }
+  #tac-preview .tp-hint { margin-top: 6px; font-size: 10px; color: #8a8a9a; }
+  #tac-preview .tp-empty { color: #6a6a80; padding: 4px 0; }
+  .minion.tac-hl { box-shadow: 0 0 12px #d8b96acc, 0 0 4px #d8b96a; }
   #overlay .panel {
     background: #1e1e2e; border: 2px solid #d8b96a; border-radius: 12px;
     padding: 36px 60px; text-align: center;
@@ -676,6 +708,8 @@
       <div id="mana-curve"></div>
       <div class="sb-label">阵营统计</div>
       <div id="race-stats"></div>
+      <div class="sb-label">对局规则</div>
+      <div id="game-rules"></div>
       <div class="sb-label">预设卡组</div>
       <div id="preset-decks"></div>
       <button class="btn" id="random-deck">随机牌组</button>
@@ -687,6 +721,7 @@
 
 <!-- ========== 对战界面 ========== -->
 <div id="game" style="display:none">
+  <div id="layout-main">
   <div id="topbar">
     <h1>使魔卡牌对战</h1>
     <div>
@@ -707,10 +742,6 @@
   <div id="midbar">
     <button id="end-turn">开始战斗</button>
     <div id="turn-indicator"></div>
-    <div id="log-wrap">
-      <div id="log"></div>
-      <button id="log-expand" title="展开 / 收起日志">⤢</button>
-    </div>
   </div>
 
   <div class="board" id="player-board"></div>
@@ -736,15 +767,20 @@
       再生X：每轮部署阶段开始时恢复 X 点生命。毒LvX：被攻击造成伤害的随从中毒（重复取最高 Lv），中毒者在每轮部署阶段开始时受 X 点伤害。<br>
       单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）。和平：不会发起可能令自己死亡的攻击（若目标反击会致死则跳过）。死亡凝视（蛮牛）：攻击时 25% 概率直接消灭目标随从（无视生命与护甲）。护甲穿透X（比蒙系）：攻击无视目标 X 点护甲。守备表示：部署阶段可在攻击/守备之间切换；守备单位不主动攻击，但无限次反击且反击伤害与对手的攻击同时结算，被随机选取的概率 ×2（卡面变宽两倍）。翻面表示：手牌可盖放部署（默认守备表示，不触发战吼）；翻面单位不会成为攻击目标、不主动攻击、不反击，但仍每轮恢复法术、可吃到 buff；部署阶段可翻开（翻开时结算战吼；已在场的单位不能再盖回）。盖牌守备的单位会被选中攻击，并在被攻击前揭示。<br>
       法术卡牌：紫边卡牌（土/水/火/气四系），从手牌打出不入场、结算后进墓地（骨龙可减费）。无需目标的法术点击直接结算；需要目标的法术点击进入选目标模式（高亮合法目标，点击目标结算，点空白或再点该卡取消）。法术卡也可盖放：成为场上的盖牌（非单位、不被攻击），翻开时立即结算——需要目标的法术随机选合法目标，无合法目标则不生效。法术伤害受「法术护盾X」减免。<br>
-      范围攻击：攻击随从时，对被攻击随从左右两边相邻的随从造成等量溅射（各自结算护甲，溅射受伤也会触发反击）。石化：生命未满时护甲视为 4。吸血：造成的伤害等量治疗己方英雄。法术护盾X：受到的法术伤害 -X。火系魔法免疫（凤凰、火鸟、火精灵、烈火精灵、火元素、烈火元素）：不受火系法术影响（火球术、烧灼、地狱烈焰、末日审判、魔女火球等）。<br>
+      范围攻击：攻击随从时，对被攻击随从左右两边相邻的随从造成等量溅射（各自结算护甲，溅射受伤也会触发反击）。石化：生命未满时护甲视为 4。吸血：造成的伤害等量恢复自身生命。法术护盾X：受到的法术伤害 -X。火系魔法免疫（凤凰、火鸟、火精灵、烈火精灵、火元素、烈火元素）：不受火系法术影响（火球术、烧灼、地狱烈焰、末日审判、魔女火球等）。<br>
       法力燃烧X：攻击敌方英雄时对方下一轮法力 -X。驱魔（如圣骑士）：被该单位击杀的使魔不触发亡语。<br>
       检索类亡语（如骷髅、骷髅弓手）：从牌库检索一张同名卡置入手牌。魅魔：战吼——随机夺取一个敌方随从。死神：战吼——消灭攻击力最高的敌方随从。骨龙/骸骨巨龙：打出时除外己方墓地，每张除外牌费用 -1。<br>
-      士气：每个单位 -10 ~ +10。正士气每点 = 10% 概率在行动后额外行动一次（每战斗阶段限一次）；负士气每点 = 10% 概率本回合无法行动，且反击（含守备表示的同时结算反击）有同等概率失败。士气流转：造成伤害 +1、击杀额外 +1、受到伤害 -1；守备方格挡全部伤害时伤害来源 -1、守备方 +1；每轮开始时，我方全场同阵营则全场 +1，两种阵营无影响，x（≥3）种阵营时 -(x-2)。墓园（亡灵）与元素城单位不受士气影响，也不参与阵营计算，盖牌同样不参与士气结算；但我方战场存在（非盖牌）墓园单位时，所有单位士气额外 -1。<br>
+      士气：每个单位 -10 ~ +10。正士气每点 = 10% 概率在行动后额外行动一次（每战斗阶段限一次）；负士气每点 = 10% 概率本回合无法行动，且反击（含守备表示的同时结算反击）有同等概率失败。士气流转：造成伤害 +1、击杀额外 +1、受到伤害 -1；伤害被护甲完全抵挡时防守方 +1（守备表示格挡时伤害来源额外 -1）；每轮开始时，我方全场同阵营则全场 +1，两种阵营无影响，x（≥3）种阵营时 -(x-2)。墓园（亡灵）与元素城单位不受士气影响，也不参与阵营计算，盖牌同样不参与士气结算；但我方战场存在（非盖牌）墓园单位时，所有单位士气额外 -1。<br>
       每轮部署阶段开始时双方各摸一张牌，法力水晶上限 10。英雄生命 20，先击倒对方英雄者胜。牌库抽空后每次摸牌受到递增的疲劳伤害。随从死亡进入墓地。<br>
       收藏与卡包：对局结束获得金币（胜 100 / 平 50 / 负 30）；100 金币开一包（5 张全卡池随机，稀有度按评分着色：灰/蓝/紫/金）。组牌只能使用收藏中已拥有的卡，每种携带数不超过拥有数（最多 4 张）；首次运行赠送全部白板卡各 2 张与 200 金币。<br>
       联机对战：基于 PeerJS 公共云 P2P（无自有服务器）。开房间生成 6 位房间码（可设密码），对方凭房间码加入或观战；房主浏览器权威执行全部规则并广播个性化快照（对手只见自己的手牌，观战不见任何手牌）。密码只是轻量校验、非安全方案；公共 P2P 与 NAT 穿透不保证 100% 可达，连接失败请重试或换网络。
     </div>
   </details>
+  </div>
+  <aside id="log-sidebar">
+    <div id="log-header"><span>战斗记录</span><button id="log-expand" title="展开 / 收起日志">⤢</button></div>
+    <div id="log"></div>
+  </aside>
 </div>
 
 <div id="overlay">
@@ -779,6 +815,9 @@
 <!-- 法术施放全屏闪光 -->
 <div id="spell-flash"><div class="sf-text" id="spell-flash-text"></div></div>
 
+<!-- 战术预览面板（长按卡牌） -->
+<div id="tac-preview"></div>
+
 <!-- 高费单位降临动画 -->
 <div id="epic-fx"></div>
 
@@ -802,310 +841,4220 @@
   </div>
 </div>
 
+<script type="application/json" id="cards-json">
+{
+  "version": 1,
+  "_comment": {
+    "name": "卡名（唯一键）",
+    "race": "阵营，必须是 races 之一",
+    "cost": "费用（非负整数；骨龙/英雄特性可在 effCost 动态变化）",
+    "atk": "攻击（数值）",
+    "arm": "护甲（数值）",
+    "hp": "生命（数值）",
+    "rating": "强度评分 1-100（白板锚定 60）",
+    "traits": "特性字符串数组，如 [\"远程\",\"飞行\",\"骑兵\",\"毒Lv2\",\"再生1\",\"法术护盾2\",\"连击\",\"反击2\",\"掠夺\",\"高级水系魔法\"]",
+    "spell": "战吼/亡语 key（prayer/draw/wisp/elfHeal/heal/witch/dragoness/charm/necro/reaper/resurrect/skeletonSearch/curse/boneDragon）",
+    "spellParam": "spell 的数值参数（如 heal 的治疗量）",
+    "actSpell": "单位法术 key（split/fireball/harvest/tidalWave/study），配合 spellCost/spellMana0/spellManaMax",
+    "spellCost": "单位法术消耗",
+    "spellMana0": "单位法术初始法力",
+    "spellManaMax": "单位法术法力上限（每轮准备阶段 +1 恢复）",
+    "actSpells": "（扩展预留）多单位法术数组，每项 {key, cost}",
+    "type": "\"spell\" 表示法术卡（单位卡省略此字段）",
+    "school": "法术派系：土/水/火/气（仅 type=spell）",
+    "spellEffect": "法术效果 key（resolveSpellEffect 中的 case 名）",
+    "target": "法术目标类型：enemyUnit/friendlyUnit/graveUnit/none",
+    "art": "卡面立绘 {icon: emoji, hue: 0-360}",
+    "token": "true 表示 token（不在牌池，仅变身/召唤产生）"
+  },
+  "races": [
+    "城堡",
+    "壁垒",
+    "塔楼",
+    "地狱",
+    "墓园",
+    "地下城",
+    "据点",
+    "要塞",
+    "元素",
+    "中立",
+    "港口",
+    "堡垒",
+    "工厂"
+  ],
+  "schools": {
+    "土": {
+      "label": "土",
+      "color": "#5a9a3a"
+    },
+    "水": {
+      "label": "水",
+      "color": "#4a9ae8"
+    },
+    "火": {
+      "label": "火",
+      "color": "#e05a3a"
+    },
+    "气": {
+      "label": "气",
+      "color": "#4ad8c8"
+    }
+  },
+  "tokens": [
+    {
+      "name": "绿龙",
+      "race": "壁垒",
+      "cost": 0,
+      "atk": 8,
+      "arm": 0,
+      "hp": 16,
+      "traits": [],
+      "token": true,
+      "art": {
+        "icon": "🐉",
+        "hue": 140
+      }
+    }
+  ],
+  "cards": [
+    {
+      "name": "枪兵",
+      "race": "城堡",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 61,
+      "traits": [
+        "拒马"
+      ],
+      "art": {
+        "icon": "🗡️",
+        "hue": 210
+      }
+    },
+    {
+      "name": "农夫约翰",
+      "race": "中立",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 56,
+      "traits": [
+        "和平"
+      ],
+      "actSpell": "harvest",
+      "spellCost": 4,
+      "spellMana0": 3,
+      "spellManaMax": 4,
+      "art": {
+        "icon": "🧑‍🌾",
+        "hue": 35
+      }
+    },
+    {
+      "name": "弓箭手",
+      "race": "城堡",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 60,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🏹",
+        "hue": 200
+      }
+    },
+    {
+      "name": "戟兵",
+      "race": "城堡",
+      "cost": 2,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "⚔️",
+        "hue": 215
+      }
+    },
+    {
+      "name": "狮鹫",
+      "race": "城堡",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 7,
+      "rating": 63,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🦅",
+        "hue": 45
+      }
+    },
+    {
+      "name": "十字军",
+      "race": "城堡",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 6,
+      "rating": 60,
+      "traits": [
+        "连击"
+      ],
+      "art": {
+        "icon": "🛡️",
+        "hue": 220
+      }
+    },
+    {
+      "name": "圣骑士",
+      "race": "城堡",
+      "cost": 5,
+      "atk": 4,
+      "arm": 0,
+      "hp": 8,
+      "rating": 58,
+      "traits": [
+        "法力燃烧2",
+        "驱魔"
+      ],
+      "art": {
+        "icon": "⚜️",
+        "hue": 50
+      }
+    },
+    {
+      "name": "祭司",
+      "race": "城堡",
+      "cost": 5,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 66,
+      "traits": [
+        "远程"
+      ],
+      "spell": "prayer",
+      "art": {
+        "icon": "🙏",
+        "hue": 260
+      }
+    },
+    {
+      "name": "骑兵",
+      "race": "城堡",
+      "cost": 6,
+      "atk": 3,
+      "arm": 0,
+      "hp": 12,
+      "rating": 58,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🐎",
+        "hue": 205
+      }
+    },
+    {
+      "name": "女武神",
+      "race": "城堡",
+      "cost": 7,
+      "atk": 8,
+      "arm": 0,
+      "hp": 15,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "👼",
+        "hue": 55
+      }
+    },
+    {
+      "name": "小精灵",
+      "race": "壁垒",
+      "cost": 0,
+      "atk": 1,
+      "arm": 0,
+      "hp": 1,
+      "rating": 58,
+      "traits": [],
+      "spell": "wisp",
+      "art": {
+        "icon": "🧚",
+        "hue": 90
+      }
+    },
+    {
+      "name": "史莱姆",
+      "race": "壁垒",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 57,
+      "traits": [
+        "再生1"
+      ],
+      "actSpell": "split",
+      "spellCost": 1,
+      "spellMana0": 0,
+      "spellManaMax": 1,
+      "art": {
+        "icon": "🟢",
+        "hue": 120
+      }
+    },
+    {
+      "name": "半人马",
+      "race": "壁垒",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 3,
+      "rating": 63,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🏇",
+        "hue": 100
+      }
+    },
+    {
+      "name": "精灵",
+      "race": "壁垒",
+      "cost": 3,
+      "atk": 0,
+      "arm": 0,
+      "hp": 3,
+      "rating": 53,
+      "traits": [],
+      "spell": "elfHeal",
+      "art": {
+        "icon": "🧝",
+        "hue": 140
+      }
+    },
+    {
+      "name": "石头人",
+      "race": "塔楼",
+      "cost": 3,
+      "atk": 4,
+      "arm": 0,
+      "hp": 7,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "🪨",
+        "hue": 30
+      }
+    },
+    {
+      "name": "棕熊",
+      "race": "壁垒",
+      "cost": 4,
+      "atk": 5,
+      "arm": 0,
+      "hp": 9,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "🐻",
+        "hue": 25
+      }
+    },
+    {
+      "name": "魔女",
+      "race": "壁垒",
+      "cost": 4,
+      "atk": 1,
+      "arm": 0,
+      "hp": 6,
+      "rating": 58,
+      "traits": [
+        "远程"
+      ],
+      "actSpell": "fireball",
+      "spellCost": 1,
+      "spellMana0": 2,
+      "spellManaMax": 2,
+      "art": {
+        "icon": "🧙‍♀️",
+        "hue": 280
+      }
+    },
+    {
+      "name": "巨型史莱姆",
+      "race": "壁垒",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 6,
+      "rating": 51,
+      "traits": [
+        "再生1"
+      ],
+      "actSpell": "split",
+      "spellCost": 1,
+      "spellMana0": 0,
+      "spellManaMax": 1,
+      "art": {
+        "icon": "🫠",
+        "hue": 110
+      }
+    },
+    {
+      "name": "龙女",
+      "race": "壁垒",
+      "cost": 7,
+      "atk": 0,
+      "arm": 0,
+      "hp": 6,
+      "rating": 55,
+      "traits": [],
+      "spell": "dragoness",
+      "art": {
+        "icon": "🐲",
+        "hue": 150
+      }
+    },
+    {
+      "name": "独角兽骑士",
+      "race": "壁垒",
+      "cost": 6,
+      "atk": 3,
+      "arm": 0,
+      "hp": 9,
+      "rating": 56,
+      "traits": [
+        "骑兵",
+        "法术护盾2"
+      ],
+      "art": {
+        "icon": "🦄",
+        "hue": 160
+      }
+    },
+    {
+      "name": "蛇",
+      "race": "要塞",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 3,
+      "rating": 60,
+      "traits": [
+        "毒Lv1"
+      ],
+      "art": {
+        "icon": "🐍",
+        "hue": 90
+      }
+    },
+    {
+      "name": "鹰身女妖R",
+      "race": "地下城",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 5,
+      "rating": 61,
+      "traits": [
+        "飞行",
+        "三姐妹"
+      ],
+      "art": {
+        "icon": "🦉",
+        "hue": 0
+      }
+    },
+    {
+      "name": "鹰身女妖G",
+      "race": "地下城",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 5,
+      "rating": 61,
+      "traits": [
+        "飞行",
+        "三姐妹"
+      ],
+      "art": {
+        "icon": "🦉",
+        "hue": 120
+      }
+    },
+    {
+      "name": "鹰身女妖B",
+      "race": "地下城",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 5,
+      "rating": 61,
+      "traits": [
+        "飞行",
+        "三姐妹"
+      ],
+      "art": {
+        "icon": "🦉",
+        "hue": 220
+      }
+    },
+    {
+      "name": "钻石人",
+      "race": "塔楼",
+      "cost": 4,
+      "atk": 4,
+      "arm": 1,
+      "hp": 8,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "💎",
+        "hue": 190
+      }
+    },
+    {
+      "name": "蝎狮",
+      "race": "地下城",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 14,
+      "rating": 62,
+      "traits": [
+        "毒Lv3"
+      ],
+      "art": {
+        "icon": "🦂",
+        "hue": 20
+      }
+    },
+    {
+      "name": "魅魔",
+      "race": "地狱",
+      "cost": 6,
+      "atk": 1,
+      "arm": 0,
+      "hp": 4,
+      "rating": 61,
+      "traits": [],
+      "spell": "charm",
+      "art": {
+        "icon": "😈",
+        "hue": 320
+      }
+    },
+    {
+      "name": "九头怪",
+      "race": "要塞",
+      "cost": 7,
+      "atk": 3,
+      "arm": 0,
+      "hp": 18,
+      "rating": 60,
+      "traits": [
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "🐙",
+        "hue": 280
+      }
+    },
+    {
+      "name": "骷髅",
+      "race": "墓园",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 55,
+      "traits": [],
+      "spell": "skeletonSearch",
+      "art": {
+        "icon": "💀",
+        "hue": 180
+      }
+    },
+    {
+      "name": "石像鬼",
+      "race": "塔楼",
+      "cost": 2,
+      "atk": 2,
+      "arm": 1,
+      "hp": 2,
+      "rating": 59,
+      "traits": [
+        "石化"
+      ],
+      "art": {
+        "icon": "🗿",
+        "hue": 200
+      }
+    },
+    {
+      "name": "木乃伊",
+      "race": "中立",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 66,
+      "traits": [],
+      "spell": "curse",
+      "art": {
+        "icon": "⚰️",
+        "hue": 170
+      }
+    },
+    {
+      "name": "幽灵",
+      "race": "墓园",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 59,
+      "traits": [
+        "再生2"
+      ],
+      "art": {
+        "icon": "👻",
+        "hue": 190
+      }
+    },
+    {
+      "name": "吸血鬼",
+      "race": "墓园",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 7,
+      "rating": 57,
+      "traits": [
+        "吸血"
+      ],
+      "art": {
+        "icon": "🧛",
+        "hue": 340
+      }
+    },
+    {
+      "name": "死灵法师",
+      "race": "墓园",
+      "cost": 5,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 59,
+      "traits": [
+        "远程"
+      ],
+      "spell": "necro",
+      "art": {
+        "icon": "🔮",
+        "hue": 270
+      }
+    },
+    {
+      "name": "死神",
+      "race": "墓园",
+      "cost": 6,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 58,
+      "traits": [],
+      "spell": "reaper",
+      "art": {
+        "icon": "☠️",
+        "hue": 240
+      }
+    },
+    {
+      "name": "死亡骑士",
+      "race": "墓园",
+      "cost": 6,
+      "atk": 3,
+      "arm": 1,
+      "hp": 9,
+      "rating": 53,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🏴",
+        "hue": 210
+      }
+    },
+    {
+      "name": "骨龙",
+      "race": "墓园",
+      "cost": 7,
+      "atk": 3,
+      "arm": 0,
+      "hp": 9,
+      "rating": 58,
+      "traits": [],
+      "spell": "boneDragon",
+      "art": {
+        "icon": "🦴",
+        "hue": 160
+      }
+    },
+    {
+      "name": "民兵",
+      "race": "城堡",
+      "cost": 0,
+      "atk": 1,
+      "arm": 0,
+      "hp": 1,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "🪖",
+        "hue": 200
+      }
+    },
+    {
+      "name": "飞鹰",
+      "race": "城堡",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 57,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🕊️",
+        "hue": 50
+      }
+    },
+    {
+      "name": "剑士",
+      "race": "城堡",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "🤺",
+        "hue": 215
+      }
+    },
+    {
+      "name": "弩手",
+      "race": "城堡",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 58,
+      "traits": [
+        "远程",
+        "护甲穿透2"
+      ],
+      "art": {
+        "icon": "🎯",
+        "hue": 205
+      }
+    },
+    {
+      "name": "医护兵",
+      "race": "城堡",
+      "cost": 3,
+      "atk": 1,
+      "arm": 0,
+      "hp": 4,
+      "rating": 53,
+      "traits": [],
+      "spell": "heal",
+      "spellParam": 3,
+      "art": {
+        "icon": "⛑️",
+        "hue": 0
+      }
+    },
+    {
+      "name": "重装卫兵",
+      "race": "城堡",
+      "cost": 4,
+      "atk": 2,
+      "arm": 2,
+      "hp": 8,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "💂",
+        "hue": 220
+      }
+    },
+    {
+      "name": "游侠",
+      "race": "城堡",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 4,
+      "rating": 54,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🪃",
+        "hue": 100
+      }
+    },
+    {
+      "name": "圣殿骑士",
+      "race": "城堡",
+      "cost": 6,
+      "atk": 5,
+      "arm": 1,
+      "hp": 9,
+      "rating": 54,
+      "traits": [
+        "法术护盾1"
+      ],
+      "art": {
+        "icon": "🤴",
+        "hue": 45
+      }
+    },
+    {
+      "name": "大祭司",
+      "race": "城堡",
+      "cost": 6,
+      "atk": 3,
+      "arm": 0,
+      "hp": 8,
+      "rating": 64,
+      "traits": [
+        "远程"
+      ],
+      "spell": "prayer",
+      "art": {
+        "icon": "📿",
+        "hue": 270
+      }
+    },
+    {
+      "name": "龙骑士",
+      "race": "城堡",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 10,
+      "rating": 56,
+      "traits": [
+        "骑兵",
+        "飞行"
+      ],
+      "art": {
+        "icon": "🐉",
+        "hue": 35
+      }
+    },
+    {
+      "name": "神射手",
+      "race": "城堡",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 62,
+      "traits": [
+        "远程",
+        "连击"
+      ],
+      "art": {
+        "icon": "🏹",
+        "hue": 195
+      }
+    },
+    {
+      "name": "皇家狮鹫",
+      "race": "城堡",
+      "cost": 4,
+      "atk": 4,
+      "arm": 0,
+      "hp": 8,
+      "rating": 61,
+      "traits": [
+        "飞行",
+        "反击2"
+      ],
+      "art": {
+        "icon": "🦅",
+        "hue": 40
+      }
+    },
+    {
+      "name": "僧侣",
+      "race": "城堡",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "rating": 55,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🧎",
+        "hue": 250
+      }
+    },
+    {
+      "name": "骑士",
+      "race": "城堡",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 12,
+      "rating": 58,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🐴",
+        "hue": 30
+      }
+    },
+    {
+      "name": "天使",
+      "race": "城堡",
+      "cost": 8,
+      "atk": 7,
+      "arm": 0,
+      "hp": 14,
+      "rating": 58,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "😇",
+        "hue": 55
+      }
+    },
+    {
+      "name": "大天使",
+      "race": "城堡",
+      "cost": 9,
+      "atk": 8,
+      "arm": 0,
+      "hp": 16,
+      "rating": 68,
+      "traits": [
+        "飞行",
+        "鼓舞1"
+      ],
+      "spell": "resurrect",
+      "art": {
+        "icon": "👼",
+        "hue": 48
+      }
+    },
+    {
+      "name": "妖精",
+      "race": "壁垒",
+      "cost": 0,
+      "atk": 0,
+      "arm": 0,
+      "hp": 1,
+      "rating": 56,
+      "traits": [],
+      "spell": "wisp",
+      "art": {
+        "icon": "🦋",
+        "hue": 100
+      }
+    },
+    {
+      "name": "林狼",
+      "race": "壁垒",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 2,
+      "rating": 57,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🐺",
+        "hue": 90
+      }
+    },
+    {
+      "name": "恐狼",
+      "race": "壁垒",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 2,
+      "rating": 57,
+      "traits": [
+        "恐狼光环"
+      ],
+      "art": {
+        "icon": "🐺",
+        "hue": 30
+      }
+    },
+    {
+      "name": "毒藤",
+      "race": "壁垒",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 3,
+      "rating": 56,
+      "traits": [
+        "毒Lv2"
+      ],
+      "art": {
+        "icon": "🌿",
+        "hue": 130
+      }
+    },
+    {
+      "name": "树精",
+      "race": "壁垒",
+      "cost": 3,
+      "atk": 1,
+      "arm": 1,
+      "hp": 6,
+      "rating": 58,
+      "traits": [
+        "再生1"
+      ],
+      "art": {
+        "icon": "🌳",
+        "hue": 140
+      }
+    },
+    {
+      "name": "鹰骑士",
+      "race": "壁垒",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 54,
+      "traits": [
+        "飞行",
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🦅",
+        "hue": 60
+      }
+    },
+    {
+      "name": "精灵法师",
+      "race": "壁垒",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 62,
+      "traits": [
+        "远程"
+      ],
+      "actSpell": "fireball",
+      "spellCost": 1,
+      "spellMana0": 2,
+      "spellManaMax": 2,
+      "art": {
+        "icon": "🧙‍♂️",
+        "hue": 290
+      }
+    },
+    {
+      "name": "风行者",
+      "race": "壁垒",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 55,
+      "traits": [
+        "远程",
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🌪️",
+        "hue": 170
+      }
+    },
+    {
+      "name": "史莱姆王",
+      "race": "壁垒",
+      "cost": 5,
+      "atk": 4,
+      "arm": 0,
+      "hp": 8,
+      "rating": 57,
+      "traits": [
+        "再生2"
+      ],
+      "actSpell": "split",
+      "spellCost": 1,
+      "spellMana0": 0,
+      "spellManaMax": 1,
+      "art": {
+        "icon": "🫧",
+        "hue": 115
+      }
+    },
+    {
+      "name": "远古树人",
+      "race": "壁垒",
+      "cost": 6,
+      "atk": 4,
+      "arm": 1,
+      "hp": 8,
+      "rating": 60,
+      "traits": [
+        "再生2"
+      ],
+      "art": {
+        "icon": "🌲",
+        "hue": 135
+      }
+    },
+    {
+      "name": "麒麟",
+      "race": "壁垒",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 12,
+      "rating": 58,
+      "traits": [
+        "再生2",
+        "法术护盾2"
+      ],
+      "art": {
+        "icon": "🦌",
+        "hue": 80
+      }
+    },
+    {
+      "name": "半人马首领",
+      "race": "壁垒",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 64,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🏇",
+        "hue": 105
+      }
+    },
+    {
+      "name": "矮人",
+      "race": "壁垒",
+      "cost": 2,
+      "atk": 2,
+      "arm": 1,
+      "hp": 4,
+      "rating": 62,
+      "traits": [
+        "法术护盾1"
+      ],
+      "art": {
+        "icon": "🧔",
+        "hue": 35
+      }
+    },
+    {
+      "name": "木精灵",
+      "race": "壁垒",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 60,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🏹",
+        "hue": 130
+      }
+    },
+    {
+      "name": "战斗矮人",
+      "race": "壁垒",
+      "cost": 3,
+      "atk": 3,
+      "arm": 1,
+      "hp": 5,
+      "rating": 60,
+      "traits": [
+        "法术护盾1"
+      ],
+      "art": {
+        "icon": "⚒️",
+        "hue": 40
+      }
+    },
+    {
+      "name": "大精灵",
+      "race": "壁垒",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 62,
+      "traits": [
+        "远程",
+        "连击"
+      ],
+      "art": {
+        "icon": "🧝‍♀️",
+        "hue": 145
+      }
+    },
+    {
+      "name": "飞马",
+      "race": "壁垒",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 55,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🪽",
+        "hue": 170
+      }
+    },
+    {
+      "name": "银飞马",
+      "race": "壁垒",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 53,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "❄️",
+        "hue": 180
+      }
+    },
+    {
+      "name": "金龙",
+      "race": "壁垒",
+      "cost": 8,
+      "atk": 7,
+      "arm": 0,
+      "hp": 14,
+      "rating": 61,
+      "traits": [
+        "飞行",
+        "法术护盾3"
+      ],
+      "art": {
+        "icon": "🐉",
+        "hue": 50
+      }
+    },
+    {
+      "name": "小恶魔",
+      "race": "地狱",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 1,
+      "rating": 61,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "👿",
+        "hue": 300
+      }
+    },
+    {
+      "name": "毒蜘蛛",
+      "race": "要塞",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 2,
+      "rating": 54,
+      "traits": [
+        "毒Lv1"
+      ],
+      "art": {
+        "icon": "🕷️",
+        "hue": 280
+      }
+    },
+    {
+      "name": "吸血蝙蝠",
+      "race": "墓园",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 62,
+      "traits": [
+        "飞行",
+        "吸血"
+      ],
+      "art": {
+        "icon": "🦇",
+        "hue": 330
+      }
+    },
+    {
+      "name": "双头犬",
+      "race": "地狱",
+      "cost": 3,
+      "atk": 5,
+      "arm": 0,
+      "hp": 6,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "🐕",
+        "hue": 20
+      }
+    },
+    {
+      "name": "石像魔",
+      "race": "要塞",
+      "cost": 4,
+      "atk": 3,
+      "arm": 2,
+      "hp": 5,
+      "rating": 59,
+      "traits": [
+        "石化"
+      ],
+      "art": {
+        "icon": "🧌",
+        "hue": 260
+      }
+    },
+    {
+      "name": "火蜥蜴",
+      "race": "地狱",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 6,
+      "rating": 48,
+      "traits": [
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "🦎",
+        "hue": 15
+      }
+    },
+    {
+      "name": "鹰身女妖女王",
+      "race": "地下城",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 7,
+      "rating": 62,
+      "traits": [
+        "飞行",
+        "三姐妹"
+      ],
+      "art": {
+        "icon": "👸",
+        "hue": 310
+      }
+    },
+    {
+      "name": "地狱三头犬",
+      "race": "地狱",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 8,
+      "rating": 50,
+      "traits": [
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "👹",
+        "hue": 0
+      }
+    },
+    {
+      "name": "魅魔女王",
+      "race": "地狱",
+      "cost": 7,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 64,
+      "traits": [],
+      "spell": "charm",
+      "art": {
+        "icon": "💋",
+        "hue": 340
+      }
+    },
+    {
+      "name": "深渊巨口",
+      "race": "地狱",
+      "cost": 8,
+      "atk": 10,
+      "arm": 0,
+      "hp": 16,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "🕳️",
+        "hue": 290
+      }
+    },
+    {
+      "name": "魔童",
+      "race": "地狱",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "👾",
+        "hue": 280
+      }
+    },
+    {
+      "name": "歌革",
+      "race": "地狱",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 60,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🧿",
+        "hue": 285
+      }
+    },
+    {
+      "name": "地狱猎犬",
+      "race": "地狱",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 3,
+      "rating": 55,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🦮",
+        "hue": 15
+      }
+    },
+    {
+      "name": "玛各",
+      "race": "地狱",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 56,
+      "traits": [
+        "远程",
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "🧨",
+        "hue": 5
+      }
+    },
+    {
+      "name": "恶鬼",
+      "race": "地狱",
+      "cost": 4,
+      "atk": 4,
+      "arm": 0,
+      "hp": 6,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "🦹",
+        "hue": 25
+      }
+    },
+    {
+      "name": "火精灵",
+      "race": "地狱",
+      "cost": 5,
+      "atk": 4,
+      "arm": 0,
+      "hp": 6,
+      "rating": 53,
+      "traits": [
+        "飞行",
+        "火系魔法免疫"
+      ],
+      "art": {
+        "icon": "🔥",
+        "hue": 15
+      }
+    },
+    {
+      "name": "长角恶鬼",
+      "race": "地狱",
+      "cost": 5,
+      "atk": 5,
+      "arm": 0,
+      "hp": 7,
+      "rating": 50,
+      "traits": [],
+      "art": {
+        "icon": "🐃",
+        "hue": 20
+      }
+    },
+    {
+      "name": "邪神",
+      "race": "地狱",
+      "cost": 5,
+      "atk": 4,
+      "arm": 1,
+      "hp": 7,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "⛓️",
+        "hue": 300
+      }
+    },
+    {
+      "name": "烈火精灵",
+      "race": "地狱",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 7,
+      "rating": 51,
+      "traits": [
+        "飞行",
+        "火系魔法免疫"
+      ],
+      "art": {
+        "icon": "🎇",
+        "hue": 25
+      }
+    },
+    {
+      "name": "邪神王",
+      "race": "地狱",
+      "cost": 6,
+      "atk": 5,
+      "arm": 1,
+      "hp": 8,
+      "rating": 55,
+      "traits": [],
+      "actSpell": "summonDemon",
+      "spellCost": 4,
+      "spellMana0": 2,
+      "spellManaMax": 4,
+      "art": {
+        "icon": "🫅",
+        "hue": 320
+      }
+    },
+    {
+      "name": "恶魔",
+      "race": "地狱",
+      "cost": 7,
+      "atk": 5,
+      "arm": 0,
+      "hp": 8,
+      "rating": 56,
+      "traits": [
+        "飞行",
+        "不受反击"
+      ],
+      "art": {
+        "icon": "😈",
+        "hue": 350
+      }
+    },
+    {
+      "name": "大恶魔",
+      "race": "地狱",
+      "cost": 8,
+      "atk": 6,
+      "arm": 0,
+      "hp": 10,
+      "rating": 56,
+      "traits": [
+        "飞行",
+        "不受反击"
+      ],
+      "art": {
+        "icon": "🖤",
+        "hue": 340
+      }
+    },
+    {
+      "name": "骷髅弓手",
+      "race": "墓园",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 55,
+      "traits": [
+        "远程"
+      ],
+      "spell": "skeletonSearch",
+      "art": {
+        "icon": "🏹",
+        "hue": 185
+      }
+    },
+    {
+      "name": "僵尸",
+      "race": "墓园",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 58,
+      "traits": [
+        "再生1"
+      ],
+      "art": {
+        "icon": "🧟",
+        "hue": 120
+      }
+    },
+    {
+      "name": "怨灵",
+      "race": "墓园",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 4,
+      "rating": 57,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🌫️",
+        "hue": 195
+      }
+    },
+    {
+      "name": "亡语者",
+      "race": "墓园",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 53,
+      "traits": [],
+      "spell": "curse",
+      "art": {
+        "icon": "🕯️",
+        "hue": 230
+      }
+    },
+    {
+      "name": "死灵学士",
+      "race": "墓园",
+      "cost": 3,
+      "atk": 1,
+      "arm": 0,
+      "hp": 3,
+      "rating": 54,
+      "traits": [],
+      "spell": "necro",
+      "art": {
+        "icon": "🎓",
+        "hue": 275
+      }
+    },
+    {
+      "name": "尸巫",
+      "race": "墓园",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 54,
+      "traits": [
+        "远程",
+        "毒Lv2"
+      ],
+      "art": {
+        "icon": "🧪",
+        "hue": 150
+      }
+    },
+    {
+      "name": "木乃伊王",
+      "race": "中立",
+      "cost": 5,
+      "atk": 3,
+      "arm": 1,
+      "hp": 6,
+      "rating": 53,
+      "traits": [],
+      "spell": "curse",
+      "art": {
+        "icon": "📜",
+        "hue": 175
+      }
+    },
+    {
+      "name": "吸血鬼伯爵",
+      "race": "墓园",
+      "cost": 6,
+      "atk": 4,
+      "arm": 0,
+      "hp": 8,
+      "rating": 54,
+      "traits": [
+        "飞行",
+        "吸血"
+      ],
+      "art": {
+        "icon": "🧛‍♂️",
+        "hue": 350
+      }
+    },
+    {
+      "name": "憎恶",
+      "race": "墓园",
+      "cost": 6,
+      "atk": 5,
+      "arm": 1,
+      "hp": 13,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "👺",
+        "hue": 140
+      }
+    },
+    {
+      "name": "骸骨巨龙",
+      "race": "墓园",
+      "cost": 8,
+      "atk": 5,
+      "arm": 0,
+      "hp": 9,
+      "rating": 68,
+      "traits": [
+        "飞行"
+      ],
+      "spell": "boneDragon",
+      "art": {
+        "icon": "🩻",
+        "hue": 165
+      }
+    },
+    {
+      "name": "行尸",
+      "race": "墓园",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "rating": 58,
+      "traits": [],
+      "art": {
+        "icon": "🚶",
+        "hue": 100
+      }
+    },
+    {
+      "name": "骷髅勇士",
+      "race": "墓园",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 56,
+      "traits": [],
+      "spell": "skeletonSearch",
+      "art": {
+        "icon": "💀",
+        "hue": 200
+      }
+    },
+    {
+      "name": "阴魂",
+      "race": "墓园",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 6,
+      "rating": 54,
+      "traits": [
+        "再生2"
+      ],
+      "art": {
+        "icon": "😶‍🌫️",
+        "hue": 200
+      }
+    },
+    {
+      "name": "尸巫王",
+      "race": "墓园",
+      "cost": 6,
+      "atk": 4,
+      "arm": 0,
+      "hp": 6,
+      "rating": 52,
+      "traits": [
+        "远程",
+        "毒Lv2"
+      ],
+      "art": {
+        "icon": "🎭",
+        "hue": 260
+      }
+    },
+    {
+      "name": "恐怖骑士",
+      "race": "墓园",
+      "cost": 7,
+      "atk": 5,
+      "arm": 1,
+      "hp": 10,
+      "rating": 53,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🌑",
+        "hue": 220
+      }
+    },
+    {
+      "name": "鬼龙",
+      "race": "墓园",
+      "cost": 8,
+      "atk": 6,
+      "arm": 0,
+      "hp": 12,
+      "rating": 52,
+      "traits": [
+        "飞行",
+        "威吓1"
+      ],
+      "art": {
+        "icon": "💨",
+        "hue": 190
+      }
+    },
+    {
+      "name": "小妖精",
+      "race": "塔楼",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 1,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "🧚",
+        "hue": 200
+      }
+    },
+    {
+      "name": "大妖精",
+      "race": "塔楼",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 2,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "🧚‍♂️",
+        "hue": 210
+      }
+    },
+    {
+      "name": "石人",
+      "race": "塔楼",
+      "cost": 3,
+      "atk": 2,
+      "arm": 1,
+      "hp": 5,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "🗿",
+        "hue": 195
+      }
+    },
+    {
+      "name": "铁人",
+      "race": "塔楼",
+      "cost": 4,
+      "atk": 2,
+      "arm": 1,
+      "hp": 6,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "🤖",
+        "hue": 200
+      }
+    },
+    {
+      "name": "法师",
+      "race": "塔楼",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 52,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🧙",
+        "hue": 215
+      }
+    },
+    {
+      "name": "大法师",
+      "race": "塔楼",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 50,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🧙‍♂️",
+        "hue": 225
+      }
+    },
+    {
+      "name": "灯神",
+      "race": "塔楼",
+      "cost": 5,
+      "atk": 4,
+      "arm": 0,
+      "hp": 6,
+      "rating": 51,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🧞",
+        "hue": 230
+      }
+    },
+    {
+      "name": "神怪",
+      "race": "塔楼",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 7,
+      "rating": 49,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🧞‍♂️",
+        "hue": 240
+      }
+    },
+    {
+      "name": "蛇女",
+      "race": "塔楼",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 9,
+      "rating": 48,
+      "traits": [],
+      "art": {
+        "icon": "🐍",
+        "hue": 190
+      }
+    },
+    {
+      "name": "蛇发女妖",
+      "race": "塔楼",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 10,
+      "rating": 46,
+      "traits": [],
+      "art": {
+        "icon": "👩‍🎤",
+        "hue": 205
+      }
+    },
+    {
+      "name": "巨人",
+      "race": "塔楼",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 12,
+      "rating": 50,
+      "traits": [],
+      "art": {
+        "icon": "🏔️",
+        "hue": 210
+      }
+    },
+    {
+      "name": "泰坦",
+      "race": "塔楼",
+      "cost": 9,
+      "atk": 7,
+      "arm": 0,
+      "hp": 14,
+      "rating": 52,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "⚡",
+        "hue": 220
+      }
+    },
+    {
+      "name": "穴居人",
+      "race": "地下城",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 1,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "🧌",
+        "hue": 270
+      }
+    },
+    {
+      "name": "地狱穴居人",
+      "race": "地下城",
+      "cost": 2,
+      "atk": 3,
+      "arm": 0,
+      "hp": 2,
+      "rating": 54,
+      "traits": [],
+      "art": {
+        "icon": "👹",
+        "hue": 280
+      }
+    },
+    {
+      "name": "邪眼",
+      "race": "地下城",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 4,
+      "rating": 54,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "👁️",
+        "hue": 260
+      }
+    },
+    {
+      "name": "毒眼",
+      "race": "地下城",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 52,
+      "traits": [
+        "远程",
+        "毒Lv1"
+      ],
+      "art": {
+        "icon": "🧿",
+        "hue": 275
+      }
+    },
+    {
+      "name": "美杜莎",
+      "race": "地下城",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "rating": 54,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🐍",
+        "hue": 265
+      }
+    },
+    {
+      "name": "美杜莎女王",
+      "race": "地下城",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 6,
+      "rating": 52,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "👸",
+        "hue": 285
+      }
+    },
+    {
+      "name": "牛头人",
+      "race": "地下城",
+      "cost": 5,
+      "atk": 5,
+      "arm": 0,
+      "hp": 6,
+      "rating": 48,
+      "traits": [],
+      "art": {
+        "icon": "🐂",
+        "hue": 255
+      }
+    },
+    {
+      "name": "牛头王",
+      "race": "地下城",
+      "cost": 6,
+      "atk": 6,
+      "arm": 0,
+      "hp": 7,
+      "rating": 46,
+      "traits": [],
+      "art": {
+        "icon": "🐃",
+        "hue": 265
+      }
+    },
+    {
+      "name": "红龙",
+      "race": "地下城",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 11,
+      "rating": 53,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🐉",
+        "hue": 0
+      }
+    },
+    {
+      "name": "黑龙",
+      "race": "地下城",
+      "cost": 9,
+      "atk": 8,
+      "arm": 0,
+      "hp": 14,
+      "rating": 57,
+      "traits": [
+        "飞行",
+        "法术护盾3"
+      ],
+      "art": {
+        "icon": "🐲",
+        "hue": 290
+      }
+    },
+    {
+      "name": "大耳怪",
+      "race": "据点",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 1,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "👂",
+        "hue": 40
+      }
+    },
+    {
+      "name": "大耳怪王",
+      "race": "据点",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 2,
+      "rating": 58,
+      "traits": [],
+      "art": {
+        "icon": "👺",
+        "hue": 45
+      }
+    },
+    {
+      "name": "狼骑兵",
+      "race": "据点",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 2,
+      "rating": 57,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🐺",
+        "hue": 35
+      }
+    },
+    {
+      "name": "狼斗士",
+      "race": "据点",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 63,
+      "traits": [
+        "骑兵",
+        "连击"
+      ],
+      "art": {
+        "icon": "🐕",
+        "hue": 40
+      }
+    },
+    {
+      "name": "半兽人",
+      "race": "据点",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 3,
+      "rating": 60,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🏹",
+        "hue": 30
+      }
+    },
+    {
+      "name": "半兽人首领",
+      "race": "据点",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 58,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🎯",
+        "hue": 35
+      }
+    },
+    {
+      "name": "食人魔",
+      "race": "据点",
+      "cost": 4,
+      "atk": 4,
+      "arm": 0,
+      "hp": 7,
+      "rating": 54,
+      "traits": [],
+      "art": {
+        "icon": "🫏",
+        "hue": 45
+      }
+    },
+    {
+      "name": "巨魔",
+      "race": "据点",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 52,
+      "traits": [
+        "再生2"
+      ],
+      "art": {
+        "icon": "🧟‍♂️",
+        "hue": 50
+      }
+    },
+    {
+      "name": "食人魔王",
+      "race": "据点",
+      "cost": 5,
+      "atk": 5,
+      "arm": 0,
+      "hp": 8,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "👹",
+        "hue": 40
+      }
+    },
+    {
+      "name": "独眼巨人",
+      "race": "据点",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 9,
+      "rating": 48,
+      "traits": [],
+      "art": {
+        "icon": "👁️‍🗨️",
+        "hue": 45
+      }
+    },
+    {
+      "name": "独眼巨人王",
+      "race": "据点",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 10,
+      "rating": 50,
+      "traits": [
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "🔨",
+        "hue": 50
+      }
+    },
+    {
+      "name": "雷鸟",
+      "race": "据点",
+      "cost": 6,
+      "atk": 4,
+      "arm": 0,
+      "hp": 8,
+      "rating": 49,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🦅",
+        "hue": 55
+      }
+    },
+    {
+      "name": "闪电鸟",
+      "race": "据点",
+      "cost": 7,
+      "atk": 5,
+      "arm": 0,
+      "hp": 9,
+      "rating": 47,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "⚡",
+        "hue": 50
+      }
+    },
+    {
+      "name": "比蒙",
+      "race": "据点",
+      "cost": 9,
+      "atk": 9,
+      "arm": 0,
+      "hp": 14,
+      "rating": 50,
+      "traits": [
+        "护甲穿透1"
+      ],
+      "art": {
+        "icon": "🦣",
+        "hue": 40
+      }
+    },
+    {
+      "name": "比蒙巨兽",
+      "race": "据点",
+      "cost": 10,
+      "atk": 10,
+      "arm": 0,
+      "hp": 17,
+      "rating": 54,
+      "traits": [
+        "护甲穿透2"
+      ],
+      "art": {
+        "icon": "🦣",
+        "hue": 20
+      }
+    },
+    {
+      "name": "狼人",
+      "race": "要塞",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 54,
+      "traits": [],
+      "art": {
+        "icon": "🐺",
+        "hue": 90
+      }
+    },
+    {
+      "name": "蜥蜴人",
+      "race": "要塞",
+      "cost": 2,
+      "atk": 1,
+      "arm": 1,
+      "hp": 3,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "🦎",
+        "hue": 95
+      }
+    },
+    {
+      "name": "蜥蜴勇士",
+      "race": "要塞",
+      "cost": 3,
+      "atk": 2,
+      "arm": 1,
+      "hp": 4,
+      "rating": 54,
+      "traits": [],
+      "art": {
+        "icon": "🛡️",
+        "hue": 100
+      }
+    },
+    {
+      "name": "毒蝇",
+      "race": "要塞",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 53,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🪰",
+        "hue": 85
+      }
+    },
+    {
+      "name": "龙蝇",
+      "race": "要塞",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 4,
+      "rating": 53,
+      "traits": [
+        "飞行",
+        "毒Lv1"
+      ],
+      "art": {
+        "icon": "🐉",
+        "hue": 95
+      }
+    },
+    {
+      "name": "石化蜥蜴",
+      "race": "要塞",
+      "cost": 5,
+      "atk": 3,
+      "arm": 1,
+      "hp": 6,
+      "rating": 51,
+      "traits": [
+        "石化"
+      ],
+      "art": {
+        "icon": "🦎",
+        "hue": 105
+      }
+    },
+    {
+      "name": "巨蜥",
+      "race": "要塞",
+      "cost": 6,
+      "atk": 4,
+      "arm": 1,
+      "hp": 7,
+      "rating": 49,
+      "traits": [
+        "石化"
+      ],
+      "art": {
+        "icon": "🐊",
+        "hue": 100
+      }
+    },
+    {
+      "name": "蛮牛",
+      "race": "要塞",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 7,
+      "rating": 56,
+      "traits": [
+        "死亡凝视"
+      ],
+      "art": {
+        "icon": "🐂",
+        "hue": 30
+      }
+    },
+    {
+      "name": "野牛",
+      "race": "要塞",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 9,
+      "rating": 44,
+      "traits": [],
+      "art": {
+        "icon": "🐃",
+        "hue": 35
+      }
+    },
+    {
+      "name": "双足飞龙",
+      "race": "要塞",
+      "cost": 6,
+      "atk": 4,
+      "arm": 0,
+      "hp": 7,
+      "rating": 47,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🐲",
+        "hue": 90
+      }
+    },
+    {
+      "name": "终极九头蛇",
+      "race": "要塞",
+      "cost": 10,
+      "atk": 6,
+      "arm": 0,
+      "hp": 20,
+      "rating": 56,
+      "traits": [
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "🐙",
+        "hue": 110
+      }
+    },
+    {
+      "name": "气元素",
+      "race": "元素",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 4,
+      "rating": 57,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "💨",
+        "hue": 195
+      }
+    },
+    {
+      "name": "雷元素",
+      "race": "元素",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 53,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "⚡",
+        "hue": 200
+      }
+    },
+    {
+      "name": "水元素",
+      "race": "元素",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 54,
+      "traits": [],
+      "art": {
+        "icon": "💧",
+        "hue": 205
+      }
+    },
+    {
+      "name": "冰元素",
+      "race": "元素",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 7,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "🧊",
+        "hue": 195
+      }
+    },
+    {
+      "name": "火元素",
+      "race": "元素",
+      "cost": 4,
+      "atk": 4,
+      "arm": 0,
+      "hp": 4,
+      "rating": 50,
+      "traits": [
+        "火系魔法免疫"
+      ],
+      "art": {
+        "icon": "🔥",
+        "hue": 20
+      }
+    },
+    {
+      "name": "烈火元素",
+      "race": "元素",
+      "cost": 5,
+      "atk": 5,
+      "arm": 0,
+      "hp": 5,
+      "rating": 48,
+      "traits": [
+        "火系魔法免疫"
+      ],
+      "art": {
+        "icon": "🎆",
+        "hue": 25
+      }
+    },
+    {
+      "name": "土元素",
+      "race": "元素",
+      "cost": 4,
+      "atk": 3,
+      "arm": 1,
+      "hp": 6,
+      "rating": 54,
+      "traits": [],
+      "art": {
+        "icon": "🪨",
+        "hue": 35
+      }
+    },
+    {
+      "name": "石元素",
+      "race": "元素",
+      "cost": 5,
+      "atk": 4,
+      "arm": 1,
+      "hp": 7,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "⛰️",
+        "hue": 40
+      }
+    },
+    {
+      "name": "精神元素",
+      "race": "元素",
+      "cost": 6,
+      "atk": 4,
+      "arm": 0,
+      "hp": 8,
+      "rating": 48,
+      "traits": [
+        "法术护盾2"
+      ],
+      "art": {
+        "icon": "✨",
+        "hue": 210
+      }
+    },
+    {
+      "name": "魔法元素",
+      "race": "元素",
+      "cost": 7,
+      "atk": 5,
+      "arm": 0,
+      "hp": 9,
+      "rating": 46,
+      "traits": [
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "🔮",
+        "hue": 220
+      }
+    },
+    {
+      "name": "火鸟",
+      "race": "元素",
+      "cost": 7,
+      "atk": 5,
+      "arm": 0,
+      "hp": 9,
+      "rating": 51,
+      "traits": [
+        "飞行",
+        "再生1",
+        "火系魔法免疫"
+      ],
+      "art": {
+        "icon": "🐦‍🔥",
+        "hue": 30
+      }
+    },
+    {
+      "name": "凤凰",
+      "race": "元素",
+      "cost": 8,
+      "atk": 6,
+      "arm": 0,
+      "hp": 10,
+      "rating": 51,
+      "traits": [
+        "飞行",
+        "再生2",
+        "火系魔法免疫"
+      ],
+      "art": {
+        "icon": "🐦‍🔥",
+        "hue": 40
+      }
+    },
+    {
+      "name": "盗贼",
+      "race": "中立",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 1,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "🗡️",
+        "hue": 30
+      }
+    },
+    {
+      "name": "游牧民",
+      "race": "中立",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 3,
+      "rating": 55,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🏇",
+        "hue": 35
+      }
+    },
+    {
+      "name": "仙女龙",
+      "race": "中立",
+      "cost": 7,
+      "atk": 5,
+      "arm": 0,
+      "hp": 8,
+      "rating": 49,
+      "traits": [
+        "飞行",
+        "法术护盾2"
+      ],
+      "art": {
+        "icon": "🧚‍♀️",
+        "hue": 160
+      }
+    },
+    {
+      "name": "水晶龙",
+      "race": "中立",
+      "cost": 8,
+      "atk": 7,
+      "arm": 0,
+      "hp": 12,
+      "rating": 46,
+      "traits": [],
+      "art": {
+        "icon": "💎",
+        "hue": 185
+      }
+    },
+    {
+      "name": "锈龙",
+      "race": "中立",
+      "cost": 8,
+      "atk": 6,
+      "arm": 0,
+      "hp": 14,
+      "rating": 52,
+      "traits": [
+        "毒Lv2"
+      ],
+      "art": {
+        "icon": "🐉",
+        "hue": 25
+      }
+    },
+    {
+      "name": "圣龙",
+      "race": "中立",
+      "cost": 9,
+      "atk": 8,
+      "arm": 0,
+      "hp": 16,
+      "rating": 60,
+      "traits": [
+        "法术护盾2",
+        "威光"
+      ],
+      "art": {
+        "icon": "🐲",
+        "hue": 55
+      }
+    },
+    {
+      "name": "护体石肤",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "土",
+      "spellEffect": "stoneSkin",
+      "target": "friendlyUnit",
+      "rating": 58,
+      "art": {
+        "icon": "🪨",
+        "hue": 30
+      }
+    },
+    {
+      "name": "迟缓",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "土",
+      "spellEffect": "slow",
+      "target": "enemyUnit",
+      "rating": 58,
+      "art": {
+        "icon": "🐌",
+        "hue": 35
+      }
+    },
+    {
+      "name": "地刺",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "土",
+      "spellEffect": "earthSpikes",
+      "target": "none",
+      "rating": 58,
+      "art": {
+        "icon": "🌋",
+        "hue": 25
+      }
+    },
+    {
+      "name": "死亡波纹",
+      "type": "spell",
+      "race": "中立",
+      "cost": 5,
+      "school": "土",
+      "spellEffect": "deathRipple",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "💀",
+        "hue": 40
+      }
+    },
+    {
+      "name": "治疗",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "水",
+      "spellEffect": "heal",
+      "target": "friendlyUnit",
+      "rating": 56,
+      "art": {
+        "icon": "💧",
+        "hue": 200
+      }
+    },
+    {
+      "name": "冰箭",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "水",
+      "spellEffect": "iceBolt",
+      "target": "enemyUnit",
+      "rating": 58,
+      "art": {
+        "icon": "🧊",
+        "hue": 195
+      }
+    },
+    {
+      "name": "祝福",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "水",
+      "spellEffect": "bless",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "🙏",
+        "hue": 210
+      }
+    },
+    {
+      "name": "驱散",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "水",
+      "spellEffect": "dispel",
+      "target": "enemyUnit",
+      "rating": 55,
+      "art": {
+        "icon": "🌀",
+        "hue": 190
+      }
+    },
+    {
+      "name": "火球术",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "火",
+      "spellEffect": "fireballSpell",
+      "target": "enemyUnit",
+      "rating": 58,
+      "art": {
+        "icon": "🔥",
+        "hue": 15
+      }
+    },
+    {
+      "name": "嗜血奇术",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "火",
+      "spellEffect": "bloodlust",
+      "target": "none",
+      "rating": 58,
+      "art": {
+        "icon": "🩸",
+        "hue": 0
+      }
+    },
+    {
+      "name": "烈火神盾",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "火",
+      "spellEffect": "fireShield",
+      "target": "friendlyUnit",
+      "rating": 56,
+      "art": {
+        "icon": "🛡️",
+        "hue": 10
+      }
+    },
+    {
+      "name": "末日审判",
+      "type": "spell",
+      "race": "中立",
+      "cost": 8,
+      "school": "火",
+      "spellEffect": "doom",
+      "target": "none",
+      "rating": 60,
+      "art": {
+        "icon": "☄️",
+        "hue": 5
+      }
+    },
+    {
+      "name": "闪电箭",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "气",
+      "spellEffect": "lightningBolt",
+      "target": "enemyUnit",
+      "rating": 58,
+      "art": {
+        "icon": "⚡",
+        "hue": 55
+      }
+    },
+    {
+      "name": "连锁闪电",
+      "type": "spell",
+      "race": "中立",
+      "cost": 5,
+      "school": "气",
+      "spellEffect": "chainLightning",
+      "target": "none",
+      "rating": 60,
+      "art": {
+        "icon": "🌩️",
+        "hue": 60
+      }
+    },
+    {
+      "name": "召唤气元素",
+      "type": "spell",
+      "race": "中立",
+      "cost": 6,
+      "school": "气",
+      "spellEffect": "summonAir",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "💨",
+        "hue": 180
+      }
+    },
+    {
+      "name": "护体神盾",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "土",
+      "spellEffect": "holyShield",
+      "target": "none",
+      "rating": 58,
+      "art": {
+        "icon": "🔰",
+        "hue": 35
+      }
+    },
+    {
+      "name": "陨石",
+      "type": "spell",
+      "race": "中立",
+      "cost": 4,
+      "school": "土",
+      "spellEffect": "meteor",
+      "target": "enemyUnit",
+      "rating": 58,
+      "art": {
+        "icon": "☄️",
+        "hue": 20
+      }
+    },
+    {
+      "name": "复活术",
+      "type": "spell",
+      "race": "中立",
+      "cost": 5,
+      "school": "土",
+      "spellEffect": "revive",
+      "target": "none",
+      "rating": 58,
+      "art": {
+        "icon": "✝️",
+        "hue": 45
+      }
+    },
+    {
+      "name": "治疗波动",
+      "type": "spell",
+      "race": "中立",
+      "cost": 4,
+      "school": "水",
+      "spellEffect": "healingWave",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "🌊",
+        "hue": 200
+      }
+    },
+    {
+      "name": "镜像术",
+      "type": "spell",
+      "race": "中立",
+      "cost": 4,
+      "school": "水",
+      "spellEffect": "mirror",
+      "target": "friendlyUnit",
+      "rating": 58,
+      "art": {
+        "icon": "🪞",
+        "hue": 190
+      }
+    },
+    {
+      "name": "传送",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "水",
+      "spellEffect": "teleport",
+      "target": "friendlyUnit",
+      "rating": 52,
+      "art": {
+        "icon": "🚪",
+        "hue": 205
+      }
+    },
+    {
+      "name": "烧灼",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "火",
+      "spellEffect": "sear",
+      "target": "enemyUnit",
+      "rating": 55,
+      "art": {
+        "icon": "♨️",
+        "hue": 10
+      }
+    },
+    {
+      "name": "地狱烈焰",
+      "type": "spell",
+      "race": "中立",
+      "cost": 6,
+      "school": "火",
+      "spellEffect": "hellfire",
+      "target": "none",
+      "rating": 58,
+      "art": {
+        "icon": "🔥",
+        "hue": 350
+      }
+    },
+    {
+      "name": "混乱",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "火",
+      "spellEffect": "confuse",
+      "target": "enemyUnit",
+      "rating": 55,
+      "art": {
+        "icon": "😵‍💫",
+        "hue": 320
+      }
+    },
+    {
+      "name": "龙卷",
+      "type": "spell",
+      "race": "中立",
+      "cost": 4,
+      "school": "气",
+      "spellEffect": "tornado",
+      "target": "none",
+      "rating": 55,
+      "art": {
+        "icon": "🌬️",
+        "hue": 170
+      }
+    },
+    {
+      "name": "鼓舞",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "气",
+      "spellEffect": "inspire",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "📣",
+        "hue": 60
+      }
+    },
+    {
+      "name": "召唤雷元素",
+      "type": "spell",
+      "race": "中立",
+      "cost": 5,
+      "school": "气",
+      "spellEffect": "summonThunder",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "⚡",
+        "hue": 50
+      }
+    },
+    {
+      "name": "雷鸣爆弹",
+      "type": "spell",
+      "race": "中立",
+      "cost": 6,
+      "school": "土",
+      "spellEffect": "thunderBolt",
+      "target": "enemyUnit",
+      "rating": 62,
+      "art": {
+        "icon": "💥",
+        "hue": 45
+      }
+    },
+    {
+      "name": "聚灵奇术",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "土",
+      "spellEffect": "animateDead",
+      "target": "graveUnit",
+      "rating": 58,
+      "art": {
+        "icon": "🧟",
+        "hue": 110
+      }
+    },
+    {
+      "name": "召唤土元素",
+      "type": "spell",
+      "race": "中立",
+      "cost": 7,
+      "school": "土",
+      "spellEffect": "summonEarth",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "🪨",
+        "hue": 35
+      }
+    },
+    {
+      "name": "流沙",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "土",
+      "spellEffect": "quicksand",
+      "target": "none",
+      "rating": 55,
+      "art": {
+        "icon": "🏜️",
+        "hue": 40
+      }
+    },
+    {
+      "name": "失忆",
+      "type": "spell",
+      "race": "中立",
+      "cost": 4,
+      "school": "水",
+      "spellEffect": "forget",
+      "target": "enemyUnit",
+      "rating": 55,
+      "art": {
+        "icon": "🌫️",
+        "hue": 200
+      }
+    },
+    {
+      "name": "召唤水元素",
+      "type": "spell",
+      "race": "中立",
+      "cost": 7,
+      "school": "水",
+      "spellEffect": "summonWater",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "💧",
+        "hue": 205
+      }
+    },
+    {
+      "name": "流星火雨",
+      "type": "spell",
+      "race": "中立",
+      "cost": 7,
+      "school": "火",
+      "spellEffect": "meteorShower",
+      "target": "none",
+      "rating": 60,
+      "art": {
+        "icon": "🌠",
+        "hue": 15
+      }
+    },
+    {
+      "name": "召唤火元素",
+      "type": "spell",
+      "race": "中立",
+      "cost": 7,
+      "school": "火",
+      "spellEffect": "summonFire",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "🔥",
+        "hue": 25
+      }
+    },
+    {
+      "name": "狂暴",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "火",
+      "spellEffect": "frenzy",
+      "target": "friendlyUnit",
+      "rating": 55,
+      "art": {
+        "icon": "😡",
+        "hue": 0
+      }
+    },
+    {
+      "name": "龙卷风",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "气",
+      "spellEffect": "twister",
+      "target": "none",
+      "rating": 55,
+      "art": {
+        "icon": "🌪️",
+        "hue": 180
+      }
+    },
+    {
+      "name": "大气神盾",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "气",
+      "spellEffect": "airShield",
+      "target": "friendlyUnit",
+      "rating": 56,
+      "art": {
+        "icon": "🛡️",
+        "hue": 190
+      }
+    },
+    {
+      "name": "召唤骷髅兵",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "土",
+      "spellEffect": "raiseSkeletons",
+      "target": "graveUnit",
+      "rating": 57,
+      "art": {
+        "icon": "💀",
+        "hue": 120
+      }
+    },
+    {
+      "name": "召唤史莱姆",
+      "type": "spell",
+      "race": "中立",
+      "cost": 0,
+      "school": "水",
+      "spellEffect": "slimeSwarm",
+      "target": "none",
+      "rating": 58,
+      "art": {
+        "icon": "🟢",
+        "hue": 120
+      }
+    },
+    {
+      "name": "泉水精灵",
+      "race": "港口",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "🧚",
+        "hue": 190
+      }
+    },
+    {
+      "name": "海洋精灵",
+      "race": "港口",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 3,
+      "rating": 57,
+      "traits": [],
+      "spell": "heal",
+      "spellParam": 2,
+      "art": {
+        "icon": "🌊",
+        "hue": 195
+      }
+    },
+    {
+      "name": "水手",
+      "race": "港口",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "⚓",
+        "hue": 200
+      }
+    },
+    {
+      "name": "海员",
+      "race": "港口",
+      "cost": 2,
+      "atk": 3,
+      "arm": 0,
+      "hp": 3,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "⛵",
+        "hue": 205
+      }
+    },
+    {
+      "name": "海贼",
+      "race": "港口",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 3,
+      "rating": 55,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🏴‍☠️",
+        "hue": 210
+      }
+    },
+    {
+      "name": "皇家海盗",
+      "race": "港口",
+      "cost": 4,
+      "atk": 4,
+      "arm": 0,
+      "hp": 5,
+      "rating": 59,
+      "traits": [
+        "骑兵",
+        "掠夺"
+      ],
+      "art": {
+        "icon": "🦜",
+        "hue": 200
+      }
+    },
+    {
+      "name": "暴风鸟",
+      "race": "港口",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "rating": 53,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🦅",
+        "hue": 195
+      }
+    },
+    {
+      "name": "暴风雕",
+      "race": "港口",
+      "cost": 5,
+      "atk": 4,
+      "arm": 0,
+      "hp": 6,
+      "rating": 51,
+      "traits": [
+        "飞行"
+      ],
+      "art": {
+        "icon": "🌩️",
+        "hue": 200
+      }
+    },
+    {
+      "name": "海洋女巫",
+      "race": "港口",
+      "cost": 5,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 60,
+      "traits": [
+        "远程"
+      ],
+      "actSpells": [
+        {
+          "key": "bless",
+          "cost": 2
+        },
+        {
+          "key": "iceBolt",
+          "cost": 2
+        }
+      ],
+      "spellMana0": 2,
+      "spellManaMax": 4,
+      "art": {
+        "icon": "🧙‍♀️",
+        "hue": 190
+      }
+    },
+    {
+      "name": "海洋术士",
+      "race": "港口",
+      "cost": 7,
+      "atk": 3,
+      "arm": 0,
+      "hp": 7,
+      "rating": 62,
+      "traits": [
+        "远程"
+      ],
+      "actSpells": [
+        {
+          "key": "bless",
+          "cost": 2
+        },
+        {
+          "key": "iceBolt",
+          "cost": 2
+        }
+      ],
+      "spellMana0": 4,
+      "spellManaMax": 4,
+      "art": {
+        "icon": "🔮",
+        "hue": 195
+      }
+    },
+    {
+      "name": "鱼人",
+      "race": "港口",
+      "cost": 6,
+      "atk": 5,
+      "arm": 1,
+      "hp": 8,
+      "rating": 53,
+      "traits": [],
+      "art": {
+        "icon": "🐟",
+        "hue": 185
+      }
+    },
+    {
+      "name": "鱼人战士",
+      "race": "港口",
+      "cost": 7,
+      "atk": 6,
+      "arm": 1,
+      "hp": 10,
+      "rating": 53,
+      "traits": [],
+      "art": {
+        "icon": "🐠",
+        "hue": 190
+      }
+    },
+    {
+      "name": "海蛇",
+      "race": "港口",
+      "cost": 8,
+      "atk": 7,
+      "arm": 0,
+      "hp": 13,
+      "rating": 52,
+      "traits": [
+        "毒Lv2"
+      ],
+      "art": {
+        "icon": "🐍",
+        "hue": 180
+      }
+    },
+    {
+      "name": "深渊海蛇",
+      "race": "港口",
+      "cost": 10,
+      "atk": 8,
+      "arm": 0,
+      "hp": 15,
+      "rating": 56,
+      "traits": [
+        "毒Lv2",
+        "复仇1"
+      ],
+      "art": {
+        "icon": "🐉",
+        "hue": 185
+      }
+    },
+    {
+      "name": "大王乌贼",
+      "race": "港口",
+      "cost": 7,
+      "atk": 3,
+      "arm": 0,
+      "hp": 15,
+      "rating": 53,
+      "traits": [
+        "再生1"
+      ],
+      "art": {
+        "icon": "🦑",
+        "hue": 280
+      }
+    },
+    {
+      "name": "狗头人",
+      "race": "堡垒",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 1,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "🐕",
+        "hue": 210
+      }
+    },
+    {
+      "name": "狗头人工长",
+      "race": "堡垒",
+      "cost": 1,
+      "atk": 2,
+      "arm": 0,
+      "hp": 2,
+      "rating": 58,
+      "traits": [],
+      "art": {
+        "icon": "⛏️",
+        "hue": 215
+      }
+    },
+    {
+      "name": "山羚",
+      "race": "堡垒",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 2,
+      "rating": 57,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🐐",
+        "hue": 220
+      }
+    },
+    {
+      "name": "雪羚",
+      "race": "堡垒",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 3,
+      "rating": 55,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🦌",
+        "hue": 215
+      }
+    },
+    {
+      "name": "雪精灵",
+      "race": "堡垒",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 56,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🧝",
+        "hue": 210
+      }
+    },
+    {
+      "name": "铁甲雪精灵",
+      "race": "堡垒",
+      "cost": 4,
+      "atk": 3,
+      "arm": 1,
+      "hp": 4,
+      "rating": 58,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🛡️",
+        "hue": 220
+      }
+    },
+    {
+      "name": "雪怪",
+      "race": "堡垒",
+      "cost": 4,
+      "atk": 4,
+      "arm": 0,
+      "hp": 6,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "❄️",
+        "hue": 200
+      }
+    },
+    {
+      "name": "控符雪怪",
+      "race": "堡垒",
+      "cost": 5,
+      "atk": 4,
+      "arm": 1,
+      "hp": 7,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "🔤",
+        "hue": 210
+      }
+    },
+    {
+      "name": "萨满",
+      "race": "堡垒",
+      "cost": 5,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 66,
+      "traits": [
+        "远程"
+      ],
+      "spell": "prayer",
+      "art": {
+        "icon": "🙏",
+        "hue": 205
+      }
+    },
+    {
+      "name": "萨满长老",
+      "race": "堡垒",
+      "cost": 6,
+      "atk": 3,
+      "arm": 0,
+      "hp": 7,
+      "rating": 64,
+      "traits": [
+        "远程"
+      ],
+      "spell": "prayer",
+      "art": {
+        "icon": "📿",
+        "hue": 215
+      }
+    },
+    {
+      "name": "猛犸",
+      "race": "堡垒",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 11,
+      "rating": 57,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🦣",
+        "hue": 210
+      }
+    },
+    {
+      "name": "战斗猛犸",
+      "race": "堡垒",
+      "cost": 7,
+      "atk": 6,
+      "arm": 0,
+      "hp": 13,
+      "rating": 57,
+      "traits": [
+        "骑兵"
+      ],
+      "art": {
+        "icon": "🐘",
+        "hue": 215
+      }
+    },
+    {
+      "name": "冰霜巨人",
+      "race": "堡垒",
+      "cost": 8,
+      "atk": 7,
+      "arm": 0,
+      "hp": 14,
+      "rating": 50,
+      "traits": [],
+      "art": {
+        "icon": "🏔️",
+        "hue": 205
+      }
+    },
+    {
+      "name": "冰霜领主",
+      "race": "堡垒",
+      "cost": 9,
+      "atk": 8,
+      "arm": 0,
+      "hp": 16,
+      "rating": 54,
+      "traits": [
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "👑",
+        "hue": 210
+      }
+    },
+    {
+      "name": "半身人",
+      "race": "工厂",
+      "cost": 1,
+      "atk": 1,
+      "arm": 0,
+      "hp": 1,
+      "rating": 62,
+      "traits": [
+        "远程"
+      ],
+      "art": {
+        "icon": "🧑",
+        "hue": 40
+      }
+    },
+    {
+      "name": "掷弹半身人",
+      "race": "工厂",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "rating": 64,
+      "traits": [
+        "远程",
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "💣",
+        "hue": 45
+      }
+    },
+    {
+      "name": "机械师",
+      "race": "工厂",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 3,
+      "rating": 54,
+      "traits": [],
+      "art": {
+        "icon": "🔧",
+        "hue": 35
+      }
+    },
+    {
+      "name": "工程师",
+      "race": "工厂",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "rating": 52,
+      "traits": [],
+      "art": {
+        "icon": "⚙️",
+        "hue": 40
+      }
+    },
+    {
+      "name": "坚甲兽",
+      "race": "工厂",
+      "cost": 3,
+      "atk": 2,
+      "arm": 2,
+      "hp": 5,
+      "rating": 56,
+      "traits": [],
+      "art": {
+        "icon": "🦔",
+        "hue": 30
+      }
+    },
+    {
+      "name": "坚甲兽头领",
+      "race": "工厂",
+      "cost": 4,
+      "atk": 3,
+      "arm": 2,
+      "hp": 7,
+      "rating": 60,
+      "traits": [],
+      "art": {
+        "icon": "🛡️",
+        "hue": 35
+      }
+    },
+    {
+      "name": "自行机器",
+      "race": "工厂",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 6,
+      "rating": 52,
+      "traits": [
+        "再生1"
+      ],
+      "art": {
+        "icon": "🤖",
+        "hue": 45
+      }
+    },
+    {
+      "name": "自行哨卫",
+      "race": "工厂",
+      "cost": 5,
+      "atk": 3,
+      "arm": 1,
+      "hp": 7,
+      "rating": 52,
+      "traits": [
+        "再生1"
+      ],
+      "art": {
+        "icon": "🦾",
+        "hue": 40
+      }
+    },
+    {
+      "name": "沙虫",
+      "race": "工厂",
+      "cost": 5,
+      "atk": 4,
+      "arm": 0,
+      "hp": 7,
+      "rating": 50,
+      "traits": [
+        "毒Lv1"
+      ],
+      "art": {
+        "icon": "🪱",
+        "hue": 30
+      }
+    },
+    {
+      "name": "死亡沙虫",
+      "race": "工厂",
+      "cost": 6,
+      "atk": 5,
+      "arm": 0,
+      "hp": 8,
+      "rating": 50,
+      "traits": [
+        "毒Lv2"
+      ],
+      "art": {
+        "icon": "🐛",
+        "hue": 35
+      }
+    },
+    {
+      "name": "雇佣杀手",
+      "race": "工厂",
+      "cost": 6,
+      "atk": 4,
+      "arm": 0,
+      "hp": 5,
+      "rating": 56,
+      "traits": [
+        "远程",
+        "连击"
+      ],
+      "art": {
+        "icon": "🔫",
+        "hue": 40
+      }
+    },
+    {
+      "name": "赏金猎人",
+      "race": "工厂",
+      "cost": 7,
+      "atk": 5,
+      "arm": 0,
+      "hp": 6,
+      "rating": 54,
+      "traits": [
+        "远程",
+        "连击"
+      ],
+      "art": {
+        "icon": "💰",
+        "hue": 45
+      }
+    },
+    {
+      "name": "无畏机甲",
+      "race": "工厂",
+      "cost": 8,
+      "atk": 7,
+      "arm": 0,
+      "hp": 15,
+      "rating": 56,
+      "traits": [
+        "范围攻击"
+      ],
+      "art": {
+        "icon": "🚢",
+        "hue": 35
+      }
+    },
+    {
+      "name": "主宰机甲",
+      "race": "工厂",
+      "cost": 9,
+      "atk": 8,
+      "arm": 0,
+      "hp": 17,
+      "rating": 59,
+      "traits": [
+        "范围攻击",
+        "护甲穿透1"
+      ],
+      "art": {
+        "icon": "🏭",
+        "hue": 40
+      }
+    },
+    {
+      "name": "帕斯卡",
+      "race": "港口",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 8,
+      "rating": 62,
+      "traits": [
+        "高级水系魔法"
+      ],
+      "actSpell": "tidalWave",
+      "spellCost": 2,
+      "spellMana0": 2,
+      "spellManaMax": 2,
+      "art": {
+        "icon": "🧝‍♀️",
+        "hue": 200
+      }
+    },
+    {
+      "name": "艾达",
+      "race": "中立",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 6,
+      "rating": 60,
+      "traits": [
+        "高级学术"
+      ],
+      "actSpell": "study",
+      "spellCost": 3,
+      "spellMana0": 3,
+      "spellManaMax": 3,
+      "art": {
+        "icon": "📖",
+        "hue": 220
+      }
+    },
+    {
+      "name": "旋涡",
+      "type": "spell",
+      "race": "中立",
+      "cost": 4,
+      "school": "水",
+      "spellEffect": "vortex",
+      "target": "none",
+      "rating": 58,
+      "art": {
+        "icon": "🌀",
+        "hue": 190
+      }
+    },
+    {
+      "name": "欢欣鼓舞",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "水",
+      "spellEffect": "inspireAll",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "🎉",
+        "hue": 50
+      }
+    },
+    {
+      "name": "悲痛欲绝",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "土",
+      "spellEffect": "dreadAll",
+      "target": "none",
+      "rating": 56,
+      "art": {
+        "icon": "😱",
+        "hue": 240
+      }
+    }
+  ]
+}
+</script>
 <script>
 'use strict';
 
-// ---------- 卡牌数据 ----------
-const CARD_DEFS = [
-  // 人族（钢蓝色系）
-  { name: '枪兵',     race: '城堡',   cost: 1, atk: 2, arm: 0, hp: 3, rating: 61,  traits: ['拒马'], art: { icon: '🗡️', hue: 210 } },
-  { name: '农夫约翰', race: '中立',   cost: 1, atk: 1, arm: 0, hp: 2, rating: 56,  traits: ['和平'], actSpell: 'harvest', spellCost: 4, spellMana0: 3, spellManaMax: 4, art: { icon: '🧑‍🌾', hue: 35 } },
-  { name: '弓箭手',   race: '城堡',   cost: 2, atk: 1, arm: 0, hp: 2, rating: 60,  traits: ['远程'], art: { icon: '🏹', hue: 200 } },
-  { name: '戟兵',     race: '城堡',   cost: 2, atk: 3, arm: 0, hp: 5, rating: 60,  traits: [], art: { icon: '⚔️', hue: 215 } },
-  { name: '狮鹫',     race: '城堡',   cost: 3, atk: 3, arm: 0, hp: 7, rating: 63,  traits: ['飞行'], art: { icon: '🦅', hue: 45 } },
-  { name: '十字军',   race: '城堡',   cost: 4, atk: 5, arm: 1, hp: 7, rating: 60,  traits: [], art: { icon: '🛡️', hue: 220 } },
-  { name: '圣骑士',   race: '城堡',   cost: 5, atk: 4, arm: 0, hp: 8, rating: 58,  traits: ['法力燃烧2', '驱魔'], art: { icon: '⚜️', hue: 50 } },
-  { name: '祭司',     race: '城堡',   cost: 5, atk: 2, arm: 0, hp: 6, rating: 66,  traits: ['远程'], spell: 'prayer', art: { icon: '🙏', hue: 260 } },
-  { name: '骑兵',     race: '城堡',   cost: 6, atk: 3, arm: 0, hp: 12, rating: 58, traits: ['骑兵'], art: { icon: '🐎', hue: 205 } },
-  { name: '女武神',   race: '城堡',   cost: 7, atk: 8, arm: 0, hp: 15, rating: 60, traits: [], art: { icon: '👼', hue: 55 } },
-  // 精灵族（翠绿色系）
-  { name: '小精灵',   race: '壁垒', cost: 0, atk: 1, arm: 0, hp: 1, rating: 58,  traits: [], spell: 'wisp', art: { icon: '🧚', hue: 90 } },
-  { name: '史莱姆',   race: '壁垒', cost: 1, atk: 1, arm: 0, hp: 2, rating: 57,  traits: ['再生1'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🟢', hue: 120 } },
-  { name: '半人马',   race: '壁垒', cost: 1, atk: 1, arm: 0, hp: 3, rating: 63,  traits: ['骑兵'], art: { icon: '🏇', hue: 100 } },
-  { name: '精灵',     race: '壁垒', cost: 3, atk: 0, arm: 0, hp: 3, rating: 53,  traits: [], spell: 'elfHeal', art: { icon: '🧝', hue: 140 } },
-  { name: '石头人',   race: '塔楼', cost: 3, atk: 4, arm: 0, hp: 7, rating: 60,  traits: [], art: { icon: '🪨', hue: 30 } },
-  { name: '棕熊',     race: '壁垒', cost: 4, atk: 5, arm: 0, hp: 9, rating: 60,  traits: [], art: { icon: '🐻', hue: 25 } },
-  { name: '魔女',     race: '壁垒', cost: 4, atk: 1, arm: 0, hp: 6, rating: 58,  traits: ['远程'], actSpell: 'fireball', spellCost: 1, spellMana0: 2, spellManaMax: 2, art: { icon: '🧙‍♀️', hue: 280 } },
-  { name: '巨型史莱姆', race: '壁垒', cost: 4, atk: 3, arm: 0, hp: 6, rating: 51, traits: ['再生1'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🫠', hue: 110 } },
-  { name: '龙女',     race: '壁垒', cost: 7, atk: 0, arm: 0, hp: 6, rating: 55,  traits: [], spell: 'dragoness', art: { icon: '🐲', hue: 150 } },
-  { name: '独角兽骑士', race: '壁垒', cost: 6, atk: 3, arm: 0, hp: 9, rating: 56, traits: ['骑兵', '法术护盾2'], art: { icon: '🦄', hue: 160 } },
-  // 魔物族（暗紫红色系）
-  { name: '蛇',       race: '要塞', cost: 1, atk: 1, arm: 0, hp: 3, rating: 60,  traits: ['毒Lv1'], art: { icon: '🐍', hue: 90 } },
-  { name: '鹰身女妖R', race: '地下城', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 0 } },
-  { name: '鹰身女妖G', race: '地下城', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 120 } },
-  { name: '鹰身女妖B', race: '地下城', cost: 2, atk: 1, arm: 0, hp: 5, rating: 61, traits: ['飞行', '三姐妹'], art: { icon: '🦉', hue: 220 } },
-  { name: '钻石人',   race: '塔楼', cost: 4, atk: 4, arm: 1, hp: 8, rating: 60,  traits: [], art: { icon: '💎', hue: 190 } },
-  { name: '蝎狮',     race: '地下城', cost: 6, atk: 5, arm: 0, hp: 14, rating: 62, traits: ['毒Lv3'], art: { icon: '🦂', hue: 20 } },
-  { name: '魅魔',     race: '地狱', cost: 6, atk: 1, arm: 0, hp: 4, rating: 61,  traits: [], spell: 'charm', art: { icon: '😈', hue: 320 } },
-  { name: '九头怪',   race: '要塞', cost: 7, atk: 3, arm: 0, hp: 18, rating: 60, traits: ['范围攻击'], art: { icon: '🐙', hue: 280 } },
-  // 不死族（青灰色系）
-  { name: '骷髅',     race: '墓园', cost: 1, atk: 1, arm: 0, hp: 2, rating: 55,  traits: [], spell: 'skeletonSearch', art: { icon: '💀', hue: 180 } },
-  { name: '石像鬼',   race: '塔楼', cost: 2, atk: 2, arm: 1, hp: 2, rating: 59,  traits: ['石化'], art: { icon: '🗿', hue: 200 } },
-  { name: '木乃伊',   race: '中立', cost: 2, atk: 2, arm: 0, hp: 6, rating: 66,  traits: [], spell: 'curse', art: { icon: '⚰️', hue: 170 } },
-  { name: '幽灵',     race: '墓园', cost: 3, atk: 3, arm: 0, hp: 5, rating: 59,  traits: ['再生2'], art: { icon: '👻', hue: 190 } },
-  { name: '吸血鬼',   race: '墓园', cost: 4, atk: 3, arm: 0, hp: 7, rating: 57,  traits: ['吸血'], art: { icon: '🧛', hue: 340 } },
-  { name: '死灵法师', race: '墓园', cost: 5, atk: 2, arm: 0, hp: 6, rating: 59,  traits: ['远程'], spell: 'necro', art: { icon: '🔮', hue: 270 } },
-  { name: '死神',     race: '墓园', cost: 6, atk: 2, arm: 0, hp: 4, rating: 58,  traits: [], spell: 'reaper', art: { icon: '☠️', hue: 240 } },
-  { name: '死亡骑士', race: '墓园', cost: 6, atk: 3, arm: 1, hp: 9, rating: 53,  traits: ['骑兵'], art: { icon: '🏴', hue: 210 } },
-  { name: '骨龙',     race: '墓园', cost: 7, atk: 3, arm: 0, hp: 9, rating: 58,  traits: [], spell: 'boneDragon', art: { icon: '🦴', hue: 160 } },
-  // ── 扩充卡（第二批，全部复用现有机制）──
-  // 人族
-  { name: '民兵',     race: '城堡',   cost: 0, atk: 1, arm: 0, hp: 1, rating: 60,  traits: [], art: { icon: '🪖', hue: 200 } },
-  { name: '飞鹰',     race: '城堡',   cost: 2, atk: 1, arm: 0, hp: 2, rating: 57,  traits: ['飞行'], art: { icon: '🕊️', hue: 50 } },
-  { name: '剑士',     race: '城堡',   cost: 2, atk: 2, arm: 0, hp: 6, rating: 60,  traits: [], art: { icon: '🤺', hue: 215 } },
-  { name: '弩手',     race: '城堡',   cost: 3, atk: 2, arm: 0, hp: 3, rating: 58,  traits: ['远程', '护甲穿透2'], art: { icon: '🎯', hue: 205 } },
-  { name: '医护兵',   race: '城堡',   cost: 3, atk: 1, arm: 0, hp: 4, rating: 53,  traits: [], spell: 'heal', spellParam: 3, art: { icon: '⛑️', hue: 0 } },
-  { name: '重装卫兵', race: '城堡',   cost: 4, atk: 2, arm: 2, hp: 8, rating: 60,  traits: [], art: { icon: '💂', hue: 220 } },
-  { name: '游侠',     race: '城堡',   cost: 4, atk: 3, arm: 0, hp: 4, rating: 54,  traits: ['远程'], art: { icon: '🪃', hue: 100 } },
-  { name: '圣殿骑士', race: '城堡',   cost: 6, atk: 5, arm: 1, hp: 9, rating: 54,  traits: ['法术护盾1'], art: { icon: '🤴', hue: 45 } },
-  { name: '大祭司',   race: '城堡',   cost: 6, atk: 3, arm: 0, hp: 8, rating: 64,  traits: ['远程'], spell: 'prayer', art: { icon: '📿', hue: 270 } },
-  { name: '龙骑士',   race: '城堡',   cost: 7, atk: 6, arm: 0, hp: 10, rating: 56, traits: ['骑兵', '飞行'], art: { icon: '🐉', hue: 35 } },
-  // 城堡兵种线补全（英雄无敌3 Castle 基础+升级 7 级 ×2）
-  { name: '神射手',   race: '城堡',   cost: 3, atk: 2, arm: 0, hp: 3,  rating: 62, traits: ['远程', '连击'], art: { icon: '🏹', hue: 195 } },
-  { name: '皇家狮鹫', race: '城堡',   cost: 4, atk: 4, arm: 0, hp: 8,  rating: 61, traits: ['飞行', '反击2'], art: { icon: '🦅', hue: 40 } },
-  { name: '僧侣',     race: '城堡',   cost: 4, atk: 2, arm: 0, hp: 5,  rating: 55, traits: ['远程'], art: { icon: '🧎', hue: 250 } },
-  { name: '骑士',     race: '城堡',   cost: 7, atk: 6, arm: 0, hp: 12, rating: 58, traits: ['骑兵'], art: { icon: '🐴', hue: 30 } },
-  { name: '天使',     race: '城堡',   cost: 8, atk: 7, arm: 0, hp: 14, rating: 58, traits: ['飞行'], art: { icon: '😇', hue: 55 } },
-  { name: '大天使',   race: '城堡',   cost: 9, atk: 8, arm: 0, hp: 16, rating: 66, traits: ['飞行'], spell: 'resurrect', art: { icon: '👼', hue: 48 } },
-  // 精灵族
-  { name: '妖精',     race: '壁垒', cost: 0, atk: 0, arm: 0, hp: 1, rating: 56,  traits: [], spell: 'wisp', art: { icon: '🦋', hue: 100 } },
-  { name: '林狼',     race: '壁垒', cost: 2, atk: 2, arm: 0, hp: 2, rating: 57,  traits: ['骑兵'], art: { icon: '🐺', hue: 90 } },
-  { name: '恐狼',     race: '壁垒', cost: 2, atk: 2, arm: 0, hp: 2, rating: 57,  traits: ['恐狼光环'], art: { icon: '🐺', hue: 30 } },
-  { name: '毒藤',     race: '壁垒', cost: 2, atk: 1, arm: 0, hp: 3, rating: 56,  traits: ['毒Lv2'], art: { icon: '🌿', hue: 130 } },
-  { name: '树精',     race: '壁垒', cost: 3, atk: 1, arm: 1, hp: 6, rating: 58,  traits: ['再生1'], art: { icon: '🌳', hue: 140 } },
-  { name: '鹰骑士',   race: '壁垒', cost: 4, atk: 2, arm: 0, hp: 4, rating: 54,  traits: ['飞行', '骑兵'], art: { icon: '🦅', hue: 60 } },
-  { name: '精灵法师', race: '壁垒', cost: 4, atk: 2, arm: 0, hp: 4, rating: 62,  traits: ['远程'], actSpell: 'fireball', spellCost: 1, spellMana0: 2, spellManaMax: 2, art: { icon: '🧙‍♂️', hue: 290 } },
-  { name: '风行者',   race: '壁垒', cost: 5, atk: 3, arm: 0, hp: 5, rating: 55,  traits: ['远程', '骑兵'], art: { icon: '🌪️', hue: 170 } },
-  { name: '史莱姆王', race: '壁垒', cost: 5, atk: 4, arm: 0, hp: 8, rating: 57,  traits: ['再生2'], actSpell: 'split', spellCost: 1, spellMana0: 0, spellManaMax: 1, art: { icon: '🫧', hue: 115 } },
-  { name: '远古树人', race: '壁垒', cost: 6, atk: 4, arm: 1, hp: 12, rating: 63, traits: ['再生2'], art: { icon: '🌲', hue: 135 } },
-  { name: '麒麟',     race: '壁垒', cost: 7, atk: 6, arm: 0, hp: 12, rating: 58, traits: ['再生2', '法术护盾2'], art: { icon: '🦌', hue: 80 } },
-  // 壁垒（Rampart）兵种线补全
-  { name: '半人马首领', race: '壁垒', cost: 1, atk: 2, arm: 0, hp: 3,  rating: 64, traits: ['骑兵'], art: { icon: '🏇', hue: 105 } },
-  { name: '矮人',     race: '壁垒', cost: 2, atk: 2, arm: 1, hp: 4,  rating: 62, traits: ['法术护盾1'], art: { icon: '🧔', hue: 35 } },
-  { name: '木精灵',   race: '壁垒', cost: 2, atk: 1, arm: 0, hp: 2,  rating: 60, traits: ['远程'], art: { icon: '🏹', hue: 130 } },
-  { name: '战斗矮人', race: '壁垒', cost: 3, atk: 3, arm: 1, hp: 5,  rating: 60, traits: ['法术护盾1'], art: { icon: '⚒️', hue: 40 } },
-  { name: '大精灵',   race: '壁垒', cost: 3, atk: 2, arm: 0, hp: 3,  rating: 62, traits: ['远程', '连击'], art: { icon: '🧝‍♀️', hue: 145 } },
-  { name: '飞马',     race: '壁垒', cost: 3, atk: 2, arm: 0, hp: 4,  rating: 55, traits: ['飞行'], art: { icon: '🪽', hue: 170 } },
-  { name: '银飞马',   race: '壁垒', cost: 4, atk: 3, arm: 0, hp: 5,  rating: 53, traits: ['飞行'], art: { icon: '❄️', hue: 180 } },
-  { name: '金龙',     race: '壁垒', cost: 8, atk: 7, arm: 0, hp: 14, rating: 61, traits: ['飞行', '法术护盾3'], art: { icon: '🐉', hue: 50 } },
-  // 魔物族
-  { name: '小恶魔',   race: '地狱', cost: 1, atk: 2, arm: 0, hp: 1, rating: 61,  traits: ['飞行'], art: { icon: '👿', hue: 300 } },
-  { name: '毒蜘蛛',   race: '要塞', cost: 2, atk: 2, arm: 0, hp: 2, rating: 54,  traits: ['毒Lv1'], art: { icon: '🕷️', hue: 280 } },
-  { name: '吸血蝙蝠', race: '墓园', cost: 2, atk: 1, arm: 0, hp: 2, rating: 62,  traits: ['飞行', '吸血'], art: { icon: '🦇', hue: 330 } },
-  { name: '双头犬',   race: '地狱', cost: 3, atk: 5, arm: 0, hp: 6, rating: 60,  traits: [], art: { icon: '🐕', hue: 20 } },
-  { name: '石像魔',   race: '要塞', cost: 4, atk: 3, arm: 2, hp: 5, rating: 59,  traits: ['石化'], art: { icon: '🧌', hue: 260 } },
-  { name: '火蜥蜴',   race: '地狱', cost: 5, atk: 3, arm: 0, hp: 6, rating: 48,  traits: ['范围攻击'], art: { icon: '🦎', hue: 15 } },
-  { name: '鹰身女妖女王', race: '地下城', cost: 5, atk: 3, arm: 0, hp: 7, rating: 62, traits: ['飞行', '三姐妹'], art: { icon: '👸', hue: 310 } },
-  { name: '地狱三头犬', race: '地狱', cost: 6, atk: 5, arm: 0, hp: 8, rating: 50, traits: ['范围攻击'], art: { icon: '👹', hue: 0 } },
-  { name: '魅魔女王', race: '地狱', cost: 7, atk: 2, arm: 0, hp: 6, rating: 64,  traits: [], spell: 'charm', art: { icon: '💋', hue: 340 } },
-  { name: '深渊巨口', race: '地狱', cost: 8, atk: 10, arm: 0, hp: 16, rating: 60, traits: [], art: { icon: '🕳️', hue: 290 } },
-  // 地狱（Inferno）兵种线补全
-  { name: '魔童',     race: '地狱', cost: 1, atk: 1, arm: 0, hp: 2,  rating: 56, traits: [], art: { icon: '👾', hue: 280 } },
-  { name: '歌革',     race: '地狱', cost: 2, atk: 1, arm: 0, hp: 2,  rating: 60, traits: ['远程'], art: { icon: '🧿', hue: 285 } },
-  { name: '地狱猎犬', race: '地狱', cost: 3, atk: 3, arm: 0, hp: 3,  rating: 55, traits: ['骑兵'], art: { icon: '🦮', hue: 15 } },
-  { name: '玛各',     race: '地狱', cost: 4, atk: 2, arm: 0, hp: 4,  rating: 56, traits: ['远程', '范围攻击'], art: { icon: '🧨', hue: 5 } },
-  { name: '恶鬼',     race: '地狱', cost: 4, atk: 4, arm: 0, hp: 6,  rating: 52, traits: [], art: { icon: '🦹', hue: 25 } },
-  { name: '火精灵',   race: '地狱', cost: 5, atk: 4, arm: 0, hp: 6,  rating: 53, traits: ['飞行', '火系魔法免疫'], art: { icon: '🔥', hue: 15 } },
-  { name: '长角恶鬼', race: '地狱', cost: 5, atk: 5, arm: 0, hp: 7,  rating: 50, traits: [], art: { icon: '🐃', hue: 20 } },
-  { name: '邪神',     race: '地狱', cost: 5, atk: 4, arm: 1, hp: 7,  rating: 52, traits: [], art: { icon: '⛓️', hue: 300 } },
-  { name: '烈火精灵', race: '地狱', cost: 6, atk: 5, arm: 0, hp: 7,  rating: 51, traits: ['飞行', '火系魔法免疫'], art: { icon: '🎇', hue: 25 } },
-  { name: '邪神王',   race: '地狱', cost: 6, atk: 5, arm: 1, hp: 8,  rating: 55, traits: [], actSpell: 'summonDemon', spellCost: 4, spellMana0: 2, spellManaMax: 4, art: { icon: '🫅', hue: 320 } },
-  { name: '恶魔',     race: '地狱', cost: 7, atk: 5, arm: 0, hp: 8,  rating: 56, traits: ['飞行', '不受反击'], art: { icon: '😈', hue: 350 } },
-  { name: '大恶魔',   race: '地狱', cost: 8, atk: 6, arm: 0, hp: 10, rating: 56, traits: ['飞行', '不受反击'], art: { icon: '🖤', hue: 340 } },
-  // 不死族
-  { name: '骷髅弓手', race: '墓园', cost: 2, atk: 1, arm: 0, hp: 2, rating: 55,  traits: ['远程'], spell: 'skeletonSearch', art: { icon: '🏹', hue: 185 } },
-  { name: '僵尸',     race: '墓园', cost: 2, atk: 2, arm: 0, hp: 4, rating: 58,  traits: ['再生1'], art: { icon: '🧟', hue: 120 } },
-  { name: '怨灵',     race: '墓园', cost: 3, atk: 3, arm: 0, hp: 4, rating: 57,  traits: ['飞行'], art: { icon: '🌫️', hue: 195 } },
-  { name: '亡语者',   race: '墓园', cost: 3, atk: 2, arm: 0, hp: 3, rating: 53,  traits: [], spell: 'curse', art: { icon: '🕯️', hue: 230 } },
-  { name: '死灵学士', race: '墓园', cost: 3, atk: 1, arm: 0, hp: 3, rating: 54,  traits: [], spell: 'necro', art: { icon: '🎓', hue: 275 } },
-  { name: '尸巫',     race: '墓园', cost: 5, atk: 3, arm: 0, hp: 5, rating: 54,  traits: ['远程', '毒Lv2'], art: { icon: '🧪', hue: 150 } },
-  { name: '木乃伊王', race: '中立', cost: 5, atk: 3, arm: 1, hp: 6, rating: 53,  traits: [], spell: 'curse', art: { icon: '📜', hue: 175 } },
-  { name: '吸血鬼伯爵', race: '墓园', cost: 6, atk: 4, arm: 0, hp: 8, rating: 54, traits: ['飞行', '吸血'], art: { icon: '🧛‍♂️', hue: 350 } },
-  { name: '憎恶',     race: '墓园', cost: 6, atk: 5, arm: 1, hp: 13, rating: 60, traits: [], art: { icon: '👺', hue: 140 } },
-  { name: '骸骨巨龙', race: '墓园', cost: 8, atk: 5, arm: 0, hp: 9, rating: 68, traits: ['飞行'], spell: 'boneDragon', art: { icon: '🩻', hue: 165 } },
-  // 墓园（Necropolis）兵种线补全
-  { name: '行尸',     race: '墓园', cost: 2, atk: 2, arm: 0, hp: 5,  rating: 58, traits: [], art: { icon: '🚶', hue: 100 } },
-  { name: '骷髅勇士', race: '墓园', cost: 2, atk: 2, arm: 0, hp: 3,  rating: 54, traits: [], art: { icon: '💀', hue: 200 } },
-  { name: '阴魂',     race: '墓园', cost: 4, atk: 3, arm: 0, hp: 6,  rating: 54, traits: ['再生2'], art: { icon: '😶‍🌫️', hue: 200 } },
-  { name: '尸巫王',   race: '墓园', cost: 6, atk: 4, arm: 0, hp: 6,  rating: 52, traits: ['远程', '毒Lv2'], art: { icon: '🎭', hue: 260 } },
-  { name: '恐怖骑士', race: '墓园', cost: 7, atk: 5, arm: 1, hp: 10, rating: 53, traits: ['骑兵'], art: { icon: '🌑', hue: 220 } },
-  { name: '鬼龙',     race: '墓园', cost: 8, atk: 6, arm: 0, hp: 12, rating: 49, traits: ['飞行'], art: { icon: '💨', hue: 190 } },
-  // ── H3 十类阵营扩充（塔楼/地下城/据点/要塞/元素/中立）──
-  // 塔楼（青蓝）
-  { name: '小妖精',   race: '塔楼',   cost: 1, atk: 1, arm: 0, hp: 1,  rating: 60, traits: [], art: { icon: '🧚', hue: 200 } },
-  { name: '大妖精',   race: '塔楼',   cost: 2, atk: 2, arm: 0, hp: 2,  rating: 52, traits: [], art: { icon: '🧚‍♂️', hue: 210 } },
-  { name: '石人',     race: '塔楼',   cost: 3, atk: 2, arm: 1, hp: 5,  rating: 56, traits: [], art: { icon: '🗿', hue: 195 } },
-  { name: '铁人',     race: '塔楼',   cost: 4, atk: 3, arm: 2, hp: 5,  rating: 56, traits: [], art: { icon: '🤖', hue: 200 } },
-  { name: '法师',     race: '塔楼',   cost: 4, atk: 2, arm: 0, hp: 4,  rating: 52, traits: ['远程'], art: { icon: '🧙', hue: 215 } },
-  { name: '大法师',   race: '塔楼',   cost: 5, atk: 3, arm: 0, hp: 5,  rating: 50, traits: ['远程'], art: { icon: '🧙‍♂️', hue: 225 } },
-  { name: '灯神',     race: '塔楼',   cost: 5, atk: 4, arm: 0, hp: 6,  rating: 51, traits: ['飞行'], art: { icon: '🧞', hue: 230 } },
-  { name: '神怪',     race: '塔楼',   cost: 6, atk: 5, arm: 0, hp: 7,  rating: 49, traits: ['飞行'], art: { icon: '🧞‍♂️', hue: 240 } },
-  { name: '蛇女',     race: '塔楼',   cost: 6, atk: 5, arm: 0, hp: 9,  rating: 48, traits: [], art: { icon: '🐍', hue: 190 } },
-  { name: '蛇发女妖', race: '塔楼',   cost: 7, atk: 6, arm: 0, hp: 10, rating: 46, traits: [], art: { icon: '👩‍🎤', hue: 205 } },
-  { name: '巨人',     race: '塔楼',   cost: 7, atk: 6, arm: 0, hp: 12, rating: 50, traits: [], art: { icon: '🏔️', hue: 210 } },
-  { name: '泰坦',     race: '塔楼',   cost: 9, atk: 7, arm: 0, hp: 14, rating: 52, traits: ['远程'], art: { icon: '⚡', hue: 220 } },
-  // 地下城（暗紫）
-  { name: '穴居人',   race: '地下城', cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '🧌', hue: 270 } },
-  { name: '地狱穴居人', race: '地下城', cost: 2, atk: 3, arm: 0, hp: 2, rating: 54, traits: [], art: { icon: '👹', hue: 280 } },
-  { name: '邪眼',     race: '地下城', cost: 4, atk: 3, arm: 0, hp: 4,  rating: 54, traits: ['远程'], art: { icon: '👁️', hue: 260 } },
-  { name: '毒眼',     race: '地下城', cost: 5, atk: 3, arm: 0, hp: 5,  rating: 52, traits: ['远程', '毒Lv1'], art: { icon: '🧿', hue: 275 } },
-  { name: '美杜莎',   race: '地下城', cost: 4, atk: 2, arm: 0, hp: 5,  rating: 54, traits: ['远程'], art: { icon: '🐍', hue: 265 } },
-  { name: '美杜莎女王', race: '地下城', cost: 5, atk: 3, arm: 0, hp: 6, rating: 52, traits: ['远程'], art: { icon: '👸', hue: 285 } },
-  { name: '牛头人',   race: '地下城', cost: 5, atk: 5, arm: 0, hp: 6,  rating: 48, traits: [], art: { icon: '🐂', hue: 255 } },
-  { name: '牛头王',   race: '地下城', cost: 6, atk: 6, arm: 0, hp: 7,  rating: 46, traits: [], art: { icon: '🐃', hue: 265 } },
-  { name: '红龙',     race: '地下城', cost: 7, atk: 6, arm: 0, hp: 11, rating: 53, traits: ['飞行'], art: { icon: '🐉', hue: 0 } },
-  { name: '黑龙',     race: '地下城', cost: 9, atk: 8, arm: 0, hp: 14, rating: 57, traits: ['飞行', '法术护盾3'], art: { icon: '🐲', hue: 290 } },
-  // 据点（土黄）
-  { name: '大耳怪',   race: '据点',   cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '👂', hue: 40 } },
-  { name: '大耳怪王', race: '据点',   cost: 1, atk: 2, arm: 0, hp: 2,  rating: 58, traits: [], art: { icon: '👺', hue: 45 } },
-  { name: '狼骑兵',   race: '据点',   cost: 2, atk: 2, arm: 0, hp: 2,  rating: 57, traits: ['骑兵'], art: { icon: '🐺', hue: 35 } },
-  { name: '狼斗士',   race: '据点',   cost: 3, atk: 2, arm: 0, hp: 3,  rating: 63, traits: ['骑兵', '连击'], art: { icon: '🐕', hue: 40 } },
-  { name: '半兽人',   race: '据点',   cost: 2, atk: 1, arm: 0, hp: 3,  rating: 60, traits: ['远程'], art: { icon: '🏹', hue: 30 } },
-  { name: '半兽人首领', race: '据点', cost: 3, atk: 2, arm: 0, hp: 4,  rating: 58, traits: ['远程'], art: { icon: '🎯', hue: 35 } },
-  { name: '食人魔',   race: '据点',   cost: 4, atk: 4, arm: 0, hp: 7,  rating: 54, traits: [], art: { icon: '🫏', hue: 45 } },
-  { name: '巨魔',     race: '据点',   cost: 4, atk: 3, arm: 0, hp: 5,  rating: 52, traits: ['再生2'], art: { icon: '🧟‍♂️', hue: 50 } },
-  { name: '食人魔王', race: '据点',   cost: 5, atk: 5, arm: 0, hp: 8,  rating: 52, traits: [], art: { icon: '👹', hue: 40 } },
-  { name: '独眼巨人', race: '据点',   cost: 6, atk: 5, arm: 0, hp: 9,  rating: 48, traits: [], art: { icon: '👁️‍🗨️', hue: 45 } },
-  { name: '独眼巨人王', race: '据点', cost: 7, atk: 6, arm: 0, hp: 10, rating: 50, traits: ['范围攻击'], art: { icon: '🔨', hue: 50 } },
-  { name: '雷鸟',     race: '据点',   cost: 6, atk: 4, arm: 0, hp: 8,  rating: 49, traits: ['飞行'], art: { icon: '🦅', hue: 55 } },
-  { name: '闪电鸟',   race: '据点',   cost: 7, atk: 5, arm: 0, hp: 9,  rating: 47, traits: ['飞行'], art: { icon: '⚡', hue: 50 } },
-  { name: '比蒙',     race: '据点',   cost: 9, atk: 9, arm: 0, hp: 14, rating: 50, traits: ['护甲穿透1'], art: { icon: '🦣', hue: 40 } },
-  { name: '比蒙巨兽', race: '据点',   cost: 10, atk: 10, arm: 0, hp: 17, rating: 54, traits: ['护甲穿透2'], art: { icon: '🦣', hue: 20 } },
-  // 要塞（沼泽墨绿）
-  { name: '狼人',     race: '要塞',   cost: 2, atk: 2, arm: 0, hp: 3,  rating: 54, traits: [], art: { icon: '🐺', hue: 90 } },
-  { name: '蜥蜴人',   race: '要塞',   cost: 2, atk: 1, arm: 1, hp: 3,  rating: 56, traits: [], art: { icon: '🦎', hue: 95 } },
-  { name: '蜥蜴勇士', race: '要塞',   cost: 3, atk: 2, arm: 1, hp: 4,  rating: 54, traits: [], art: { icon: '🛡️', hue: 100 } },
-  { name: '毒蝇',     race: '要塞',   cost: 3, atk: 2, arm: 0, hp: 3,  rating: 53, traits: ['飞行'], art: { icon: '🪰', hue: 85 } },
-  { name: '龙蝇',     race: '要塞',   cost: 4, atk: 3, arm: 0, hp: 4,  rating: 53, traits: ['飞行', '毒Lv1'], art: { icon: '🐉', hue: 95 } },
-  { name: '石化蜥蜴', race: '要塞',   cost: 5, atk: 3, arm: 1, hp: 6,  rating: 51, traits: ['石化'], art: { icon: '🦎', hue: 105 } },
-  { name: '巨蜥',     race: '要塞',   cost: 6, atk: 4, arm: 1, hp: 7,  rating: 49, traits: ['石化'], art: { icon: '🐊', hue: 100 } },
-  { name: '蛮牛',     race: '要塞',   cost: 6, atk: 5, arm: 0, hp: 7,  rating: 56, traits: ['死亡凝视'], art: { icon: '🐂', hue: 30 } },
-  { name: '野牛',     race: '要塞',   cost: 7, atk: 6, arm: 0, hp: 9,  rating: 44, traits: [], art: { icon: '🐃', hue: 35 } },
-  { name: '双足飞龙', race: '要塞',   cost: 6, atk: 4, arm: 0, hp: 7,  rating: 47, traits: ['飞行'], art: { icon: '🐲', hue: 90 } },
-  { name: '终极九头蛇', race: '要塞', cost: 10, atk: 6, arm: 0, hp: 20, rating: 56, traits: ['范围攻击'], art: { icon: '🐙', hue: 110 } },
-  // 元素（银亮蓝）
-  { name: '气元素',   race: '元素',   cost: 3, atk: 3, arm: 0, hp: 4,  rating: 57, traits: ['飞行'], art: { icon: '💨', hue: 195 } },
-  { name: '雷元素',   race: '元素',   cost: 4, atk: 3, arm: 0, hp: 5,  rating: 53, traits: ['飞行'], art: { icon: '⚡', hue: 200 } },
-  { name: '水元素',   race: '元素',   cost: 3, atk: 2, arm: 0, hp: 6,  rating: 54, traits: [], art: { icon: '💧', hue: 205 } },
-  { name: '冰元素',   race: '元素',   cost: 4, atk: 3, arm: 0, hp: 7,  rating: 52, traits: [], art: { icon: '🧊', hue: 195 } },
-  { name: '火元素',   race: '元素',   cost: 4, atk: 4, arm: 0, hp: 4,  rating: 50, traits: ['火系魔法免疫'], art: { icon: '🔥', hue: 20 } },
-  { name: '烈火元素', race: '元素',   cost: 5, atk: 5, arm: 0, hp: 5,  rating: 48, traits: ['火系魔法免疫'], art: { icon: '🎆', hue: 25 } },
-  { name: '土元素',   race: '元素',   cost: 4, atk: 3, arm: 1, hp: 6,  rating: 54, traits: [], art: { icon: '🪨', hue: 35 } },
-  { name: '石元素',   race: '元素',   cost: 5, atk: 4, arm: 1, hp: 7,  rating: 52, traits: [], art: { icon: '⛰️', hue: 40 } },
-  { name: '精神元素', race: '元素',   cost: 6, atk: 4, arm: 0, hp: 8,  rating: 48, traits: ['法术护盾2'], art: { icon: '✨', hue: 210 } },
-  { name: '魔法元素', race: '元素',   cost: 7, atk: 5, arm: 0, hp: 9,  rating: 46, traits: ['范围攻击'], art: { icon: '🔮', hue: 220 } },
-  { name: '火鸟',     race: '元素',   cost: 7, atk: 5, arm: 0, hp: 9,  rating: 51, traits: ['飞行', '再生1', '火系魔法免疫'], art: { icon: '🐦‍🔥', hue: 30 } },
-  { name: '凤凰',     race: '元素',   cost: 8, atk: 6, arm: 0, hp: 10, rating: 51, traits: ['飞行', '再生2', '火系魔法免疫'], art: { icon: '🐦‍🔥', hue: 40 } },
-  // 中立（灰褐）
-  { name: '盗贼',     race: '中立',   cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '🗡️', hue: 30 } },
-  { name: '游牧民',   race: '中立',   cost: 3, atk: 3, arm: 0, hp: 3,  rating: 55, traits: ['骑兵'], art: { icon: '🏇', hue: 35 } },
-  { name: '仙女龙',   race: '中立',   cost: 7, atk: 5, arm: 0, hp: 8,  rating: 49, traits: ['飞行', '法术护盾2'], art: { icon: '🧚‍♀️', hue: 160 } },
-  { name: '水晶龙',   race: '中立',   cost: 8, atk: 7, arm: 0, hp: 12, rating: 46, traits: [], art: { icon: '💎', hue: 185 } },
-  { name: '锈龙',     race: '中立',   cost: 8, atk: 6, arm: 0, hp: 14, rating: 52, traits: ['毒Lv2'], art: { icon: '🐉', hue: 25 } },
-  { name: '圣龙',     race: '中立',   cost: 9, atk: 8, arm: 0, hp: 16, rating: 54, traits: ['法术护盾2'], art: { icon: '🐲', hue: 55 } },
-  // ── 法术卡牌（H3 四系魔法；type:'spell'，不入场的主动法术）──
-  // 土系
-  { name: '护体石肤', type: 'spell', race: '中立', cost: 2, school: '土', spellEffect: 'stoneSkin', target: 'friendlyUnit', rating: 58, art: { icon: '🪨', hue: 30 } },
-  { name: '迟缓',     type: 'spell', race: '中立', cost: 2, school: '土', spellEffect: 'slow', target: 'enemyUnit', rating: 58, art: { icon: '🐌', hue: 35 } },
-  { name: '地刺',     type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'earthSpikes', target: 'none', rating: 58, art: { icon: '🌋', hue: 25 } },
-  { name: '死亡波纹', type: 'spell', race: '中立', cost: 5, school: '土', spellEffect: 'deathRipple', target: 'none', rating: 56, art: { icon: '💀', hue: 40 } },
-  // 水系
-  { name: '治疗',     type: 'spell', race: '中立', cost: 2, school: '水', spellEffect: 'heal', target: 'friendlyUnit', rating: 56, art: { icon: '💧', hue: 200 } },
-  { name: '冰箭',     type: 'spell', race: '中立', cost: 2, school: '水', spellEffect: 'iceBolt', target: 'enemyUnit', rating: 58, art: { icon: '🧊', hue: 195 } },
-  { name: '祝福',     type: 'spell', race: '中立', cost: 3, school: '水', spellEffect: 'bless', target: 'none', rating: 56, art: { icon: '🙏', hue: 210 } },
-  { name: '驱散',     type: 'spell', race: '中立', cost: 2, school: '水', spellEffect: 'dispel', target: 'enemyUnit', rating: 55, art: { icon: '🌀', hue: 190 } },
-  // 火系
-  { name: '火球术',   type: 'spell', race: '中立', cost: 3, school: '火', spellEffect: 'fireballSpell', target: 'enemyUnit', rating: 58, art: { icon: '🔥', hue: 15 } },
-  { name: '嗜血奇术', type: 'spell', race: '中立', cost: 3, school: '火', spellEffect: 'bloodlust', target: 'none', rating: 58, art: { icon: '🩸', hue: 0 } },
-  { name: '烈火神盾', type: 'spell', race: '中立', cost: 3, school: '火', spellEffect: 'fireShield', target: 'friendlyUnit', rating: 56, art: { icon: '🛡️', hue: 10 } },
-  { name: '末日审判', type: 'spell', race: '中立', cost: 8, school: '火', spellEffect: 'doom', target: 'none', rating: 60, art: { icon: '☄️', hue: 5 } },
-  // 气系
-  { name: '闪电箭',   type: 'spell', race: '中立', cost: 3, school: '气', spellEffect: 'lightningBolt', target: 'enemyUnit', rating: 58, art: { icon: '⚡', hue: 55 } },
-  { name: '连锁闪电', type: 'spell', race: '中立', cost: 5, school: '气', spellEffect: 'chainLightning', target: 'none', rating: 60, art: { icon: '🌩️', hue: 60 } },
-  { name: '召唤气元素', type: 'spell', race: '中立', cost: 6, school: '气', spellEffect: 'summonAir', target: 'none', rating: 56, art: { icon: '💨', hue: 180 } },
-  // ── 法术卡扩充（第二批 12 张）──
-  { name: '护体神盾', type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'holyShield', target: 'none', rating: 58, art: { icon: '🔰', hue: 35 } },
-  { name: '陨石',     type: 'spell', race: '中立', cost: 4, school: '土', spellEffect: 'meteor', target: 'enemyUnit', rating: 58, art: { icon: '☄️', hue: 20 } },
-  { name: '复活术',   type: 'spell', race: '中立', cost: 5, school: '土', spellEffect: 'revive', target: 'none', rating: 58, art: { icon: '✝️', hue: 45 } },
-  { name: '治疗波动', type: 'spell', race: '中立', cost: 4, school: '水', spellEffect: 'healingWave', target: 'none', rating: 56, art: { icon: '🌊', hue: 200 } },
-  { name: '镜像术',   type: 'spell', race: '中立', cost: 4, school: '水', spellEffect: 'mirror', target: 'friendlyUnit', rating: 58, art: { icon: '🪞', hue: 190 } },
-  { name: '传送',     type: 'spell', race: '中立', cost: 2, school: '水', spellEffect: 'teleport', target: 'friendlyUnit', rating: 52, art: { icon: '🚪', hue: 205 } },
-  { name: '烧灼',     type: 'spell', race: '中立', cost: 2, school: '火', spellEffect: 'sear', target: 'enemyUnit', rating: 55, art: { icon: '♨️', hue: 10 } },
-  { name: '地狱烈焰', type: 'spell', race: '中立', cost: 6, school: '火', spellEffect: 'hellfire', target: 'none', rating: 58, art: { icon: '🔥', hue: 350 } },
-  { name: '混乱',     type: 'spell', race: '中立', cost: 3, school: '火', spellEffect: 'confuse', target: 'enemyUnit', rating: 55, art: { icon: '😵‍💫', hue: 320 } },
-  { name: '龙卷',     type: 'spell', race: '中立', cost: 4, school: '气', spellEffect: 'tornado', target: 'none', rating: 55, art: { icon: '🌬️', hue: 170 } },
-  { name: '鼓舞',     type: 'spell', race: '中立', cost: 2, school: '气', spellEffect: 'inspire', target: 'none', rating: 56, art: { icon: '📣', hue: 60 } },
-  { name: '召唤雷元素', type: 'spell', race: '中立', cost: 5, school: '气', spellEffect: 'summonThunder', target: 'none', rating: 56, art: { icon: '⚡', hue: 50 } },
-  // ── 法术卡扩充（第三批 11 张 H3 经典）──
-  { name: '雷鸣爆弹', type: 'spell', race: '中立', cost: 6, school: '土', spellEffect: 'thunderBolt', target: 'enemyUnit', rating: 62, art: { icon: '💥', hue: 45 } },
-  { name: '聚灵奇术', type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'animateDead', target: 'graveUnit', rating: 58, art: { icon: '🧟', hue: 110 } },
-  { name: '召唤土元素', type: 'spell', race: '中立', cost: 7, school: '土', spellEffect: 'summonEarth', target: 'none', rating: 56, art: { icon: '🪨', hue: 35 } },
-  { name: '流沙',     type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'quicksand', target: 'none', rating: 55, art: { icon: '🏜️', hue: 40 } },
-  { name: '失忆',     type: 'spell', race: '中立', cost: 4, school: '水', spellEffect: 'forget', target: 'enemyUnit', rating: 55, art: { icon: '🌫️', hue: 200 } },
-  { name: '召唤水元素', type: 'spell', race: '中立', cost: 7, school: '水', spellEffect: 'summonWater', target: 'none', rating: 56, art: { icon: '💧', hue: 205 } },
-  { name: '流星火雨', type: 'spell', race: '中立', cost: 7, school: '火', spellEffect: 'meteorShower', target: 'none', rating: 60, art: { icon: '🌠', hue: 15 } },
-  { name: '召唤火元素', type: 'spell', race: '中立', cost: 7, school: '火', spellEffect: 'summonFire', target: 'none', rating: 56, art: { icon: '🔥', hue: 25 } },
-  { name: '狂暴',     type: 'spell', race: '中立', cost: 3, school: '火', spellEffect: 'frenzy', target: 'friendlyUnit', rating: 55, art: { icon: '😡', hue: 0 } },
-  { name: '龙卷风',   type: 'spell', race: '中立', cost: 3, school: '气', spellEffect: 'twister', target: 'none', rating: 55, art: { icon: '🌪️', hue: 180 } },
-  { name: '大气神盾', type: 'spell', race: '中立', cost: 2, school: '气', spellEffect: 'airShield', target: 'friendlyUnit', rating: 56, art: { icon: '🛡️', hue: 190 } },
-  { name: '召唤骷髅兵', type: 'spell', race: '中立', cost: 3, school: '土', spellEffect: 'raiseSkeletons', target: 'graveUnit', rating: 57, art: { icon: '💀', hue: 120 } },
-  { name: '召唤史莱姆', type: 'spell', race: '中立', cost: 0, school: '水', spellEffect: 'slimeSwarm', target: 'none', rating: 58, art: { icon: '🟢', hue: 120 } },
-  // ── HotA 新阵营（港口 Cove / 堡垒 Bulwark / 工厂 Factory）──
-  // 港口（海蓝）
-  { name: '泉水精灵', race: '港口',   cost: 1, atk: 1, arm: 0, hp: 2,  rating: 56, traits: [], art: { icon: '🧚', hue: 190 } },
-  { name: '海洋精灵', race: '港口',   cost: 2, atk: 1, arm: 0, hp: 3,  rating: 57, traits: [], spell: 'heal', spellParam: 2, art: { icon: '🌊', hue: 195 } },
-  { name: '水手',     race: '港口',   cost: 2, atk: 2, arm: 0, hp: 4,  rating: 56, traits: [], art: { icon: '⚓', hue: 200 } },
-  { name: '海员',     race: '港口',   cost: 2, atk: 3, arm: 0, hp: 3,  rating: 56, traits: [], art: { icon: '⛵', hue: 205 } },
-  { name: '海贼',     race: '港口',   cost: 3, atk: 3, arm: 0, hp: 3,  rating: 55, traits: ['骑兵'], art: { icon: '🏴‍☠️', hue: 210 } },
-  { name: '皇家海盗', race: '港口',   cost: 4, atk: 4, arm: 0, hp: 5,  rating: 59, traits: ['骑兵', '掠夺'], art: { icon: '🦜', hue: 200 } },
-  { name: '暴风鸟',   race: '港口',   cost: 4, atk: 3, arm: 0, hp: 5,  rating: 53, traits: ['飞行'], art: { icon: '🦅', hue: 195 } },
-  { name: '暴风雕',   race: '港口',   cost: 5, atk: 4, arm: 0, hp: 6,  rating: 51, traits: ['飞行'], art: { icon: '🌩️', hue: 200 } },
-  { name: '海洋女巫', race: '港口',   cost: 5, atk: 2, arm: 0, hp: 6,  rating: 60, traits: ['远程'], actSpells: [{ key: 'bless', cost: 2 }, { key: 'iceBolt', cost: 2 }], spellMana0: 2, spellManaMax: 4, art: { icon: '🧙‍♀️', hue: 190 } },
-  { name: '海洋术士', race: '港口',   cost: 7, atk: 3, arm: 0, hp: 7,  rating: 62, traits: ['远程'], actSpells: [{ key: 'bless', cost: 2 }, { key: 'iceBolt', cost: 2 }], spellMana0: 4, spellManaMax: 4, art: { icon: '🔮', hue: 195 } },
-  { name: '鱼人',     race: '港口',   cost: 6, atk: 5, arm: 1, hp: 8,  rating: 53, traits: [], art: { icon: '🐟', hue: 185 } },
-  { name: '鱼人战士', race: '港口',   cost: 7, atk: 6, arm: 1, hp: 10, rating: 53, traits: [], art: { icon: '🐠', hue: 190 } },
-  { name: '海蛇',     race: '港口',   cost: 8, atk: 7, arm: 0, hp: 13, rating: 52, traits: ['毒Lv2'], art: { icon: '🐍', hue: 180 } },
-  { name: '深渊海蛇', race: '港口',   cost: 10, atk: 8, arm: 0, hp: 15, rating: 56, traits: ['毒Lv2', '复仇1'], art: { icon: '🐉', hue: 185 } },
-  { name: '大王乌贼', race: '港口',   cost: 7, atk: 3, arm: 0, hp: 15, rating: 53, traits: ['再生1'], art: { icon: '🦑', hue: 280 } },
-  // 堡垒（冰蓝）
-  { name: '狗头人',   race: '堡垒',   cost: 1, atk: 2, arm: 0, hp: 1,  rating: 56, traits: [], art: { icon: '🐕', hue: 210 } },
-  { name: '狗头人工长', race: '堡垒', cost: 1, atk: 2, arm: 0, hp: 2,  rating: 58, traits: [], art: { icon: '⛏️', hue: 215 } },
-  { name: '山羚',     race: '堡垒',   cost: 2, atk: 2, arm: 0, hp: 2,  rating: 57, traits: ['骑兵'], art: { icon: '🐐', hue: 220 } },
-  { name: '雪羚',     race: '堡垒',   cost: 3, atk: 3, arm: 0, hp: 3,  rating: 55, traits: ['骑兵'], art: { icon: '🦌', hue: 215 } },
-  { name: '雪精灵',   race: '堡垒',   cost: 3, atk: 2, arm: 0, hp: 3,  rating: 56, traits: ['远程'], art: { icon: '🧝', hue: 210 } },
-  { name: '铁甲雪精灵', race: '堡垒', cost: 4, atk: 3, arm: 1, hp: 4,  rating: 58, traits: ['远程'], art: { icon: '🛡️', hue: 220 } },
-  { name: '雪怪',     race: '堡垒',   cost: 4, atk: 4, arm: 0, hp: 6,  rating: 52, traits: [], art: { icon: '❄️', hue: 200 } },
-  { name: '控符雪怪', race: '堡垒',   cost: 5, atk: 4, arm: 1, hp: 7,  rating: 52, traits: [], art: { icon: '🔤', hue: 210 } },
-  { name: '萨满',     race: '堡垒',   cost: 5, atk: 2, arm: 0, hp: 6,  rating: 66, traits: ['远程'], spell: 'prayer', art: { icon: '🙏', hue: 205 } },
-  { name: '萨满长老', race: '堡垒',   cost: 6, atk: 3, arm: 0, hp: 7,  rating: 64, traits: ['远程'], spell: 'prayer', art: { icon: '📿', hue: 215 } },
-  { name: '猛犸',     race: '堡垒',   cost: 6, atk: 5, arm: 0, hp: 11, rating: 57, traits: ['骑兵'], art: { icon: '🦣', hue: 210 } },
-  { name: '战斗猛犸', race: '堡垒',   cost: 7, atk: 6, arm: 0, hp: 13, rating: 57, traits: ['骑兵'], art: { icon: '🐘', hue: 215 } },
-  { name: '冰霜巨人', race: '堡垒',   cost: 8, atk: 7, arm: 0, hp: 14, rating: 50, traits: [], art: { icon: '🏔️', hue: 205 } },
-  { name: '冰霜领主', race: '堡垒',   cost: 9, atk: 8, arm: 0, hp: 16, rating: 54, traits: ['范围攻击'], art: { icon: '👑', hue: 210 } },
-  // 工厂（黄铜）
-  { name: '半身人',   race: '工厂',   cost: 1, atk: 1, arm: 0, hp: 1,  rating: 62, traits: ['远程'], art: { icon: '🧑', hue: 40 } },
-  { name: '掷弹半身人', race: '工厂', cost: 2, atk: 1, arm: 0, hp: 2,  rating: 64, traits: ['远程', '范围攻击'], art: { icon: '💣', hue: 45 } },
-  { name: '机械师',   race: '工厂',   cost: 2, atk: 2, arm: 0, hp: 3,  rating: 54, traits: [], art: { icon: '🔧', hue: 35 } },
-  { name: '工程师',   race: '工厂',   cost: 3, atk: 2, arm: 0, hp: 5,  rating: 52, traits: [], art: { icon: '⚙️', hue: 40 } },
-  { name: '坚甲兽',   race: '工厂',   cost: 3, atk: 2, arm: 2, hp: 5,  rating: 56, traits: [], art: { icon: '🦔', hue: 30 } },
-  { name: '坚甲兽头领', race: '工厂', cost: 4, atk: 3, arm: 2, hp: 7,  rating: 60, traits: [], art: { icon: '🛡️', hue: 35 } },
-  { name: '自行机器', race: '工厂',   cost: 4, atk: 3, arm: 0, hp: 6,  rating: 52, traits: ['再生1'], art: { icon: '🤖', hue: 45 } },
-  { name: '自行哨卫', race: '工厂',   cost: 5, atk: 3, arm: 1, hp: 7,  rating: 52, traits: ['再生1'], art: { icon: '🦾', hue: 40 } },
-  { name: '沙虫',     race: '工厂',   cost: 5, atk: 4, arm: 0, hp: 7,  rating: 50, traits: ['毒Lv1'], art: { icon: '🪱', hue: 30 } },
-  { name: '死亡沙虫', race: '工厂',   cost: 6, atk: 5, arm: 0, hp: 8,  rating: 50, traits: ['毒Lv2'], art: { icon: '🐛', hue: 35 } },
-  { name: '雇佣杀手', race: '工厂',   cost: 6, atk: 4, arm: 0, hp: 5,  rating: 56, traits: ['远程', '连击'], art: { icon: '🔫', hue: 40 } },
-  { name: '赏金猎人', race: '工厂',   cost: 7, atk: 5, arm: 0, hp: 6,  rating: 54, traits: ['远程', '连击'], art: { icon: '💰', hue: 45 } },
-  { name: '无畏机甲', race: '工厂',   cost: 8, atk: 7, arm: 0, hp: 15, rating: 56, traits: ['范围攻击'], art: { icon: '🚢', hue: 35 } },
-  { name: '主宰机甲', race: '工厂',   cost: 9, atk: 8, arm: 0, hp: 17, rating: 59, traits: ['范围攻击', '护甲穿透1'], art: { icon: '🏭', hue: 40 } },
-  // ── 原创主角与招牌法术 ──
-  { name: '帕斯卡',   race: '港口',   cost: 5, atk: 3, arm: 0, hp: 8,  rating: 62, traits: ['高级水系魔法'], actSpell: 'tidalWave', spellCost: 2, spellMana0: 2, spellManaMax: 2, art: { icon: '🧝‍♀️', hue: 200 } },
-  { name: '艾达',     race: '中立',   cost: 4, atk: 2, arm: 0, hp: 6,  rating: 60, traits: ['高级学术'], actSpell: 'study', spellCost: 3, spellMana0: 3, spellManaMax: 3, art: { icon: '📖', hue: 220 } },
-  { name: '旋涡',     type: 'spell', race: '中立', cost: 4, school: '水', spellEffect: 'vortex', target: 'none', rating: 58, art: { icon: '🌀', hue: 190 } },
-];
-// token：不在牌池，仅由龙女变形产生
-const GREEN_DRAGON = { name: '绿龙', race: '壁垒', cost: 0, atk: 8, arm: 0, hp: 16, traits: [], token: true, art: { icon: '🐉', hue: 140 } };
-
-const RACES = ['城堡', '壁垒', '塔楼', '地狱', '墓园', '地下城', '据点', '要塞', '元素', '中立', '港口', '堡垒', '工厂'];
+// ---------- 卡牌数据（JSON 驱动：数据源 cards.json，经 tools/sync-cards.js 注入内嵌块） ----------
+function loadCardData() {
+  const el = document.getElementById('cards-json');
+  if (!el) throw new Error('未找到内嵌卡牌数据（#cards-json 缺失，请运行 node tools/sync-cards.js）');
+  return JSON.parse(el.textContent);
+}
+const CARD_DATA = loadCardData();
+const CARD_DEFS = CARD_DATA.cards;
+const GREEN_DRAGON = CARD_DATA.tokens.find(t => t.name === '绿龙');
+if (!GREEN_DRAGON) throw new Error('cards.json 缺少绿龙 token');
+const RACES = CARD_DATA.races;
+const SCHOOL_INFO = CARD_DATA.schools;
 // 阵营代表色（与卡面底色一致：灰白/绿/红褐/黑）
 const RACE_DOT = ['#8b9099', '#5a8a52', '#5a9aba', '#8a5a42', '#464650', '#6a4a8a', '#a89048', '#4a6a4a', '#7ab8d8', '#9a9288', '#2a6a8a', '#7a9ab8', '#8a744a'];
 const CURVE_LABELS = ['0', '1', '2', '3', '4', '5', '6', '7+'];
@@ -1117,7 +5066,7 @@ const SPELL_TEXT = {
   elfHeal: '战吼：本轮法力 +1，英雄恢复 2 点生命',
   dragoness: '下一轮准备阶段开始时变形为【绿龙】(8/0/16)并恢复 4 点生命（期间可被击杀）',
   charm: '战吼：随机获得一个敌方随从的控制权',
-  skeletonSearch: '亡语：从牌库检索一张同名卡置入手牌',
+  skeletonSearch: '亡语：从牌库检索一张同名卡置入手牌；没有则检索其家族卡（骷髅↔骷髅勇士）',
   curse: '亡语·诅咒：所有敌方随从攻击 -1',
   necro: '战吼·招魂术：召唤一个【骷髅】',
   reaper: '战吼：消灭攻击力最高的敌方随从',
@@ -1130,6 +5079,9 @@ const TRAIT_TEXT = {
   '不受反击': '攻击不触发普通反击（守备表示的同时结算反击除外）',
   '火系魔法免疫': '不受火系法术影响（火球术、地狱烈焰、末日审判、魔女火球等）',
   '复仇': '每次反击前攻击 +X（X=等级，永久累积）',
+  '鼓舞': '战斗阶段开始前，我方所有单位士气 +X（X=等级）',
+  '威吓': '战斗阶段开始前，敌方所有单位士气 -X（X=等级）',
+  '威光': '与携带者交战的单位，战斗前后士气各 -1',
   '飞行': '只能被远程或飞行单位攻击；被远程单位攻击时受到的伤害加倍',
   '骑兵': '攻击骑兵以外的单位时不会被反击',
   '掠夺': '攻击敌方英雄时获得 5 金币',
@@ -1154,7 +5106,7 @@ const TRAIT_TEXT = {
   '三姐妹': '场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限',
   '范围攻击': '攻击随从时，对被攻击随从左右两边相邻的随从造成等量溅射伤害（各自结算护甲，溅射受伤也会触发反击）',
   '石化': '生命未满时护甲视为 4',
-  '吸血': '造成的伤害等量治疗己方英雄',
+  '吸血': '造成的伤害等量恢复自身生命',
   '法术护盾': '受到的法术伤害 -X（X=等级）',
   '法术护盾2': '受到的法术伤害 -2',
 };
@@ -1165,6 +5117,19 @@ function traitText(t) {
 
 const HAND_LIMIT = 10;
 const MAX_MANA = 10;
+// ---------- 对局规则配置（玩家可在组牌界面调整，localStorage 持久化） ----------
+const DEFAULT_CONFIG = { heroHp: 20, maxMana: 10, allowSet: true, allowDefense: true };
+let gameConfig = (() => {
+  try {
+    const raw = storage.getItem('mtcg-config');
+    if (raw) return Object.assign({}, DEFAULT_CONFIG, JSON.parse(raw));
+  } catch (e) {}
+  return Object.assign({}, DEFAULT_CONFIG);
+})();
+function saveConfig() {
+  try { storage.setItem('mtcg-config', JSON.stringify(gameConfig)); } catch (e) {}
+}
+function manaCap() { return gameConfig.maxMana; }
 // 场上随从安全上限：正常对局远不会触及，仅防止「无上限 + 回合开始分裂 + 再生」
 // 指数增殖（每轮翻倍）把页面卡死
 const BOARD_CAP = 50;
@@ -1432,7 +5397,14 @@ function hostHandleAct(conn, msg) {
       ok = playCard('enemy', i, null, null, true);
       break;
     }
-    case 'endDeploy': startCombat(); break;
+    case 'endDeploy':
+      if (state.deploySide === state._firstSide) {
+        state.deploySide = otherSide(state.deploySide);
+        log('—— 等待 ' + sideName(state.deploySide) + ' 部署 ——');
+      } else {
+        startCombat();
+      }
+      break;
     default: ok = false;
   }
   if (!ok) conn.send({ t: 'actReject', reason: '动作无法执行' });
@@ -1757,7 +5729,7 @@ function updateMuteBtn() {
 }
 
 function newSide() {
-  return { hp: 20, maxHp: 20, maxMana: 0, mana: 0, burned: 0, fatigue: 0, deck: [], hand: [], board: [], graveyard: [] };
+  return { hp: gameConfig.heroHp, maxHp: gameConfig.heroHp, maxMana: 0, mana: 0, burned: 0, fatigue: 0, deck: [], hand: [], board: [], graveyard: [] };
 }
 
 function shuffle(arr) {
@@ -1877,7 +5849,7 @@ function startRound() {
   sfx('phase');
   ['player', 'enemy'].forEach(side => {
     const p = state[side];
-    p.maxMana = Math.min(MAX_MANA, p.maxMana + 1);
+    p.maxMana = Math.min(manaCap(), p.maxMana + 1);
     p.mana = Math.max(0, p.maxMana - p.burned);
     if (p.burned > 0) log(sideName(side) + '受到法力燃烧影响，本轮法力 -' + p.burned);
     p.burned = 0;
@@ -1933,12 +5905,13 @@ function startRound() {
   render();
   // 双人对战：每轮部署从玩家1 开始；本地热座亮交机隐私屏，联机房主直接广播等待部署
   if (state.mode === 'pvp' && !state.gameOver) {
-    state.deploySide = 'player';
+    state.deploySide = state.round % 2 === 1 ? 'player' : 'enemy'; // 每回合轮换先手
+    state._firstSide = state.deploySide; // 记录本轮先手方
     if (NET.role === 'host') {
-      log('—— 等待 ' + sideName('player') + ' 部署 ——');
+      log('—— 等待 ' + sideName(state.deploySide) + ' 部署 ——');
       render(); // 触发快照广播
     } else {
-      showPassScreen('第 ' + state.round + ' 轮部署 · 请把设备交给玩家 1', () => { render(); });
+      showPassScreen('第 ' + state.round + ' 轮部署 · 请把设备交给' + sideName(state.deploySide), () => { render(); });
     }
   }
 }
@@ -2173,6 +6146,14 @@ function resolveSpellEffect(side, def, target, costPaid) {
       p.board.forEach(m => { m.morale = Math.min(10, (m.morale || 0) + 3); });
       log('【鼓舞】：全场友方单位士气 +3');
       break;
+    case 'inspireAll':
+      p.board.forEach(m => changeMorale(m, 3));
+      log('【欢欣鼓舞】：我方全场士气 +3');
+      break;
+    case 'dreadAll':
+      foe.board.forEach(m => changeMorale(m, -3));
+      log('【悲痛欲绝】：敌方全场士气 -3');
+      break;
     case 'summonThunder': {
       const s = summonMinion(side, findDef('雷元素'), AIR_ROW);
       summonBuff(s);
@@ -2342,6 +6323,7 @@ function playSpellCard(side, idx, targetUid, faceDown) {
   }
   if (cost > p.mana) return false;
   if (faceDown) {
+    if (!gameConfig.allowSet) { log('本局已禁用盖放'); return false; }
     if (p.board.length >= BOARD_CAP) { if (state.mode === 'pvp' || side === 'player') log('场上使魔已达上限（' + BOARD_CAP + '）'); return false; }
     p.mana -= cost;
     p.hand.splice(idx, 1);
@@ -2426,13 +6408,6 @@ function aiRowFor(def) {
 
 const ROW_NAMES = ['前排', '中排', '后排', '空中'];
 
-// ---------- 法术卡牌（四系魔法） ----------
-const SCHOOL_INFO = {
-  '土': { label: '土', color: '#5a9a3a' }, // H3 原版绿
-  '水': { label: '水', color: '#4a9ae8' },
-  '火': { label: '火', color: '#e05a3a' },
-  '气': { label: '气', color: '#4ad8c8' },
-};
 const SPELL_FX_TEXT = {
   stoneSkin: '目标友方单位护甲 +3（永久）',
   slow: '目标敌方单位攻击 -3（最低 0）',
@@ -2460,6 +6435,8 @@ const SPELL_FX_TEXT = {
   confuse: '目标敌方单位士气 -6（最低 -10）',
   tornado: '消灭一个随机敌方飞行单位',
   inspire: '全场友方单位士气 +3（最高 10）',
+  inspireAll: '我方所有单位士气 +3（欢欣鼓舞）',
+  dreadAll: '敌方所有单位士气 -3（悲痛欲绝）',
   summonThunder: '在空中区域召唤一个【雷元素】（4/0/6 飞行）',
   thunderBolt: '对目标敌方单位造成 9 点伤害',
   animateDead: '从双方墓地中至多选择费用总和不超过（剩余法力 ×2）的墓园单位，直接召唤回场上；选定后再消耗（所选费用总和 ÷2 向上取整）点法力',
@@ -2607,7 +6584,7 @@ function recallMinion(uid, side) {
   if (p.hand.length >= HAND_LIMIT) { log('手牌已满，无法收回【' + m.name + '】'); return false; }
   p.board = p.board.filter(x => x !== m);
   p.hand.push(findDef(m.name)); // 不涉及墓地/亡语
-  p.mana = Math.min(MAX_MANA, p.mana + m.costPaid);
+  p.mana = Math.min(manaCap(), p.mana + m.costPaid);
   log(sideName(side || activeSide()) + '收回了【' + m.name + '】，退还 ' + m.costPaid + ' 点法力');
   recalcAuras(); // 三姐妹光环等照旧重算
   render();
@@ -2661,11 +6638,13 @@ function playCard(side, idx, row, beforeUid, faceDown, targetUid) {
     p.graveyard = [];
   }
   const m = makeMinion(def);
-  // 收回信息：无战吼/亡语等入场效果（def.spell == null）的随从可收回；带单位法术（actSpell）的也可收回，
-  // 但部署回合使用过法术之后不可（recallMinion 里校验）。骨龙因打出即除外墓地无法回滚，仍排除（有 spell）。
+  // 收回信息：无战吼类入场效果的随从可收回（亡语类打出时没有即时收益，收回无套利风险，允许收回；
+  // 骨龙因打出即除外墓地无法回滚，仍排除）。带单位法术（actSpell）的也可收回，
+  // 但部署回合使用过法术之后不可（recallMinion 里校验）。
+  const DEATHRATTLE_SPELLS = ['skeletonSearch', 'curse', 'draw'];
   m.playedRound = state.round;
   m.costPaid = cost;
-  m.recallable = !def.spell; // 带单位法术（actSpell）的卡也可收回——但若已使用过法术则不可（recallMinion 里校验）
+  m.recallable = !def.spell || DEATHRATTLE_SPELLS.indexOf(def.spell) >= 0;
   if (state.mode === 'ai' && side === 'enemy') {
     m.row = aiRowFor(def); // AI 按启发式选排
     p.board.push(m);
@@ -2680,6 +6659,7 @@ function playCard(side, idx, row, beforeUid, faceDown, targetUid) {
     }
   }
   if (faceDown) {
+    if (!gameConfig.allowSet) { log('本局已禁用盖放'); return false; }
     // 翻面表示盖放：默认守备表示；不触发战吼（pendingBattlecry 待翻开时结算）；日志不公开卡名（对对手保密）
     m.faceDown = true;
     m.defense = true;
@@ -2708,11 +6688,11 @@ function battlecry(side, m) {
       break;
     }
     case 'wisp':
-      p.mana = Math.min(MAX_MANA, p.mana + 1);
+      p.mana = Math.min(manaCap(), p.mana + 1);
       log('【小精灵】战吼：本轮法力 +1');
       break;
     case 'elfHeal':
-      p.mana = Math.min(MAX_MANA, p.mana + 1);
+      p.mana = Math.min(manaCap(), p.mana + 1);
       log('【精灵】战吼：本轮法力 +1');
       healHero(side, 2);
       break;
@@ -2844,11 +6824,13 @@ function moraleFx(m, kind) {
 // 反击造成的伤害不再触发反击（depth > 0 即为反击）。label 区分 主攻击/溅射/反击 的日志措辞。
 function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, label) {
   if (dmg <= 0) {
-    // 守备方成功格挡全部伤害：伤害来源士气 -1，守备方士气 +1
+    // 伤害被护甲完全抵挡：防守方士气 +1；守备表示格挡时伤害来源额外 -1（士气此消彼长）
+    changeMorale(target, 1);
     if (target.defense && depth === 0) {
       changeMorale(attacker, -1);
-      changeMorale(target, 1);
       log('【' + target.name + '】成功格挡了【' + attacker.name + '】的攻击！（士气此消彼长）');
+    } else {
+      log('【' + target.name + '】完全抵挡了【' + attacker.name + '】的攻击（士气 +1）');
     }
     return;
   }
@@ -2865,7 +6847,12 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
   else if (label === 'splash') log('【' + attacker.name + '】的溅射对【' + target.name + '】造成 ' + dmg + ' 点伤害' + antiAir + remain);
   else log('【' + attacker.name + '】攻击【' + target.name + '】，造成 ' + dmg + ' 点伤害' + antiAir + remain);
   applyPoison(attacker, target);
-  if (attacker.traits.includes('吸血')) healHero(attackerSide, dmg);
+  // 吸血：造成的伤害等量恢复自身生命（封顶）
+  if (attacker.traits.includes('吸血') && dmg > 0) {
+    const healBefore = attacker.curHp;
+    attacker.curHp = Math.min(attacker.maxHp, attacker.curHp + dmg);
+    if (attacker.curHp > healBefore) log('【' + attacker.name + '】吸血：自身恢复 ' + (attacker.curHp - healBefore) + ' 点生命');
+  }
   if (target.curHp <= 0 && attacker.traits.includes('驱魔')) target._noDR = true;
   if (depth === 0 && !target.faceDown && target.atk > 0) {
     if (target.defense) {
@@ -2931,6 +6918,9 @@ function doAttack(side, attackerUid, targetUid) {
   const shaken = []; // 本次攻击中受到伤害的随从 uid（用于晃动动画）
   if (defender) {
     sfx('hit');
+    // 威光：与圣龙交战，战斗前士气 -1
+    if (defender.traits.includes('威光')) { changeMorale(attacker, -1); log('【' + attacker.name + '】被【' + defender.name + '】的威光震慑，士气 -1'); }
+    if (attacker.traits.includes('威光')) { changeMorale(defender, -1); log('【' + defender.name + '】被【' + attacker.name + '】的威光震慑，士气 -1'); }
     // 盖牌守备：被攻击前先揭示（结算盖放时跳过的战吼），再按正面守备单位结算攻击
     if (defender.faceDown) {
       defender.faceDown = false;
@@ -2988,7 +6978,12 @@ function doAttack(side, attackerUid, targetUid) {
     changeMorale(attacker, 1); // 士气：造成正面伤害 +1（对英雄同样生效）
     log('【' + attacker.name + '】攻击' + sideName(foeSide) + '英雄，造成 ' + attacker.atk + ' 点伤害');
     sfx('hit');
-    if (attacker.traits.includes('吸血')) healHero(side, attacker.atk);
+    // 吸血：对英雄造成的伤害等量恢复自身生命（封顶）
+    if (attacker.traits.includes('吸血')) {
+      const healBefore = attacker.curHp;
+      attacker.curHp = Math.min(attacker.maxHp, attacker.curHp + attacker.atk);
+      if (attacker.curHp > healBefore) log('【' + attacker.name + '】吸血：自身恢复 ' + (attacker.curHp - healBefore) + ' 点生命');
+    }
     // 掠夺：攻击敌方英雄时额外获得 5 金币
     if (attacker.traits.includes('掠夺')) {
       gold += 5;
@@ -3001,6 +6996,9 @@ function doAttack(side, attackerUid, targetUid) {
       log('法力燃烧：' + sideName(foeSide) + '下轮法力 -' + burnLv);
     }
   }
+  // 威光：与圣龙交战，战斗后士气 -1
+  if (defender && defender.traits.includes('威光')) { changeMorale(attacker, -1); log('【' + attacker.name + '】被【' + defender.name + '】的威光震慑，士气 -1'); }
+  if (defender && attacker.traits.includes('威光')) { changeMorale(defender, -1); log('【' + defender.name + '】被【' + attacker.name + '】的威光震慑，士气 -1'); }
   const dying = cleanupDead('player').concat(cleanupDead('enemy'));
   recalcAuras();
   checkGameOver();
@@ -3035,14 +7033,20 @@ function cleanupDead(side) {
       log('【' + m.name + '】亡语触发：' + sideName(side) + '摸一张牌');
       drawCard(side);
     } else if (m.spell === 'skeletonSearch') {
-      // 检索同名卡（检索自己名字的另一张）
-      const i = p.deck.findIndex(d => d.name === m.name);
-      if (i >= 0 && p.hand.length < HAND_LIMIT) {
-        p.deck.splice(i, 1);
-        p.hand.push(findDef(m.name));
-        log('【' + m.name + '】亡语触发：从牌库检索一张同名卡置入手牌');
+      // 检索同名卡置入手牌；没有则按家族备选检索（骷髅↔骷髅勇士互检）
+      const FALLBACK = { '骷髅': '骷髅勇士', '骷髅勇士': '骷髅' };
+      const want = [m.name, FALLBACK[m.name]].filter(Boolean);
+      let found = -1, foundName = null;
+      for (let w = 0; w < want.length && found < 0; w++) {
+        const i = p.deck.findIndex(d => d.name === want[w]);
+        if (i >= 0) { found = i; foundName = want[w]; }
+      }
+      if (found >= 0 && p.hand.length < HAND_LIMIT) {
+        p.deck.splice(found, 1);
+        p.hand.push(findDef(foundName));
+        log('【' + m.name + '】亡语触发：从牌库检索一张【' + foundName + '】置入手牌');
       } else {
-        log('【' + m.name + '】亡语触发：' + (i < 0 ? '牌库中没有同名卡' : '手牌已满') + '，无效果');
+        log('【' + m.name + '】亡语触发：' + (found < 0 ? '牌库中没有可检索的卡' : '手牌已满') + '，无效果');
       }
     } else if (m.spell === 'curse') {
       const foe = state[otherSide(side)];
@@ -3232,6 +7236,143 @@ const UNIT_SPELL_TEXT = {
   iceBolt: '冰箭：消耗 2 法力，对一个敌方单位造成 4 点水系伤害',
 };
 
+// ---------- 战术预览（长按卡牌：进攻/受击目标分析） ----------
+let tacPreview = null; // { uid, mode: 'attack'|'defense', hl: {} }
+let tacPressTimer = null;
+
+function tacSideOf(uid) {
+  if (state.player.board.find(x => x.uid === uid)) return 'player';
+  if (state.enemy.board.find(x => x.uid === uid)) return 'enemy';
+  return null;
+}
+
+// 复刻 autoAttack 远程分支的确定性选目标逻辑，返回被选中的目标（可能为 'hero' 或 null）
+function tacRangedChoice(m, foeSide, mySide) {
+  let targets = legalMinionTargets(m, foeSide);
+  if (m.traits.includes('和平')) targets = targets.filter(t => !suicidalTarget(m, t, mySide));
+  const flying = targets.filter(t => isFlying(t));
+  if (flying.length > 0) targets = flying;
+  const kill = targets.find(t => {
+    const dmg = attackDamage(m, t);
+    if (dmg < t.curHp) return false;
+    const counters = t.atk > 0 && (t.defense || (t.counterLeft > 0 && canCounter(t, m, mySide)));
+    if (!counters) return true;
+    return attackDamage(t, m) < m.curHp;
+  });
+  if (kill) return kill;
+  if (m.atk > 0 && canHitHero(m, foeSide)) return 'hero';
+  if (targets.length > 0 && m.atk > 0) return targets.slice().sort((a, b) => a.curHp - b.curHp)[0];
+  return null;
+}
+
+// 进攻预览：该单位在当前位置的备选攻击目标（概率/伤害/可击杀）
+function tacAttackRows(m, mySide) {
+  const foeSide = otherSide(mySide);
+  const rows = [];
+  if (m.traits.includes('远程')) {
+    const chosen = tacRangedChoice(m, foeSide, mySide);
+    if (chosen === 'hero') rows.push({ hero: true, prob: 1, dmg: m.atk, lethal: m.atk >= state[foeSide].hp });
+    else if (chosen) rows.push({ t: chosen, prob: 1, dmg: attackDamage(m, chosen), lethal: attackDamage(m, chosen) >= chosen.curHp });
+    return rows;
+  }
+  let pool = meleeTargets(m, foeSide);
+  if (m.traits.includes('和平')) pool = pool.filter(x => !suicidalTarget(m, x.t, mySide));
+  const total = pool.reduce((s, x) => s + x.w, 0);
+  pool.forEach(x => {
+    const dmg = attackDamage(m, x.t);
+    rows.push({ t: x.t, prob: total > 0 ? x.w / total : 0, dmg: dmg, lethal: dmg >= x.t.curHp });
+  });
+  rows.sort((a, b) => b.prob - a.prob);
+  if (pool.length === 0 && m.atk > 0 && canHitHero(m, foeSide)) {
+    rows.push({ hero: true, prob: 1, dmg: m.atk, lethal: m.atk >= state[foeSide].hp });
+  }
+  return rows;
+}
+
+// 受击预览：哪些敌方单位会选中该单位（概率/伤害/我方反击）
+function tacDefenseRows(m, mySide) {
+  const foeSide = otherSide(mySide);
+  const rows = [];
+  state[foeSide].board.forEach(e => {
+    if (e.faceDown || e.atk <= 0) return;
+    let prob = 0;
+    if (e.traits.includes('远程')) {
+      if (tacRangedChoice(e, mySide, foeSide) === m) prob = 1;
+    } else {
+      const pool = meleeTargets(e, mySide);
+      const total = pool.reduce((s, x) => s + x.w, 0);
+      const me = pool.find(x => x.t === m);
+      if (me && total > 0) prob = me.w / total;
+    }
+    if (prob > 0) {
+      const dmg = attackDamage(e, m);
+      let counter = 0;
+      if (!m.faceDown && m.atk > 0 && (m.defense || (m.counterLeft > 0 && canCounter(m, e, foeSide)))) {
+        counter = attackDamage(m, e);
+      }
+      rows.push({ t: e, prob: prob, dmg: dmg, lethal: dmg >= m.curHp, counter: counter, counterLethal: counter > 0 && counter >= e.curHp });
+    }
+  });
+  rows.sort((a, b) => b.prob - a.prob);
+  return rows;
+}
+
+function openTacPreview(uid) {
+  const side = tacSideOf(uid);
+  if (!side) return;
+  const m = state[side].board.find(x => x.uid === uid);
+  if (!m || m.faceDown) return; // 盖牌无预览
+  tacPreview = { uid: uid, mode: m.defense ? 'defense' : 'attack', hl: {} }; // 守备表示首次即显示受击
+  renderTacPreview();
+  render();
+}
+
+function closeTacPreview() {
+  tacPreview = null;
+  const el = document.getElementById('tac-preview');
+  if (el) { el.classList.remove('show'); el.innerHTML = ''; }
+  render();
+}
+
+function renderTacPreview() {
+  const el = document.getElementById('tac-preview');
+  if (!el) return;
+  if (!tacPreview || !state || state.gameOver) { el.classList.remove('show'); el.innerHTML = ''; return; }
+  const side = tacSideOf(tacPreview.uid);
+  const m = side ? state[side].board.find(x => x.uid === tacPreview.uid) : null;
+  if (!m || m.faceDown) { tacPreview = null; el.classList.remove('show'); el.innerHTML = ''; return; }
+  const rows = tacPreview.mode === 'attack' ? tacAttackRows(m, side) : tacDefenseRows(m, side);
+  tacPreview.hl = {};
+  rows.forEach(r => { if (r.t) tacPreview.hl[r.t.uid] = true; });
+  const pct = p => Math.round(p * 100) + '%';
+  let html = '<div class="tp-title">【' + m.name + '】' + (tacPreview.mode === 'attack' ? '进攻预览' : '受击预览') + '</div>';
+  if (rows.length === 0) html += '<div class="tp-empty">（无）</div>';
+  rows.forEach(r => {
+    const name = r.hero ? '英雄本体' : '【' + r.t.name + '】';
+    html += '<div class="tp-row"><span class="tp-prob">' + pct(r.prob) + '</span><span>' + name + '</span>' +
+      '<span class="tp-dmg">' + r.dmg + ' 伤</span>' +
+      (r.counter > 0 ? '<span class="tp-counter">反击 ' + r.counter + (r.counterLethal ? '（反杀）' : '') + '</span>' : '') +
+      (r.lethal ? '<span class="tp-kill">可击杀</span>' : '') + '</div>';
+  });
+  html += '<div class="tp-hint">单击该卡切换 进攻/受击 · 点击空白关闭</div>';
+  el.innerHTML = html;
+  // 定位到卡牌右侧（越界则左移/下移）
+  const card = document.querySelector('[data-uid="' + tacPreview.uid + '"]');
+  if (card) {
+    const r = card.getBoundingClientRect();
+    el.classList.add('show');
+    const pw = el.offsetWidth, ph = el.offsetHeight;
+    let x = r.right + 8, y = r.top;
+    if (x + pw > window.innerWidth - 8) x = r.left - pw - 8;
+    if (x < 8) x = 8;
+    if (y + ph > window.innerHeight - 8) y = Math.max(8, window.innerHeight - ph - 8);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  } else {
+    el.classList.add('show');
+  }
+}
+
 // 守备表示的单位被随机选取的概率 ×2（宽度变成两倍）：构建加权池后随机
 function weightedPick(arr) {
   const pool = [];
@@ -3420,6 +7561,7 @@ function toggleLand(side, minionUid, setValue) {
 // 守备表示：不主动攻击；无限次反击且反击与对手攻击同时结算；被随机选取概率 ×2；卡面变宽。
 function toggleDefense(side, minionUid, setValue) {
   if (!state || state.gameOver) return false;
+  if (!gameConfig.allowDefense) { log('本局已禁用守备表示'); return false; }
   if (state.phase !== 'deploy') return false;
   if (state.mode === 'pvp' && side !== state.deploySide) return false;
   const m = state[side].board.find(x => x.uid === minionUid);
@@ -3482,6 +7624,7 @@ function aiCastSpells() {
 // AI 守备姿态：攻击力 ≤1 且生命较厚（≥5）的单位转为守备表示（无限反击·同时结算当肉盾），
 // 攻击力 ≥2 的确保攻击表示
 function aiSetDefense() {
+  if (!gameConfig.allowDefense) return;
   state.enemy.board.forEach(m => {
     const want = m.atk <= 1 && m.maxHp >= 5;
     if (want !== m.defense) {
@@ -3531,16 +7674,20 @@ function onActionButton() {
   if (!state || state.gameOver || state.phase !== 'deploy') return;
   if (NET.role === 'host') {
     if (state.deploySide === 'player') {
-      state.deploySide = 'enemy';
-      log('—— 等待 ' + sideName('enemy') + ' 部署 ——');
-      render(); // 触发快照广播，guest 随后开始部署
+      if (state._firstSide === 'player') {
+        state.deploySide = 'enemy';
+        log('—— 等待 ' + sideName('enemy') + ' 部署 ——');
+        render(); // 触发快照广播，guest 随后开始部署
+      } else {
+        startCombat(); // 本轮 guest 先手，房主部署完毕直接开战
+      }
     }
     return; // deploySide==='enemy' 时等待 guest 的 endDeploy 消息
   }
   if (state.mode === 'ai') { startCombat(); return; }
-  if (state.deploySide === 'player') {
-    showPassScreen('玩家 1 部署完毕 · 请把设备交给玩家 2', () => {
-      state.deploySide = 'enemy';
+  if (state.deploySide === state._firstSide) {
+    showPassScreen(sideName(state.deploySide) + ' 部署完毕 · 请把设备交给' + sideName(otherSide(state.deploySide)), () => {
+      state.deploySide = otherSide(state.deploySide);
       render();
     });
   } else {
@@ -3562,6 +7709,18 @@ function startCombat() {
   while (state.mode === 'ai' && aiPlayStep()) {} // AI 部署（仅人机模式）
   if (state.mode === 'ai') aiCastSpells(); // AI 施放单位法术
   if (state.mode === 'ai') aiSetDefense(); // AI 守备姿态：攻击力 ≤1 的单位转为守备表示
+  // 战斗阶段开始前：鼓舞/威吓光环结算（大天使全场 +1，鬼龙敌方全场 -1）
+  ['player', 'enemy'].forEach(sd => {
+    const me = state[sd], foe = state[otherSide(sd)];
+    let inspire = 0, dread = 0;
+    me.board.forEach(m => {
+      if (m.faceDown) return;
+      inspire += traitLv(m, '鼓舞');
+      dread += traitLv(m, '威吓');
+    });
+    if (inspire > 0) { me.board.forEach(m => changeMorale(m, inspire)); log(sideName(sd) + '受到鼓舞：全场士气 +' + inspire); }
+    if (dread > 0) { foe.board.forEach(m => changeMorale(m, -dread)); log(sideName(sd) + '施加威吓：敌方全场士气 -' + dread); }
+  });
   // 战斗阶段开始：双方所有随从重置反击机会（默认 1 次；反击X 特性为 X 次，如皇家狮鹫反击2）
   ['player', 'enemy'].forEach(s => state[s].board.forEach(m => { m.counterLeft = Math.max(1, traitLv(m, '反击')); m._extraUsed = false; }));
   render();
@@ -3608,6 +7767,8 @@ function minionHtml(m, isEnemy, ghost) {
     classes.push('spell-hit');
     spellHitStyle = 'box-shadow:0 0 16px ' + state.spellFx.color + ', 0 0 6px ' + state.spellFx.color + ';';
   }
+  // 战术预览目标高亮
+  if (!ghost && tacPreview && tacPreview.hl && tacPreview.hl[m.uid]) classes.push('tac-hl');
   const draggable = !ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver;
   // 本轮刚打出且无入场效果的随从可单击收回：青色虚线描边提示（已用法术的不再提示）
   const recallable = !ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver &&
@@ -3682,9 +7843,12 @@ function minionHtml(m, isEnemy, ghost) {
   let defBtn = '';
   let corners = '';
   if (!ghost && !isEnemy && state.phase === 'deploy' && !state.gameOver && NET.role !== 'spectator' && localDeployAllowed(mySide)) {
-    defBtn = '<div class="m-cast-row"><button class="def-btn" data-action="toggle-defense" data-uid="' + m.uid + '"' +
-      ' title="守备表示：不主动攻击，但无限次反击且反击同时结算；被随机选取概率×2">' +
-      (m.defense ? '→ 攻击表示' : '→ 守备表示') + '</button>' +
+    defBtn = '<div class="m-cast-row">' +
+      (gameConfig.allowDefense
+        ? '<button class="def-btn" data-action="toggle-defense" data-uid="' + m.uid + '"' +
+          ' title="守备表示：不主动攻击，但无限次反击且反击同时结算；被随机选取概率×2">' +
+          (m.defense ? '→ 攻击表示' : '→ 守备表示') + '</button>'
+        : '') +
       (m.traits.includes('飞行') && !m.faceDown
         ? '<button class="def-btn" data-action="toggle-land" data-uid="' + m.uid + '"' +
           ' title="落地：暂时失去飞行效果、移到地面阵型；可再起飞">' + (m.grounded ? '↑ 起飞' : '✈ 落地') + '</button>'
@@ -3716,7 +7880,7 @@ function handCardHtml(def, i, side) {
   if (def.type === 'spell') {
     const sch = SCHOOL_INFO[def.school] || { label: '?', color: '#888' };
     const sel = state.spellTargetMode && state.spellTargetMode.def === def ? ' selected' : '';
-    const setBtn = afford && NET.role !== 'spectator'
+    const setBtn = afford && NET.role !== 'spectator' && gameConfig.allowSet
       ? '<button class="set-btn" data-action="set-hand" data-idx="' + i + '" title="盖放这张法术卡：翻开时立即结算（需要目标的随机选合法目标）">盖放</button>' : '';
     return '<div class="hand-card spell-card ' + raceClass(def) + sel + (afford ? '' : ' unaffordable') + '" draggable="false" data-action="play-hand" data-idx="' + i + '"' +
       ' style="border-color:' + sch.color + ';box-shadow:0 0 10px ' + sch.color + '66;background:linear-gradient(160deg,' + sch.color + '33,#1e1e2e 55%)">' +
@@ -3732,7 +7896,7 @@ function handCardHtml(def, i, side) {
   const spellText = def.spell ? SPELL_TEXT[def.spell]
     : (def.actSpell ? '法术·' + UNIT_SPELL_TEXT[def.actSpell] : '');
   const spell = spellText ? '<div class="c-spell">' + spellText + '</div>' : '<div class="c-spell"></div>';
-  const setBtn = afford && NET.role !== 'spectator'
+  const setBtn = afford && NET.role !== 'spectator' && gameConfig.allowSet
     ? '<button class="set-btn" data-action="set-hand" data-idx="' + i + '" title="翻面表示盖放（默认守备表示）：不触发战吼；不会成为攻击目标、不主动攻击；仍可回蓝、吃 buff；之后可翻开">盖放</button>' : '';
   const hCorners = afford && NET.role !== 'spectator'
     ? '<div class="corner c-r rot-handle" data-idx="' + i + '" title="按住拖动旋转卡牌：90°=守备入场，180°=盖放，回正=攻击入场">↻</div>' : '';
@@ -3934,6 +8098,8 @@ function render() {
       : (state.mode === 'pvp' && state.deploySide === 'player' ? '完成部署' : '开始战斗');
     btn.disabled = state.phase !== 'deploy' || state.gameOver;
   }
+  // 战术预览面板随渲染刷新
+  renderTacPreview();
 }
 
 // ---------- 组牌 ----------
@@ -4093,6 +8259,7 @@ const SUMMON_FX = ['summonAir', 'summonEarth', 'summonWater', 'summonFire', 'sum
   'raiseSkeletons', 'slimeSwarm', 'mirror', 'revive', 'animateDead'];
 // 通用型法术（伤害/治疗/增益类，用于默认卡组法术位）
 const GENERIC_FX = ['sear', 'iceBolt', 'fireballSpell', 'lightningBolt', 'thunderBolt', 'meteor',
+  'inspireAll', 'dreadAll',
   'earthSpikes', 'deathRipple', 'doom', 'hellfire', 'meteorShower', 'vortex', 'chainLightning',
   'heal', 'healingWave', 'bless', 'bloodlust', 'holyShield', 'fireShield', 'stoneSkin',
   'inspire', 'frenzy', 'airShield'];
@@ -4137,6 +8304,14 @@ function buildRacePreset(race) {
   return { name: race + ' · 标准', cards: cards };
 }
 RACES.forEach(r => PRESET_DECKS.push(buildRacePreset(r)));
+// 墓园预设定制：骷髅海全满编 + 主题法术（替换通用法术位）
+(function () {
+  const necro = PRESET_DECKS.find(d => d.name === '墓园 · 标准');
+  if (necro) necro.cards = {
+    '骷髅': 4, '骷髅勇士': 4, '骷髅弓手': 4, '吸血蝙蝠': 4, '僵尸': 4, '行尸': 4,
+    '召唤骷髅兵': 2, '聚灵奇术': 2, '死亡波纹': 2,
+  };
+})();
 function applyPresetDeck(preset) {
   Object.keys(curSel).forEach(k => { curSel[k] = 0; });
   Object.keys(preset.cards).forEach(name => {
@@ -4150,12 +8325,18 @@ function applyPresetDeck(preset) {
 
 // ---------- 组牌筛选 ----------
 // off 集合：默认全部显示，点击 chip 把该项加入 off（隐藏）
-const builderFilter = { races: {}, costs: {}, types: {}, schools: {} };
+const builderFilter = { races: {}, costs: {}, types: {}, schools: {}, traits: {} };
 const FILTER_GROUPS = [
   { key: 'races', label: '阵营', vals: () => RACES.map(r => ({ v: r, t: r })) },
   { key: 'costs', label: '费用', vals: () => [0, 1, 2, 3, 4, 5, 6, 7].map(c => ({ v: c, t: c === 7 ? '7+' : String(c) })) },
   { key: 'types', label: '类型', vals: () => [{ v: 'unit', t: '单位' }, { v: 'spell', t: '法术' }] },
   { key: 'schools', label: '派系', vals: () => ['土', '水', '火', '气'].map(s => ({ v: s, t: s + '系' })) },
+  // 词条：选中即包含（只显示带选中特性的单位；不选=全部显示）
+  { key: 'traits', label: '词条', include: true, vals: () => {
+    const set = {};
+    CARD_DEFS.forEach(d => (d.traits || []).forEach(t => { set[t] = true; }));
+    return Object.keys(set).sort().map(t => ({ v: t, t: t }));
+  } },
 ];
 
 function costBucket(cost) { return cost >= 7 ? 7 : cost; }
@@ -4166,24 +8347,49 @@ function matchBuilderFilter(d) {
   const ty = d.type === 'spell' ? 'spell' : 'unit';
   if (builderFilter.types[ty]) return false;
   if (ty === 'spell' && builderFilter.schools[d.school]) return false;
+  // 词条（选中即包含）：有选中词条时，单位卡必须带至少一个选中特性
+  const selTraits = Object.keys(builderFilter.traits);
+  if (selTraits.length > 0 && ty === 'unit' && !(d.traits || []).some(t => builderFilter.traits[t])) return false;
   return true;
 }
 
 function renderPoolFilter() {
   const html = FILTER_GROUPS.map(g => {
-    const anyOff = g.vals().some(x => builderFilter[g.key][x.v]);
+    const include = !!g.include;
+    const anyOff = include ? false : g.vals().some(x => builderFilter[g.key][x.v]);
+    const anyOn = include && g.vals().some(x => builderFilter[g.key][x.v]);
     return '<div class="filter-row"><span class="filter-label">' + g.label + '</span>' +
       g.vals().map(x =>
-        '<span class="filter-chip' + (builderFilter[g.key][x.v] ? ' off' : '') + '" data-action="filter-chip" data-group="' + g.key + '" data-val="' + x.v + '">' + x.t + '</span>'
+        '<span class="filter-chip' + (include
+          ? (builderFilter[g.key][x.v] ? '' : ' off')          // 词条：未选中=灰
+          : (builderFilter[g.key][x.v] ? ' off' : '')) +        // 其他：被排除=灰
+        '" data-action="filter-chip" data-group="' + g.key + '" data-val="' + x.v + '"' +
+        (include ? ' title="' + (traitText(x.v) || x.v) + '"' : '') + '>' + x.t + '</span>'
       ).join('') +
-      '<span class="filter-chip filter-toggle-all" data-action="filter-toggle-all" data-group="' + g.key + '">' + (anyOff ? '全选' : '全不选') + '</span></div>';
+      '<span class="filter-chip filter-toggle-all" data-action="filter-toggle-all" data-group="' + g.key + '">' +
+        (include ? (anyOn ? '清除' : '全选') : (anyOff ? '全选' : '全不选')) + '</span></div>';
   }).join('') +
   '<div class="filter-row"><button class="filter-reset" data-action="filter-reset">重置筛选</button></div>';
   document.getElementById('pool-filter').innerHTML = html;
 }
 
+// ---------- 对局规则配置 UI ----------
+function renderGameRules() {
+  const chips = (vals, cur, action) => vals.map(v =>
+    '<span class="filter-chip' + (cur === v ? '' : ' off') + '" data-action="' + action + '" data-val="' + v + '" style="text-decoration:none;">' + v + '</span>'
+  ).join('');
+  const toggle = (on, action, label) =>
+    '<span class="filter-chip' + (on ? '' : ' off') + '" data-action="' + action + '">' + label + '：' + (on ? '允许' : '禁用') + '</span>';
+  document.getElementById('game-rules').innerHTML =
+    '<div class="filter-row"><span class="filter-label">生命值</span>' + chips([10, 15, 20, 25, 30], gameConfig.heroHp, 'rule-hp') + '</div>' +
+    '<div class="filter-row"><span class="filter-label">法力上限</span>' + chips([5, 8, 10, 12, 15], gameConfig.maxMana, 'rule-mana') + '</div>' +
+    '<div class="filter-row">' + toggle(gameConfig.allowSet, 'rule-toggle-set', '盖牌') +
+    toggle(gameConfig.allowDefense, 'rule-toggle-defense', '守备表示') + '</div>';
+}
+
 function renderBuilder() {
   renderPoolFilter();
+  renderGameRules();
   const owned = ownedDefs().filter(matchBuilderFilter);
   // 单位卡按阵营分区；法术卡单独一个「法术」大分区（按系别分组、组内按费用排序）
   const unitHtml = RACES.map(race => {
@@ -4425,6 +8631,20 @@ document.addEventListener('click', e => {
   }
   const action = el.dataset.action;
 
+  // 战术预览：单击同一卡切换视图；点击空白关闭
+  if (tacPreview) {
+    const cardEl = e.target.closest('.minion');
+    const tacUid = cardEl ? parseInt(cardEl.dataset.uid, 10) : NaN;
+    if (tacUid === tacPreview.uid) {
+      tacPreview.mode = tacPreview.mode === 'attack' ? 'defense' : 'attack';
+      if (typeof cancelPendingClick === 'function') cancelPendingClick();
+      renderTacPreview();
+      render();
+      return;
+    }
+    closeTacPreview();
+  }
+
   // 组牌界面（单击延时执行，双击打开详情并取消单击动作）
   if (action === 'filter-chip') {
     const g = el.dataset.group, v = el.dataset.val;
@@ -4439,12 +8659,25 @@ document.addEventListener('click', e => {
     renderBuilder();
     return;
   }
+  // 对局规则配置
+  if (action === 'rule-hp') { gameConfig.heroHp = parseInt(el.dataset.val, 10); saveConfig(); renderBuilder(); return; }
+  if (action === 'rule-mana') { gameConfig.maxMana = parseInt(el.dataset.val, 10); saveConfig(); renderBuilder(); return; }
+  if (action === 'rule-toggle-set') { gameConfig.allowSet = !gameConfig.allowSet; saveConfig(); renderBuilder(); return; }
+  if (action === 'rule-toggle-defense') { gameConfig.allowDefense = !gameConfig.allowDefense; saveConfig(); renderBuilder(); return; }
   if (action === 'filter-toggle-all') {
     const g = el.dataset.group;
-    const vals = FILTER_GROUPS.find(x => x.key === g).vals();
-    const anyOff = vals.some(x => builderFilter[g][x.v]);
-    builderFilter[g] = {};
-    if (!anyOff) vals.forEach(x => { builderFilter[g][x.v] = true; }); // 全不选
+    const grp = FILTER_GROUPS.find(x => x.key === g);
+    const vals = grp.vals();
+    if (grp.include) {
+      // 词条：有选中 → 清除；无选中 → 全选
+      const anyOn = vals.some(x => builderFilter[g][x.v]);
+      builderFilter[g] = {};
+      if (!anyOn) vals.forEach(x => { builderFilter[g][x.v] = true; });
+    } else {
+      const anyOff = vals.some(x => builderFilter[g][x.v]);
+      builderFilter[g] = {};
+      if (!anyOff) vals.forEach(x => { builderFilter[g][x.v] = true; }); // 全不选
+    }
     renderBuilder();
     return;
   }
@@ -4800,10 +9033,14 @@ let rotGesture = null;
 
 function rotHintText(kind, snapped, faceDown, isFlyer, grounded) {
   if (faceDown) return snapped === 0 ? '回正（不翻开）' : '翻开！';
-  if (kind === 'hand') return snapped === 0 ? '攻击表示入场' : (snapped === 180 ? '盖放（翻面守备）' : '守备表示入场');
+  if (kind === 'hand') {
+    if (snapped === 0) return '攻击表示入场';
+    if (snapped === 180) return gameConfig.allowSet ? '盖放（翻面守备）' : '（盖放已禁用）';
+    return gameConfig.allowDefense ? '守备表示入场' : '（守备已禁用）';
+  }
   if (snapped === 0) return '攻击表示';
   if (snapped === 180) return isFlyer ? (grounded ? '起飞（恢复飞行）' : '落地（失去飞行）') : '（已在场不能盖回）';
-  return '守备表示';
+  return gameConfig.allowDefense ? '守备表示' : '（守备已禁用）';
 }
 
 function applyRotation(g, snapped) {
@@ -4818,7 +9055,7 @@ function applyRotation(g, snapped) {
       if (playCard(as, g.idx, null, null, true)) render();
       return;
     }
-    const withDef = snapped !== 0;
+    const withDef = snapped !== 0 && gameConfig.allowDefense; // 守备禁用时 90° 按攻击入场
     if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: def.name, defense: withDef }); return; }
     const m = playCard(as, g.idx);
     if (m && withDef) { m.defense = true; log('【' + m.name + '】以守备表示入场'); }
@@ -4873,6 +9110,23 @@ document.addEventListener('mousedown', e => {
   hint.textContent = rotHintText(rotGesture.kind, 0, rotGesture.faceDown, !!(rotGesture.minion && rotGesture.minion.traits.includes('飞行')), !!(rotGesture.minion && rotGesture.minion.grounded));
   card.appendChild(hint);
   rotGesture.hint = hint;
+});
+
+// 长按卡牌打开战术预览
+document.addEventListener('mousedown', e => {
+  if (e.target.closest('.rot-handle') || e.target.closest('button')) return;
+  const card = e.target.closest('.minion');
+  if (!card || !state || state.gameOver) return;
+  const uid = parseInt(card.dataset.uid, 10);
+  if (isNaN(uid)) return;
+  const sx = e.clientX, sy = e.clientY;
+  clearTimeout(tacPressTimer);
+  tacPressTimer = setTimeout(() => { openTacPreview(uid); }, 420);
+  document.addEventListener('mousemove', function cancel(ev) {
+    if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) > 10) clearTimeout(tacPressTimer);
+  }, { once: true });
+  document.addEventListener('mouseup', function up() { clearTimeout(tacPressTimer); }, { once: true });
+  document.addEventListener('dragstart', function up2() { clearTimeout(tacPressTimer); }, { once: true });
 });
 
 document.addEventListener('mousemove', e => {
