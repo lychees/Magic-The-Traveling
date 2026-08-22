@@ -17,7 +17,7 @@
   #game { max-width: 1420px; margin: 0 auto; padding: 10px 14px 30px; display: flex; gap: 14px; align-items: flex-start; }
   #layout-main { flex: 1; min-width: 0; }
   #log-sidebar {
-    width: 280px; flex-shrink: 0; position: sticky; top: 10px;
+    width: 280px; flex-shrink: 0; position: sticky; top: 10px; order: -1; /* 固定在左侧 */
     display: flex; flex-direction: column; max-height: calc(100vh - 20px);
     background: #101018; border: 1px solid #2e2e44; border-radius: 10px; overflow: hidden;
   }
@@ -761,7 +761,7 @@
       阵型：场上分为 前排 / 中排 / 后排。点击手牌打出时近战默认放前排、远程默认放后排；部署阶段也可以直接把手牌拖到某一排的指定位置出牌（拖到排内空白放排尾，拖到某张随从上插入其前），并可拖拽己方场上随从在三排间移动或同排调整顺序。<br>
       收回：部署阶段单击本轮刚从手牌打出、且没有战吼/亡语等入场效果的随从，可将其收回手牌并退还实际支付的法力（手牌满时不可收回；召唤物与 token 不可收回）。<br>
       攻击规则（进攻阶段自动执行）：近战单位按「战场宽度」选目标——每张卡占 1 宽度（守备表示占 2），各排居中对齐，前排会遮挡正后方的区域；只有暴露宽度大于 0 的单位才能被近战攻击，且目标按暴露宽度加权随机选取（例：前排 1 卡 + 后排 2 卡时，命中概率为 50% / 25% / 25%；前后排各 1 卡时，后排卡在前排卡死前无法被近战攻击）。飞行单位漂浮在空中，不参与战场宽度计算（不遮挡也不被遮挡）。远程单位无视遮挡、可攻击任意一排。只有对方场上没有随从、或对方所有随从都无法成为你的合法目标时，才能攻击英雄本体——但只要对方还有守备表示的单位或远程单位，就必须先打完它们。飞行单位守备时暂时失去飞行效果。<br>
-      反击规则：每个随从每战斗阶段有 1 次反击机会（进攻阶段开始时重置；「反击X」特性为 X 次，如皇家狮鹫反击2）。随从受到攻击造成的伤害（含溅射）且存活时，若还有反击机会、攻击力大于 0、且按射程规则能够到伤害来源（非远程只能够到对方最前排、远程任意排、飞行限制照旧），便立刻反击并消耗一次；够不到或 0 攻则不消耗，之后被能反击的攻击打中仍会反击。**远程单位的攻击不会触发反击**（无论站位）；带「不受反击」特性的单位（恶魔、大恶魔）同样不会触发反击。以上免反击只对普通反击有效——**攻击守备表示的单位时，必然同时受到守备单位攻击力的反击**（无视一切免反击特性）。反击造成的伤害不再触发反击。中毒等非攻击伤害不触发反击。<br>
+      反击规则：每个随从每战斗阶段有 1 次反击机会（进攻阶段开始时重置；「反击X」特性为 X 次，如皇家狮鹫反击2）。随从受到攻击造成的伤害（含溅射）且存活时，若还有反击机会、攻击力大于 0、且按射程规则能够到伤害来源（非远程只能够到对方最前排、远程任意排、飞行限制照旧），便立刻反击并消耗一次；够不到或 0 攻则不消耗，之后被能反击的攻击打中仍会反击。**远程单位的攻击不会触发反击**（无论站位）；带「不受反击」特性的单位（恶魔、大恶魔）同样不会触发反击。以上免反击只对普通反击有效——**攻击守备表示的单位时，必然同时受到守备单位攻击力的反击**（无视其他免反击特性，但守备单位无法反击远程单位）。反击造成的伤害不再触发反击。中毒等非攻击伤害不触发反击。<br>
       连击（神射手）：攻击随从时连续攻击 2 次，第二次不触发反击；目标已死于第一次攻击则第二次落空。复活（大天使）：战吼——将己方墓地中最后死亡的一张随从满状态复活到其原排。<br>
       远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍；攻击不会触发反击。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍；悬浮于空中区域、不参与战场宽度；正面表示时可在 落地/起飞 间切换（落地暂时失去飞行、移到前排地面阵型，可用按钮或旋转 180° 切换）。骑兵：攻击骑兵以外的单位时不会被反击。掠夺：攻击敌方英雄时获得 5 金币。拒马：可以对骑兵进行反击。<br>
       再生X：每轮部署阶段开始时恢复 X 点生命。毒LvX：被攻击造成伤害的随从中毒（重复取最高 Lv），中毒者在每轮部署阶段开始时受 X 点伤害。<br>
@@ -6855,8 +6855,8 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
   }
   if (target.curHp <= 0 && attacker.traits.includes('驱魔')) target._noDR = true;
   if (depth === 0 && !target.faceDown && target.atk > 0) {
-    if (target.defense) {
-      // 守备表示：攻击守备单位的同时必然受到反击——无视攻击方的免反击特性（远程/骑兵/不受反击），
+    if (target.defense && !attacker.traits.includes('远程')) {
+      // 守备表示：攻击守备单位的同时必然受到反击——无视攻击方的免反击特性（骑兵/不受反击），但无法反击远程单位，
       // 无限次、与对手攻击同时结算（即使被打死反击也生效），不消耗反击机会；负士气可能导致反击失败
       if (moraleFail(target)) {
         log('【' + target.name + '】士气低落，未能反击');
@@ -7178,7 +7178,7 @@ function nextActor() {
 function suicidalTarget(m, t, side) {
   const dmg = attackDamage(m, t);
   // 守备目标必然反击（无视免反击特性）；普通目标要有反击机会且够得着
-  const counters = t.atk > 0 && (t.defense || (t.counterLeft > 0 && canCounter(t, m, side)));
+  const counters = t.atk > 0 && (t.defense ? !m.traits.includes('远程') : (t.counterLeft > 0 && canCounter(t, m, side)));
   if (!counters) return false;
   if (dmg >= t.curHp && !t.defense) return false; // 普通目标被直接击杀则无反击；守备目标被杀也反击
   return attackDamage(t, m) >= m.curHp;
@@ -7210,7 +7210,7 @@ function autoAttack(side, m) {
     const dmg = attackDamage(m, t);
     if (dmg < t.curHp) return false;
     // 守备表示的目标即使被击杀也会反击（必然反击·同时结算）；普通目标只有存活且有反击机会才反击
-    const counters = t.atk > 0 && (t.defense || (t.counterLeft > 0 && canCounter(t, m, side)));
+    const counters = t.atk > 0 && (t.defense ? !m.traits.includes('远程') : (t.counterLeft > 0 && canCounter(t, m, side)));
     if (!counters) return true;
     return attackDamage(t, m) < m.curHp;
   });
