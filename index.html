@@ -7623,13 +7623,23 @@ function aiCastSpells() {
 
 // AI 守备姿态：攻击力 ≤1 且生命较厚（≥5）的单位转为守备表示（无限反击·同时结算当肉盾），
 // 攻击力 ≥2 的确保攻击表示
-function aiSetDefense() {
+// 守备姿态策略（游戏 AI 与测试策略共用）：低攻高血天然筑墙；危局（英雄半血以下或场面落后）时大身板转守备托局
+function aiSetDefense(side) {
   if (!gameConfig.allowDefense) return;
-  state.enemy.board.forEach(m => {
-    const want = m.atk <= 1 && m.maxHp >= 5;
+  side = side || 'enemy';
+  const me = state[side], foe = state[otherSide(side)];
+  const heroDanger = me.hp <= me.maxHp * 0.5;
+  const boardBehind = foe.board.length > me.board.length + 1;
+  me.board.forEach(m => {
+    if (m.faceDown) return;
+    let want;
+    if (m.atk <= 1 && m.maxHp >= 5) want = true;                       // 低攻高血天然墙
+    else if ((heroDanger || boardBehind) && m.maxHp >= 8) want = true; // 危局大身板筑墙托局
+    else if (m.atk >= 4 && !heroDanger) want = false;                  // 高攻保持进攻
+    else want = m.defense;                                              // 其余维持现状
     if (want !== m.defense) {
       m.defense = want;
-      if (m.traits.includes('飞行')) m.row = want ? 0 : AIR_ROW; // 飞行守备落地/恢复回空
+      if (m.traits.includes('飞行')) m.row = want ? 0 : (m.grounded ? 0 : AIR_ROW); // 飞行守备落地/恢复回空（落地形态除外）
       log('【' + m.name + '】切换为' + (want ? '守备表示' : '攻击表示'));
     }
   });
@@ -9326,7 +9336,7 @@ globalThis.__api = {
   initGame, getState: () => state, playCard, doAttack, startCombat, playSpellCard, legalSpellTargets, resolveSpellEffect,
   effCost, effArmor, canTarget, legalMinionTargets, canHitHero, frontRowOf, canCounter, meleeTargets, exposure,
   moveMinion, aiRowFor, unitPower, nextActor, autoAttack, buildRandomDeck, buildAIDeck, selectedDeck,
-  flushPendingClick, showCardDetail, recallMinion, castUnitSpell, aiCastSpells, startRound, toggleDefense, weightedPick, flipUnit, toggleLand,
+  flushPendingClick, showCardDetail, recallMinion, castUnitSpell, aiCastSpells, aiSetDefense, startRound, toggleDefense, weightedPick, flipUnit, toggleLand,
   tryAddCard, canStartBattle, selCount, builderSel, builderSel2, deckStats, deckFrom, renderBuilder, PRESET_DECKS, applyPresetDeck, buildRacePreset,
   makeMinion, cleanupDead, findDef, traitLv, attackDamage,
   onActionButton, confirmPass, showPassScreen, activeSide, viewSide, setBuilderMode,
