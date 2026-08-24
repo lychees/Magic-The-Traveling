@@ -4789,12 +4789,20 @@
       "atk": 2,
       "arm": 0,
       "hp": 5,
-      "rating": 52,
+      "rating": 58,
       "traits": [],
       "art": {
         "icon": "⚙️",
         "hue": 40
-      }
+      },
+      "actSpells": [
+        {
+          "key": "repair",
+          "cost": 1
+        }
+      ],
+      "spellMana0": 1,
+      "spellManaMax": 3
     },
     {
       "name": "坚甲兽",
@@ -4833,7 +4841,8 @@
       "hp": 6,
       "rating": 52,
       "traits": [
-        "再生1"
+        "再生1",
+        "机械"
       ],
       "art": {
         "icon": "🤖",
@@ -4849,7 +4858,8 @@
       "hp": 7,
       "rating": 52,
       "traits": [
-        "再生1"
+        "再生1",
+        "机械"
       ],
       "art": {
         "icon": "🦾",
@@ -4931,7 +4941,8 @@
       "hp": 15,
       "rating": 56,
       "traits": [
-        "范围攻击"
+        "范围攻击",
+        "机械"
       ],
       "art": {
         "icon": "🚢",
@@ -4948,7 +4959,8 @@
       "rating": 59,
       "traits": [
         "范围攻击",
-        "护甲穿透1"
+        "护甲穿透1",
+        "机械"
       ],
       "art": {
         "icon": "🏭",
@@ -5079,6 +5091,7 @@ const TRAIT_TEXT = {
   '不受反击': '攻击不触发普通反击（守备表示的同时结算反击除外）',
   '火系魔法免疫': '不受火系法术影响（火球术、地狱烈焰、末日审判、魔女火球等）',
   '复仇': '每次反击前攻击 +X（X=等级，永久累积）',
+  '机械': '机械单位（可被工程师修理）',
   '鼓舞': '战斗阶段开始前，我方所有单位士气 +X（X=等级）',
   '威吓': '战斗阶段开始前，敌方所有单位士气 -X（X=等级）',
   '威光': '与携带者交战的单位，战斗前后士气各 -1',
@@ -6537,7 +6550,7 @@ function canHitHero(attacker, foeSide) {
   return legalMinionTargets(attacker, foeSide).length === 0;
 }
 
-// 反击合法性：攻击者在防守方的合法攻击目标集合内（非远程只能反击对方最前排、远程任意、飞行限制照旧）；
+// 反击合法性：不考虑战场宽度遮挡（躲在掩体后也会被反击），仅保留飞行限制（地面近战够不到飞行单位）；
 // 骑兵攻击骑兵以外的单位时不会被反击——除非防守方有「拒马」（可反击骑兵）；
 // 远程单位的攻击不会触发反击。
 // 远程单位的攻击不会触发反击；「不受反击」特性的单位攻击同样不会触发反击（包括守备表示的同时结算反击）。
@@ -6545,7 +6558,7 @@ function canCounter(defender, attacker, attackerSide) {
   if (attacker.traits.includes('远程') || attacker.traits.includes('不受反击')) return false;
   if (attacker.traits.includes('骑兵') && !defender.traits.includes('骑兵') &&
       !defender.traits.includes('拒马')) return false;
-  return legalMinionTargets(defender, attackerSide).indexOf(attacker) >= 0;
+  return canTarget(defender, attacker); // 反击不考虑战场宽度遮挡，仅保留飞行限制
 }
 
 // 拖拽布阵：移动随从到 row 排；beforeUid 非空则插入其前面，否则排到该排末尾。side 默认为当前部署方
@@ -6809,7 +6822,9 @@ function moraleFail(m) { // 负士气导致的失败判定（无法行动/无法
 // 士气特效：触发专属音效 + 卡面动画（600ms 后清除并重绘）
 function moraleFx(m, kind) {
   if (!state) return;
-  state.moraleFx = { uid: m.uid, kind: kind };
+  state.moraleFx = { uid: m.uid, kind: kind ,
+  repair: '修理：消耗 1 法力，使一个机械单位恢复 2 点生命',
+};
   sfx(kind === 'up' ? 'moraleUp' : 'moraleDown');
   setTimeout(() => {
     if (!state) return;
@@ -7414,6 +7429,10 @@ function castUnitSpell(side, minionUid, payload) {
     // 冰箭：需要指定敌方单位目标
     const t = payload && state[otherSide(side)].board.find(x => x.uid === payload.targetUid && !x.isSpellShell && !x.faceDown);
     if (!t) return false;
+  } else if (key === 'repair') {
+    // 修理：需要指定己方机械单位目标
+    const t = payload && p.board.find(x => x.uid === payload.targetUid && !x.isSpellShell && !x.faceDown && x.traits.includes('机械'));
+    if (!t) return false;
   }
   m.spellMana -= entry.cost;
   m._usedSpell = true; // 标记已使用法术：本回合不可再收回
@@ -7490,11 +7509,18 @@ function castUnitSpell(side, minionUid, payload) {
     sfx('hit');
     cleanupDead('player');
     cleanupDead('enemy');
+  } else if (key === 'repair') {
+    // 修理：目标机械单位恢复 2 点生命
+    const t = p.board.find(x => x.uid === payload.targetUid);
+    const before = t.curHp;
+    t.curHp = Math.min(t.maxHp, t.curHp + 2);
+    log('【' + m.name + '】施放修理：【' + t.name + '】恢复 ' + (t.curHp - before) + ' 点生命');
+    sfx('heal');
   }
   recalcAuras();
   checkGameOver();
   // 单位法术动画
-  const labelMap = { split: '分裂', fireball: '火球', tidalWave: '巨浪', study: '研读', harvest: '收获', summonDemon: '召唤恶鬼', bless: '祝福', iceBolt: '冰箭' };
+  const labelMap = { split: '分裂', fireball: '火球', tidalWave: '巨浪', study: '研读', harvest: '收获', summonDemon: '召唤恶鬼', bless: '祝福', iceBolt: '冰箭', repair: '修理' };
   spellFx(actSpellFxColor(key), labelMap[key] || key, spellHitQueue);
   render();
   return true;
@@ -7594,6 +7620,7 @@ function aiCastSpells() {
         if ((key === 'fireball' || key === 'tidalWave' || key === 'iceBolt') && state.player.board.length === 0) continue;
         if (key === 'summonDemon' && !(e.board.length < BOARD_CAP && e.graveyard.some(g => !g._isSpell))) continue;
         if (key === 'bless' && !e.board.some(x => !x.isSpellShell && !x.faceDown)) continue;
+        if (key === 'repair' && !e.board.some(x => !x.isSpellShell && !x.faceDown && x.traits.includes('机械') && x.curHp < x.maxHp)) continue;
         found = { m: m, en: en };
         break;
       }
@@ -7615,6 +7642,9 @@ function aiCastSpells() {
     } else if (en.key === 'iceBolt') {
       const t = state.player.board.filter(x => !x.isSpellShell && !x.faceDown).sort((a, b) => b.atk - a.atk)[0];
       castUnitSpell('enemy', m.uid, { key: en.key, targetUid: t.uid });
+    } else if (en.key === 'repair') {
+      const t = e.board.filter(x => !x.isSpellShell && !x.faceDown && x.traits.includes('机械') && x.curHp < x.maxHp).sort((a, b) => (b.maxHp - b.curHp) - (a.maxHp - a.curHp))[0];
+      if (t) castUnitSpell('enemy', m.uid, { key: en.key, targetUid: t.uid });
     } else {
       castUnitSpell('enemy', m.uid, { key: en.key });
     }
@@ -7790,7 +7820,7 @@ function minionHtml(m, isEnemy, ghost) {
     if (mode.unitSpell) {
       const mySideT = state.player.board.indexOf(m) >= 0 ? 'player' : 'enemy';
       const asT = activeSide();
-      const want = mode.key === 'bless' ? (mySideT === asT && !m.isSpellShell) : (mySideT !== asT && !m.isSpellShell);
+      const want = (mode.key === 'bless' || mode.key === 'repair') ? (mySideT === asT && !m.isSpellShell && (mode.key !== 'repair' || m.traits.includes('机械'))) : (mySideT !== asT && !m.isSpellShell);
       if (want) classes.push('targetable');
     } else if (mode.def && legalSpellTargets(activeSide(), mode.def).indexOf(m) >= 0) {
       classes.push('targetable');
@@ -7837,6 +7867,7 @@ function minionHtml(m, isEnemy, ghost) {
       : key === 'summonDemon' ? (state[mySide].board.length < BOARD_CAP && state[mySide].graveyard.some(g => !g._isSpell))
       : key === 'bless' ? state[mySide].board.some(x => !x.isSpellShell && !x.faceDown)
       : key === 'iceBolt' ? foe.board.some(x => !x.isSpellShell && !x.faceDown)
+      : key === 'repair' ? state[mySide].board.some(x => !x.isSpellShell && !x.faceDown && x.traits.includes('机械'))
       : true; // 研读/收获等无条件
     const labelOf = { split: '分裂', fireball: '火球', tidalWave: '巨浪', study: '研读', harvest: '收获', summonDemon: '召唤恶鬼', bless: '祝福', iceBolt: '冰箭' };
     const entries = m.actSpells || [{ key: m.actSpell, cost: m.spellCost }];
@@ -8627,7 +8658,7 @@ function setBuilderMode(mode) {
 
 function showGame() {
   document.getElementById('deckbuilder').style.display = 'none';
-  document.getElementById('game').style.display = 'block';
+  document.getElementById('game').style.display = 'flex'; // flex 布局（左侧战斗记录边栏）
 }
 
 // ---------- 交互 ----------
@@ -8784,7 +8815,7 @@ document.addEventListener('click', e => {
   if (state.spellTargetMode) {
     const mode = state.spellTargetMode;
     // 治疗：允许直接点击己方英雄治疗英雄
-    if (mode.def.spellEffect === 'heal' && e.target.closest('#player-hero')) {
+    if (mode.def && mode.def.spellEffect === 'heal' && e.target.closest('#player-hero')) {
       state.spellTargetMode = null;
       if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: mode.def.name, healHero: true }); return; }
       const hi = state[as].hand.indexOf(mode.def);
@@ -8799,7 +8830,7 @@ document.addEventListener('click', e => {
     // 单位法术（祝福/冰箭）选目标结算
     if (mode.unitSpell) {
       const mySideT = state.player.board.find(m => m.uid === u) ? 'player' : 'enemy';
-      const want = mode.key === 'bless' ? mySideT === as : mySideT !== as;
+      const want = (mode.key === 'bless' || mode.key === 'repair') ? mySideT === as : mySideT !== as;
       const target = state[mySideT].board.find(m => m.uid === u && !m.isSpellShell && !m.faceDown);
       state.spellTargetMode = null;
       if (target && want) {
@@ -8827,7 +8858,7 @@ document.addEventListener('click', e => {
     if (!m) return;
     const key = el.dataset.key || m.actSpell;
     // 祝福/冰箭：进入选目标模式（祝福点友方、冰箭点敌方）
-    if (key === 'bless' || key === 'iceBolt') {
+    if (key === 'bless' || key === 'iceBolt' || key === 'repair') {
       const entry = m.actSpells ? m.actSpells.find(e2 => e2.key === key) : { cost: m.spellCost };
       if (m.spellMana < entry.cost) { log('法力不足，无法施放'); return; }
       const poolSide = key === 'bless' ? state[as] : state[otherSide(as)];
