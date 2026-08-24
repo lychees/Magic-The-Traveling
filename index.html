@@ -427,6 +427,11 @@
     padding: 20px 26px; max-width: 520px; max-height: 70vh; overflow-y: auto;
   }
   #grave-pick h3 { color: #d8b96a; font-size: 15px; margin-bottom: 10px; }
+  /* 通用选牌浮层 */
+  #card-pick { display: none; position: fixed; inset: 0; background: #000a; align-items: center; justify-content: center; z-index: 32; }
+  #card-pick.show { display: flex; }
+  #card-pick .panel { background: #1e1e2e; border: 2px solid #d8b96a; border-radius: 12px; padding: 20px 26px; max-width: 520px; max-height: 70vh; overflow-y: auto; }
+  #card-pick h3 { color: #d8b96a; font-size: 15px; margin-bottom: 10px; }
   .gp-side { font-size: 12px; color: #8a8a9a; margin: 8px 0 4px; }
   .gp-entry {
     display: block; width: 100%; text-align: left; margin: 3px 0;
@@ -813,6 +818,13 @@
   </div>
 </div>
 
+<!-- 通用选牌浮层（恶魔的祭品/谦逊之壶等） -->
+<div id="card-pick">
+  <div class="panel">
+    <div id="card-pick-body"></div>
+  </div>
+</div>
+
 <!-- 法术施放全屏闪光 -->
 <div id="spell-flash"><div class="sf-text" id="spell-flash-text"></div></div>
 
@@ -952,6 +964,51 @@
       "art": {
         "icon": "🧑‍🌾",
         "hue": 35
+      }
+    },
+    {
+      "name": "强欲之壶",
+      "race": "中立",
+      "cost": 2,
+      "atk": 0,
+      "arm": 0,
+      "hp": 2,
+      "rating": 4,
+      "traits": [],
+      "spell": "potOfGreed",
+      "art": {
+        "icon": "🏺",
+        "hue": 45
+      }
+    },
+    {
+      "name": "北宋之壶",
+      "race": "中立",
+      "cost": 4,
+      "atk": 0,
+      "arm": 0,
+      "hp": 7,
+      "rating": 9,
+      "traits": [],
+      "spell": "songPot",
+      "art": {
+        "icon": "🫖",
+        "hue": 200
+      }
+    },
+    {
+      "name": "谦逊之壶",
+      "race": "中立",
+      "cost": 1,
+      "atk": 0,
+      "arm": 0,
+      "hp": 1,
+      "rating": 3,
+      "traits": [],
+      "spell": "humblePot",
+      "art": {
+        "icon": "🍶",
+        "hue": 160
       }
     },
     {
@@ -2317,8 +2374,8 @@
       "cost": 4,
       "atk": 4,
       "arm": 0,
-      "hp": 6,
-      "rating": 10,
+      "hp": 10,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "🦹",
@@ -2348,8 +2405,8 @@
       "cost": 5,
       "atk": 5,
       "arm": 0,
-      "hp": 7,
-      "rating": 12,
+      "hp": 12,
+      "rating": 17,
       "traits": [],
       "art": {
         "icon": "🐃",
@@ -2360,10 +2417,10 @@
       "name": "邪神",
       "race": "地狱",
       "cost": 5,
-      "atk": 4,
-      "arm": 1,
-      "hp": 7,
-      "rating": 14,
+      "atk": 7,
+      "arm": 0,
+      "hp": 10,
+      "rating": 17,
       "traits": [],
       "art": {
         "icon": "⛓️",
@@ -2391,10 +2448,10 @@
       "name": "邪神王",
       "race": "地狱",
       "cost": 6,
-      "atk": 5,
-      "arm": 1,
-      "hp": 8,
-      "rating": 18,
+      "atk": 8,
+      "arm": 0,
+      "hp": 11,
+      "rating": 21,
       "traits": [],
       "actSpell": "summonDemon",
       "spellCost": 4,
@@ -2868,8 +2925,10 @@
       "atk": 6,
       "arm": 0,
       "hp": 12,
-      "rating": 18,
-      "traits": [],
+      "rating": 20,
+      "traits": [
+        "心智免疫"
+      ],
       "art": {
         "icon": "🏔️",
         "hue": 210
@@ -2882,9 +2941,10 @@
       "atk": 7,
       "arm": 0,
       "hp": 14,
-      "rating": 24,
+      "rating": 26,
       "traits": [
-        "远程"
+        "远程",
+        "心智免疫"
       ],
       "art": {
         "icon": "⚡",
@@ -3749,6 +3809,20 @@
       }
     },
     {
+      "name": "生还的宝礼",
+      "type": "spell",
+      "race": "中立",
+      "cost": 1,
+      "school": "土",
+      "spellEffect": "lifeBoon",
+      "target": "friendlyUnit",
+      "rating": 2,
+      "art": {
+        "icon": "🎁",
+        "hue": 95
+      }
+    },
+    {
       "name": "迟缓",
       "type": "spell",
       "race": "中立",
@@ -3788,6 +3862,34 @@
       "art": {
         "icon": "💀",
         "hue": 40
+      }
+    },
+    {
+      "name": "奥术智慧",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "水",
+      "spellEffect": "arcaneDraw",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "📜",
+        "hue": 210
+      }
+    },
+    {
+      "name": "恶魔的祭品",
+      "type": "spell",
+      "race": "中立",
+      "cost": 1,
+      "school": "火",
+      "spellEffect": "darkSacrifice",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "🩸",
+        "hue": 0
       }
     },
     {
@@ -3903,10 +4005,24 @@
       }
     },
     {
+      "name": "禁断之炎",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "火",
+      "spellEffect": "forbiddenFlame",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "🕯️",
+        "hue": 10
+      }
+    },
+    {
       "name": "末日审判",
       "type": "spell",
       "race": "中立",
-      "cost": 8,
+      "cost": 6,
       "school": "火",
       "spellEffect": "doom",
       "target": "none",
@@ -4060,7 +4176,7 @@
       "name": "地狱烈焰",
       "type": "spell",
       "race": "中立",
-      "cost": 6,
+      "cost": 5,
       "school": "火",
       "spellEffect": "hellfire",
       "target": "none",
@@ -4214,7 +4330,7 @@
       "name": "流星火雨",
       "type": "spell",
       "race": "中立",
-      "cost": 7,
+      "cost": 3,
       "school": "火",
       "spellEffect": "meteorShower",
       "target": "none",
@@ -4325,14 +4441,12 @@
     {
       "name": "海洋精灵",
       "race": "港口",
-      "cost": 2,
-      "atk": 1,
+      "cost": 1,
+      "atk": 3,
       "arm": 0,
-      "hp": 3,
-      "rating": 6,
+      "hp": 2,
+      "rating": 5,
       "traits": [],
-      "spell": "heal",
-      "spellParam": 2,
       "art": {
         "icon": "🌊",
         "hue": 195
@@ -4344,8 +4458,8 @@
       "cost": 2,
       "atk": 2,
       "arm": 0,
-      "hp": 4,
-      "rating": 6,
+      "hp": 6,
+      "rating": 8,
       "traits": [],
       "art": {
         "icon": "⚓",
@@ -4358,8 +4472,8 @@
       "cost": 2,
       "atk": 3,
       "arm": 0,
-      "hp": 3,
-      "rating": 6,
+      "hp": 5,
+      "rating": 8,
       "traits": [],
       "art": {
         "icon": "⛵",
@@ -5127,6 +5241,9 @@ const SPELL_TEXT = {
   charm: '战吼：随机获得一个敌方随从的控制权',
   skeletonSearch: '亡语：从牌库检索一张同名卡置入手牌；没有则检索其家族卡（骷髅↔骷髅勇士）',
   impBurst: '亡语：被近战单位杀死时，对伤害来源造成 2 点火系魔法伤害',
+  potOfGreed: '战吼：摸两张牌。亡语：被击败时，加入对方的卡组顶端',
+  songPot: '战吼：摸三张牌。亡语：击败这张卡牌的玩家摸三张牌',
+  humblePot: '战吼：抽三张牌，保留一张，其余两张洗入卡组。亡语：洗入对手的牌组',
   curse: '亡语·诅咒：所有敌方随从攻击 -1',
   necro: '战吼·招魂术：召唤一个【骷髅】',
   reaper: '战吼：消灭攻击力最高的敌方随从',
@@ -5170,6 +5287,7 @@ const TRAIT_TEXT = {
   '石像形态': '守备表示时护甲 +2、攻击 -2',
   '破法': '攻击拥有法术（可施放单位法术）的单位时，造成伤害翻倍',
   '无目': '免疫双目失明',
+  '心智免疫': '免疫心智魔法（双目失明/混乱/失忆/悲痛欲绝/魅魔夺取）',
   '刺客': '优先攻击相对更靠后的单位，无视阻挡',
   '狗头人领袖': '所有狗头人 +1 攻击（含自身，多个可叠加）',
   '英灵感召': '当全场所有其它单位（盖牌与墓园/元素除外）都处于正士气时，自身 +1 攻击',
@@ -5438,6 +5556,8 @@ function hostHandleAct(conn, msg) {
         // 聚灵奇术多选载荷 picks；墓地单选传 graveSide/graveIndex；治疗可传 healHero；其余按 targetUid
         const t2 = msg.picks ? { picks: msg.picks.map(pk => ({ graveSide: pk.graveSide, graveIndex: pk.graveIndex | 0 })) }
           : msg.graveSide ? { graveSide: msg.graveSide, graveIndex: msg.graveIndex | 0 }
+          : msg.sacHand != null ? { sacHand: msg.sacHand | 0 }
+          : msg.sacUid != null ? { sacUid: msg.sacUid | 0 }
           : msg.healHero ? { hero: true }
           : (msg.targetUid == null ? null : msg.targetUid | 0);
         ok = !!playCard('enemy', i, null, null, false, t2);
@@ -5509,6 +5629,13 @@ function clientSend(msg) {
   if (NET.conn) {
     try { NET.conn.send(msg); } catch (e) {}
   }
+}
+
+// 联机动作转发：guest 把本地操作发给房主并返回 true（调用点据此 return）；非 guest 返回 false
+function netAct(payload) {
+  if (NET.role !== 'guest') return false;
+  clientSend(Object.assign({ t: 'act' }, payload));
+  return true;
 }
 
 function clientHandleData(msg) {
@@ -5669,7 +5796,7 @@ function renderPack() {
       '<div class="c-cost">' + d.cost + '</div>' +
       '<div class="c-name">' + d.name + '</div>' +
       artHtml(d) +
-      '<div class="c-stats"><span class="stat-atk">攻' + d.atk + '</span><span class="stat-arm">甲' + d.arm + '</span><span class="stat-hp">血' + d.hp + '</span></div>' +
+      cardStatsHtml(d) +
       '</div></div>';
   }).join('');
   const all = packRevealed.every(Boolean);
@@ -5881,6 +6008,10 @@ function traitLv(m, prefix) {
   return t ? parseInt(t.slice(prefix.length), 10) : 0;
 }
 
+// 可作为目标的存活单位：非盖牌壳、正面表示
+function isTargetable(x) { return !x.isSpellShell && !x.faceDown; }
+function targetableUnits(board) { return board.filter(isTargetable); }
+
 // 有效护甲：石化生命未满时视为 4；石像形态守备表示时护甲 +2
 function effArmor(m) {
   if (m.traits.includes('石化') && m.curHp < m.maxHp) return 4;
@@ -6032,10 +6163,15 @@ function effCost(side, def) {
 // ---------- 法术卡牌引擎 ----------
 // 法术的合法目标集合（按 target 类型）
 function legalSpellTargets(side, def) {
-  if (def.target === 'enemyUnit') return state[otherSide(side)].board.filter(m => !m.isSpellShell && !m.faceDown);
-  if (def.target === 'friendlyUnit') return state[side].board.filter(m => !m.isSpellShell && !m.faceDown);
+  if (def.target === 'enemyUnit') return state[otherSide(side)].board.filter(m => isTargetable(m));
+  if (def.target === 'friendlyUnit') return state[side].board.filter(m => isTargetable(m));
   if (def.target === 'graveUnit') return state.player.graveyard.concat(state.enemy.graveyard).filter(g => !g._isSpell); // 双方墓地的单位（用于判定有无目标）
   return [];
+}
+
+// 卡牌三围行（卡面通用：攻/甲/血）
+function cardStatsHtml(d) {
+  return '<div class="c-stats"><span class="stat-atk">攻' + d.atk + '</span><span class="stat-arm">甲' + d.arm + '</span><span class="stat-hp">血' + d.hp + '</span></div>';
 }
 
 // 法术伤害：吃「法术护盾X」减免；伤害致死走正常 cleanupDead/亡语流程
@@ -6131,6 +6267,21 @@ function resolveSpellEffect(side, def, target, costPaid) {
         log('【烈火神盾】：【' + target.name + '】获得「反击2」');
       }
       break;
+    case 'forbiddenFlame': {
+      // 禁断之炎：消耗全部剩余法力 X（已付 2 费后），全场单位各 2X 伤，双方英雄各 X 伤
+      const x = p.mana;
+      p.mana = 0;
+      log('【禁断之炎】：消耗全部剩余 ' + x + ' 点法力！');
+      if (x > 0) {
+        ['player', 'enemy'].forEach(sd => state[sd].board.slice().forEach(m => dealSpellDamage(def, m, 2 * x)));
+        p.hp -= x;
+        foe.hp -= x;
+        log('【禁断之炎】：双方英雄各受到 ' + x + ' 点伤害');
+      } else {
+        log('【禁断之炎】：没有剩余法力，无事发生');
+      }
+      break;
+    }
     case 'doom':
       ['player', 'enemy'].forEach(sd => state[sd].board.slice().forEach(m => dealSpellDamage(def, m, 6)));
       break;
@@ -6170,6 +6321,7 @@ function resolveSpellEffect(side, def, target, costPaid) {
       const dead = p.graveyard.splice(idx, 1)[0];
       const s = summonMinion(side, findDef(dead.name), dead.row);
       if (s) log('【复活术】：【' + s.name + '】在' + ROW_NAMES[s.row] + '复活归来！');
+      lifeBoonProc(side, 1); // 生还的宝礼
       break;
     }
     case 'healingWave':
@@ -6200,10 +6352,10 @@ function resolveSpellEffect(side, def, target, costPaid) {
       dealSpellDamage(def, target, 3);
       break;
     case 'hellfire':
-      foe.board.slice().forEach(m => dealSpellDamage(def, m, 4));
+      foe.board.slice().forEach(m => dealSpellDamage(def, m, 3));
       break;
     case 'blind': {
-      if (target.traits.includes('无目')) { log('【双目失明】：【' + target.name + '】无目，免疫失明'); break; }
+      if (target.traits.includes('无目') || mindImmune(target)) { log('【双目失明】：【' + target.name + '】免疫失明'); break; }
       const shield = traitLv(target, '法术护盾');
       const dur = Math.max(0, p.mana + 1 - shield); // p.mana 为施放后剩余法力
       if (dur <= 0) { log('【双目失明】：【' + target.name + '】依靠法术护盾抵挡了失明'); break; }
@@ -6212,6 +6364,7 @@ function resolveSpellEffect(side, def, target, costPaid) {
       break;
     }
     case 'confuse':
+      if (mindImmune(target)) { log('【混乱】：【' + target.name + '】免疫心智魔法'); break; }
       target.morale = Math.max(-10, (target.morale || 0) - 6);
       log('【混乱】：【' + target.name + '】士气 -6（当前 ' + target.morale + '）');
       break;
@@ -6223,6 +6376,39 @@ function resolveSpellEffect(side, def, target, costPaid) {
       log('【龙卷】：消灭了飞行单位【' + t.name + '】！');
       break;
     }
+    case 'darkSacrifice': {
+      if (!target || (target.sacHand == null && target.sacUid == null)) {
+        // 盖放翻开等无指定载荷：随机献祭一张己方卡牌
+        const cands = [];
+        p.hand.forEach((c, i2) => cands.push({ sacHand: i2 }));
+        p.board.forEach(u => { if (!u.isSpellShell) cands.push({ sacUid: u.uid }); });
+        if (cands.length === 0) { log('【恶魔的祭品】：没有可献祭的卡牌'); break; }
+        target = cands[Math.floor(Math.random() * cands.length)];
+      }
+      if (target.sacHand != null) {
+        const c = p.hand.splice(target.sacHand, 1)[0];
+        if (c) { p.graveyard.push({ name: c.name, cost: c.cost, atk: c.atk || 0, arm: c.arm || 0, maxHp: c.hp || 0, row: -1 }); log('【恶魔的祭品】：将手牌【' + c.name + '】送入墓地'); }
+      } else {
+        const v = p.board.find(x => x.uid === target.sacUid);
+        if (v) { v.curHp = 0; log('【恶魔的祭品】：消灭了己方【' + v.name + '】'); }
+      }
+      log('【恶魔的祭品】：' + sideName(side) + '摸两张牌');
+      sfx('flip');
+      drawCard(side);
+      drawCard(side);
+      break;
+    }
+    case 'lifeBoon':
+      target.boonOfLife = true;
+      log('【生还的宝礼】：【' + target.name + '】获得生还的宝礼（在场时，我方每次从墓地召唤卡牌都摸一张牌）');
+      sfx('heal');
+      break;
+    case 'arcaneDraw':
+      log('【奥术智慧】：' + sideName(side) + '摸两张牌');
+      sfx('flip');
+      drawCard(side);
+      drawCard(side);
+      break;
     case 'inspire':
       p.board.forEach(m => { m.morale = Math.min(10, (m.morale || 0) + 3); });
       log('【鼓舞】：全场友方单位士气 +3');
@@ -6232,7 +6418,7 @@ function resolveSpellEffect(side, def, target, costPaid) {
       log('【欢欣鼓舞】：我方全场士气 +3');
       break;
     case 'dreadAll':
-      foe.board.forEach(m => changeMorale(m, -3));
+      foe.board.forEach(m => { if (mindImmune(m)) log('【' + m.name + '】免疫心智魔法'); else changeMorale(m, -3); });
       log('【悲痛欲绝】：敌方全场士气 -3');
       break;
     case 'summonThunder': {
@@ -6263,6 +6449,7 @@ function resolveSpellEffect(side, def, target, costPaid) {
         });
       });
       log('【聚灵奇术】：从墓地召唤了 ' + n + ' 个墓园单位回场（共消耗 ' + (costPaid || 0) + ' 点法力）！');
+      lifeBoonProc(side, n); // 生还的宝礼：每个从墓地召回的单位摸一张
       break;
     }
     case 'summonEarth': {
@@ -6281,6 +6468,7 @@ function resolveSpellEffect(side, def, target, costPaid) {
       break;
     }
     case 'forget': {
+      if (mindImmune(target)) { log('【失忆】：【' + target.name + '】免疫心智魔法'); break; }
       const i = target.traits.indexOf('远程');
       if (i < 0) log('【失忆】：【' + target.name + '】没有远程特性，无效');
       else {
@@ -6297,16 +6485,16 @@ function resolveSpellEffect(side, def, target, costPaid) {
       break;
     }
     case 'meteorShower': {
-      // 随机至多 4 个敌方单位各 4 伤；守备表示加权 ×2、不重复选取
+      // 随机至多 3 个敌方单位各 2 伤；守备表示加权 ×2、不重复选取
       const pool = foe.board.slice();
       const targets = [];
-      while (targets.length < 4 && pool.length > 0) {
+      while (targets.length < 3 && pool.length > 0) {
         const t = weightedPick(pool);
         targets.push(t);
         pool.splice(pool.indexOf(t), 1);
       }
       if (targets.length === 0) log('【流星火雨】：敌方没有单位，无效果');
-      targets.forEach(m => dealSpellDamage(def, m, 5));
+      targets.forEach(m => dealSpellDamage(def, m, 2));
       break;
     }
     case 'summonFire': {
@@ -6447,6 +6635,10 @@ function playSpellCard(side, idx, targetUid, faceDown) {
       if (!target) return false;
     }
   }
+  if (def.spellEffect === 'darkSacrifice') {
+    if (targetUid && targetUid.sacHand != null && targetUid.sacHand > idx) targetUid = { sacHand: targetUid.sacHand - 1 };
+    target = targetUid; // 祭品载荷（{sacHand} 或 {sacUid}）
+  }
   p.mana -= cost;
   p.hand.splice(idx, 1);
   log(sideName(side) + '施放了法术【' + def.name + '】');
@@ -6454,8 +6646,7 @@ function playSpellCard(side, idx, targetUid, faceDown) {
   spellHitQueue = [];
   resolveSpellEffect(side, def, target, cost);
   discardSpellToGraveyard(side, def);
-  cleanupDead('player');
-  cleanupDead('enemy');
+  cleanupAllDead();
   recalcAuras();
   checkGameOver();
   // 法术动画：全屏系别色闪光 + 命中目标高亮
@@ -6502,6 +6693,7 @@ const SPELL_FX_TEXT = {
   bloodlust: '全场友方单位 +3 攻击',
   fireShield: '目标友方单位获得「反击2」（重复无效）',
   doom: '对双方场上所有单位造成 6 点伤害',
+  forbiddenFlame: '消耗所有剩余法力 X：对双方场上所有单位各造成 2X 点伤害，双方英雄各受到 X 点伤害',
   lightningBolt: '对目标敌方单位造成 5 点伤害',
   chainLightning: '对最多 3 个敌方单位各造成 4 点伤害（从攻击最高者开始）',
   summonAir: '召唤一个【气元素】（4/0/5 飞行）',
@@ -6512,9 +6704,12 @@ const SPELL_FX_TEXT = {
   mirror: '在同排召唤一个目标友方单位的复制（复制当前数值与姿态）',
   teleport: '将目标友方单位收回手牌（不退法力）',
   sear: '对目标敌方单位造成 3 点伤害',
-  hellfire: '对敌方全场造成 4 点伤害',
+  hellfire: '对敌方全场造成 3 点伤害',
   confuse: '目标敌方单位士气 -6（最低 -10）',
   blind: '目标敌方单位失明：无法攻击/反击/施放法术/切换形态，持续（施放后剩余法力 +1 − 目标法术护盾）回合',
+  arcaneDraw: '摸两张牌',
+  darkSacrifice: '消灭一张己方手牌或场上卡牌送入墓地，摸两张牌',
+  lifeBoon: '赋予一个友方单位「生还的宝礼」：其在场时，每当我方从墓地召唤卡牌进入手牌或战场，摸一张牌',
   tornado: '消灭一个随机敌方飞行单位',
   inspire: '全场友方单位士气 +3（最高 10）',
   inspireAll: '我方所有单位士气 +3（欢欣鼓舞）',
@@ -6526,7 +6721,7 @@ const SPELL_FX_TEXT = {
   quicksand: '敌方前排所有单位攻击 -2（最低 0）',
   forget: '移除目标敌方单位的「远程」特性',
   summonWater: '召唤一个【水元素】（3/0/7）',
-  meteorShower: '对随机至多 4 个敌方单位各造成 5 点伤害（守备加权，不重复）',
+  meteorShower: '对随机至多 3 个敌方单位各造成 2 点伤害（守备加权，不重复）',
   summonFire: '召唤一个【火元素】（5/0/5，带火系魔法免疫）',
   frenzy: '目标友方单位攻击 +4 并中毒 Lv1',
   twister: '随机重排敌方阵型：地面单位随机分配到前/中/后三排（飞行单位不动）',
@@ -6762,8 +6957,7 @@ function playCard(side, idx, row, beforeUid, faceDown, targetUid) {
   sfx('summon');
   if (!faceDown && isEpicUnit(def)) epicSummonFx(def, m); // 高费/巨型单位降临动画
   if (!faceDown) battlecry(side, m);
-  cleanupDead('player');
-  cleanupDead('enemy');
+  cleanupAllDead();
   recalcAuras();
   checkGameOver();
   return m; // 返回打出的随从（失败时已在上方 return false）
@@ -6782,6 +6976,38 @@ function battlecry(side, m) {
       p.mana = Math.min(manaCap(), p.mana + 1);
       log('【小精灵】战吼：本轮法力 +1');
       break;
+    case 'potOfGreed':
+      log('【强欲之壶】战吼：' + sideName(side) + '摸两张牌');
+      sfx('flip');
+      drawCard(side);
+      drawCard(side);
+      break;
+    case 'songPot':
+      log('【北宋之壶】战吼：' + sideName(side) + '摸三张牌');
+      sfx('flip');
+      drawCard(side);
+      drawCard(side);
+      drawCard(side);
+      break;
+    case 'humblePot': {
+      // 谦逊之壶：抽三张，保留一张（玩家三选一；AI/联机对方自动留最贵），其余洗入卡组
+      const drawn = [];
+      for (let i = 0; i < 3 && p.deck.length > 0; i++) drawn.push(p.deck.pop());
+      if (drawn.length === 0) { log('【谦逊之壶】战吼：牌库已空，无效果'); break; }
+      const auto = side === 'enemy' && (state.mode === 'ai' || NET.role === 'host');
+      if (auto || drawn.length === 1) {
+        let bi = 0;
+        drawn.forEach((d2, i2) => { if (d2.cost > drawn[bi].cost) bi = i2; });
+        keepHumblePick(side, drawn, bi);
+      } else {
+        showCardPick({
+          title: '【谦逊之壶】战吼：保留一张，其余两张洗入卡组',
+          entries: drawn.map((d2, i2) => ({ html: '【' + d2.name + '】费用 ' + d2.cost, data: i2 })),
+          onPick: en => keepHumblePick(side, drawn, en.data),
+        });
+      }
+      break;
+    }
     case 'elfHeal':
       p.mana = Math.min(manaCap(), p.mana + 1);
       log('【精灵】战吼：本轮法力 +1');
@@ -6799,7 +7025,9 @@ function battlecry(side, m) {
     case 'charm': {
       if (foe.board.length === 0) { log('【魅魔】战吼：敌方没有随从，无效果'); break; }
       if (p.board.length >= BOARD_CAP) { log('【魅魔】战吼：我方场上已达上限，无效果'); break; }
-      const t = weightedPick(foe.board); // 守备表示的单位被夺取概率 ×2
+      const charmPool = foe.board.filter(o => !mindImmune(o)); // 心智免疫不可夺取
+      if (charmPool.length === 0) { log('【魅魔】战吼：可夺取的目标都免疫心智魔法'); break; }
+      const t = weightedPick(charmPool); // 守备表示的单位被夺取概率 ×2
       foe.board = foe.board.filter(o => o !== t);
       t.canAttack = true; // 换边后本阶段尚未行动，可正常行动
       p.board.push(t);
@@ -6889,6 +7117,8 @@ function changeMorale(m, delta) {
   m.morale = Math.max(-10, Math.min(10, (m.morale || 0) + delta));
   recalcAuras(); // 英灵感召等随士气变化的词条需要即时重算
 }
+// 心智免疫（巨人/泰坦）：免疫心智魔法（双目失明/混乱/失忆/悲痛欲绝/魅魔夺取）
+function mindImmune(m) { return m.traits.includes('心智免疫'); }
 // 墓园（亡灵）、元素（元素城）单位：不受士气影响，也不参与阵营士气计算
 function moraleImmune(m) {
   const d = findDef(m.name);
@@ -6929,7 +7159,7 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
     return;
   }
   target.curHp -= dmg;
-  if (target.curHp <= 0) target._killedBy = attacker; // 记录致死攻击来源（魔童亡语等用）
+  if (target.curHp <= 0) { target._killedBy = attacker; target._killedBySide = attackerSide; } // 记录致死攻击来源与方位（魔童/北宋之壶亡语等用）
   shaken.push(target.uid);
   // 士气流转：造成正面伤害 +1；被攻击/反击且受到伤害 -1；击杀额外 +1
   changeMorale(attacker, 1);
@@ -7022,7 +7252,7 @@ function doAttack(side, attackerUid, targetUid) {
       log('【' + defender.name + '】在被攻击前揭示！');
       sfx('flip');
       if (defender.pendingBattlecry) { defender.pendingBattlecry = false; battlecry(foeSide, defender); }
-      const dyingR = cleanupDead('player').concat(cleanupDead('enemy'));
+      const dyingR = cleanupAllDead();
       recalcAuras();
       if (defender.curHp <= 0) { // 被自己的揭示效果波及死亡，攻击落空
         checkGameOver();
@@ -7094,7 +7324,7 @@ function doAttack(side, attackerUid, targetUid) {
   // 威光：与圣龙交战，战斗后士气 -1
   if (defender && defender.traits.includes('威光')) { changeMorale(attacker, -1); log('【' + attacker.name + '】被【' + defender.name + '】的威光震慑，士气 -1'); }
   if (defender && attacker.traits.includes('威光')) { changeMorale(defender, -1); log('【' + defender.name + '】被【' + attacker.name + '】的威光震慑，士气 -1'); }
-  const dying = cleanupDead('player').concat(cleanupDead('enemy'));
+  const dying = cleanupAllDead();
   recalcAuras();
   checkGameOver();
   // 记录攻击动画：攻击者突进、受伤随从晃动、死亡随从幽灵卡（先晃动再消失）、英雄被直击晃动；
@@ -7121,6 +7351,18 @@ function cleanupDead(side) {
   dead.forEach(m => {
     log('【' + m.name + '】被消灭');
     sfx('death');
+    // 壶类：被击败时不进墓地，加入对方卡组（强欲置顶/谦逊洗入；驱魔封印则正常进墓）
+    if ((m.spell === 'potOfGreed' || m.spell === 'humblePot') && !m._noDR) {
+      const od = state[otherSide(side)].deck;
+      if (m.spell === 'potOfGreed') {
+        od.push(findDef('强欲之壶'));
+        log('【强欲之壶】被击败，加入了' + sideName(otherSide(side)) + '的卡组顶端');
+      } else {
+        od.splice(Math.floor(Math.random() * (od.length + 1)), 0, findDef('谦逊之壶'));
+        log('【谦逊之壶】被击败，洗入了' + sideName(otherSide(side)) + '的卡组');
+      }
+      return;
+    }
     p.graveyard.push(m);
     if (m._noDR) { log('【' + m.name + '】被驱魔效果击杀，亡语未能触发'); return; }
     // 亡语
@@ -7149,9 +7391,16 @@ function cleanupDead(side) {
       if (k && !k.traits.includes('远程') && k.curHp > 0) {
         log('【魔童】亡语触发：烈焰反噬【' + k.name + '】');
         dealSpellDamage({ name: '魔童', school: '火' }, k, 2);
-        cleanupDead('player');
-        cleanupDead('enemy');
+        cleanupAllDead();
       }
+    } else if (m.spell === 'songPot') {
+      // 北宋之壶：击败它的玩家摸三张牌（攻击致死记录方位；法术/毒等未记录时按对方计）
+      const killerSide = m._killedBySide || otherSide(side);
+      log('【北宋之壶】亡语触发：' + sideName(killerSide) + '摸三张牌');
+      sfx('flip');
+      drawCard(killerSide);
+      drawCard(killerSide);
+      drawCard(killerSide);
     } else if (m.spell === 'curse') {
       const foe = state[otherSide(side)];
       let n = 0;
@@ -7162,6 +7411,9 @@ function cleanupDead(side) {
   recalcAuras();
   return dying;
 }
+
+// 双方战场一并清理（返回合并的死亡快照，供死亡动画）
+function cleanupAllDead() { return cleanupDead('player').concat(cleanupDead('enemy')); }
 
 function checkGameOver() {
   if (state.gameOver) return;
@@ -7197,17 +7449,28 @@ function aiSpellDecision(def) {
   const me = state.enemy, foe = state.player;
   const highest = arr => arr.slice().sort((a, b) => b.atk - a.atk)[0] || null;
   switch (def.spellEffect) {
-    case 'stoneSkin': case 'fireShield': case 'mirror': case 'frenzy': case 'airShield': // 增益单体 → 自己攻击最高单位
+    case 'stoneSkin': case 'fireShield': case 'mirror': case 'frenzy': case 'airShield': case 'lifeBoon': // 增益单体 → 自己攻击最高单位
       return me.board.length ? highest(me.board).uid : null;
     case 'slow': case 'iceBolt': case 'fireballSpell': case 'lightningBolt': case 'dispel':
-    case 'sear': case 'meteor': case 'confuse': case 'thunderBolt': case 'forget': case 'blind': // 伤害/减益 → 敌方攻击最高单位
+    case 'sear': case 'meteor': case 'thunderBolt': // 伤害/减益 → 敌方攻击最高单位
       return foe.board.length ? highest(foe.board).uid : null;
+    case 'confuse': case 'forget': case 'blind': { // 心智魔法 → 敌方攻击最高的非免疫单位
+      const mindPool = foe.board.filter(x => !mindImmune(x) && (def.spellEffect !== 'blind' || !x.traits.includes('无目')));
+      return mindPool.length ? highest(mindPool).uid : null;
+    }
     case 'heal': // 英雄受伤 ≥6 奶英雄；否则奶最残的友方单位（缺口 ≥6 才用）
       if (me.hp <= me.maxHp - 6) return { hero: true };
       const wounded = me.board.filter(m => m.maxHp - m.curHp >= 6).sort((a, b) => (b.maxHp - b.curHp) - (a.maxHp - a.curHp))[0];
       return wounded ? wounded.uid : null;
     case 'slimeSwarm': // 召唤史莱姆：法力 ≥6 才倾泻
       return me.mana >= 6 ? true : null;
+    case 'arcaneDraw': // 奥术智慧：手牌不多时才摸（≤7 张，防爆牌）
+      return me.hand.length <= 7 ? true : null;
+    case 'darkSacrifice': { // 恶魔的祭品：献祭己方攻击最低的单位换两张牌；无单位可献祭则不用
+      if (me.board.filter(x => !x.isSpellShell).length === 0) return null;
+      const weakest = me.board.filter(x => !x.isSpellShell).sort((a, b) => a.atk - b.atk || a.curHp - b.curHp)[0];
+      return { sacUid: weakest.uid };
+    }
     case 'animateDead': { // 聚灵奇术：贪心选双方墓地费用最高的墓园单位（预算 = (法力-3)×2）
       const budget = Math.max(0, me.mana - def.cost) * 2;
       const units = [];
@@ -7231,6 +7494,10 @@ function aiSpellDecision(def) {
     }
     case 'doom': // 敌方场上单位多于我方时用
       return foe.board.length > me.board.length ? true : null;
+    case 'forbiddenFlame': { // 禁断之炎：剩余法力 ≥3 且敌方单位 ≥2 才倾泻（自伤同样大，劣势搏命）
+      const x = me.mana - def.cost;
+      return x >= 3 && foe.board.length >= 2 && me.hp > x + 3 ? true : null;
+    }
     case 'teleport': // 传送（收回自己单位）AI 不使用
       return null;
     default: // 其余（地刺/死亡波纹/祝福/嗜血/连锁闪电/召唤/复活/治疗波动/地狱烈焰/龙卷/鼓舞/神盾）：有费就用
@@ -7280,6 +7547,11 @@ function nextActor() {
   return ties[Math.floor(Math.random() * ties.length)];
 }
 
+// 目标 t 是否会反击攻击者 m（预估用）：守备=必然反击但打不了远程；普通=需攻>0、有反击机会且够得着
+function willBeCountered(t, m, side) {
+  return t.atk > 0 && (t.defense ? !m.traits.includes('远程') : (t.counterLeft > 0 && canCounter(t, m, side)));
+}
+
 // 自动攻击启发式（双方共用）：远程单位优先攻击飞行目标；合法目标里优先有利交换
 // （仅目标还有反击机会、攻>0 且够得着反击时才计入反击伤害），否则打剩余生命最低的
 // 合法目标，对方场空则打英雄；0 攻单位跳过行动
@@ -7287,7 +7559,7 @@ function nextActor() {
 function suicidalTarget(m, t, side) {
   const dmg = attackDamage(m, t);
   // 守备目标必然反击（无视免反击特性）；普通目标要有反击机会且够得着
-  const counters = t.atk > 0 && (t.defense ? !m.traits.includes('远程') : (t.counterLeft > 0 && canCounter(t, m, side)));
+  const counters = willBeCountered(t, m, side);
   if (!counters) return false;
   if (dmg >= t.curHp && !t.defense) return false; // 普通目标被直接击杀则无反击；守备目标被杀也反击
   return attackDamage(t, m) >= m.curHp;
@@ -7319,7 +7591,7 @@ function autoAttack(side, m) {
     const dmg = attackDamage(m, t);
     if (dmg < t.curHp) return false;
     // 守备表示的目标即使被击杀也会反击（必然反击·同时结算）；普通目标只有存活且有反击机会才反击
-    const counters = t.atk > 0 && (t.defense ? !m.traits.includes('远程') : (t.counterLeft > 0 && canCounter(t, m, side)));
+    const counters = willBeCountered(t, m, side);
     if (!counters) return true;
     return attackDamage(t, m) < m.curHp;
   });
@@ -7351,6 +7623,14 @@ const UNIT_SPELL_TEXT = {
 
 // 单位法术短标签（施放按钮/战斗力明细共用）
 const UNIT_SPELL_LABEL = { split: '分裂', fireball: '火球', tidalWave: '巨浪', study: '研读', harvest: '收获', summonDemon: '召唤恶鬼', bless: '祝福', iceBolt: '冰箭', repair: '修理', manaGain: '回魔', heroHeal: '治愈', genieBless: '祝福' };
+// 单位法术条目归一化：多法术单位取数组，单法术单位合成单条目
+function unitSpellEntries(m) {
+  return m.actSpells || (m.actSpell ? [{ key: m.actSpell, cost: m.spellCost }] : []);
+}
+// 按 key 找法术条目：多法术单位找不到返回 null；单法术单位回退为自身法术
+function unitSpellEntry(m, key) {
+  return m.actSpells ? (m.actSpells.find(e => e.key === key) || null) : { key: key, cost: m.spellCost };
+}
 // ---------- 战术预览（长按卡牌：进攻/受击目标分析） ----------
 let tacPreview = null; // { uid, mode: 'attack'|'defense', hl: {} }
 let tacPressTimer = null;
@@ -7501,6 +7781,17 @@ const GENIE_BUFFS = ['护体石肤', '治疗', '大气神盾', '烈火神盾', '
 function genieBuffPool(x) {
   return GENIE_BUFFS.map(n => CARD_DEFS.find(d => d.name === n)).filter(d => d && d.cost === x);
 }
+// 单位法术的纯场面条件（施放门控 / AI 跳过 / 按钮置灰 三处共用；选目标与载荷校验留在各调用点）
+function unitSpellBoardCond(m, key, side) {
+  const p = state[side], foe = state[otherSide(side)];
+  if (key === 'split') return m.curHp > 0 && m.curHp % 2 === 0 && p.board.length < BOARD_CAP;
+  if (key === 'fireball' || key === 'tidalWave') return foe.board.length > 0;
+  if (key === 'summonDemon') return p.board.length < BOARD_CAP && p.graveyard.some(g => !g._isSpell);
+  if (key === 'manaGain') return p.mana < manaCap();
+  if (key === 'heroHeal') return p.hp < p.maxHp;
+  if (key === 'genieBless') return genieBuffPool(m.spellMana).length > 0;
+  return true; // 其余（含需选目标的 bless/iceBolt/repair 与无条件法术）在此不判
+}
 function castUnitSpell(side, minionUid, payload) {
   if (!state || state.gameOver) return false;
   // 与人机 AI 部署同规则：部署阶段外只有 ai 模式的 enemy（AI）可施放；pvp 仅当前部署方
@@ -7513,36 +7804,27 @@ function castUnitSpell(side, minionUid, payload) {
   const key = (payload && payload.key) || m.actSpell;
   if (m.blind) return false; // 失明无法施放法术
   if (!key) return false;
-  const entry = m.actSpells ? m.actSpells.find(e => e.key === key) : { key: key, cost: m.spellCost };
+  const entry = unitSpellEntry(m, key);
   if (!entry) return false;
   if (m.spellMana < entry.cost) return false;
-  if (key === 'split') {
-    if (m.curHp <= 0 || m.curHp % 2 !== 0) return false; // 奇数血不可施放（不扣法力）
-    if (p.board.length >= BOARD_CAP) { log('【' + m.name + '】生命为偶数，但场上已达上限，无法分裂'); return false; }
-  } else if (key === 'fireball' || key === 'tidalWave') {
-    if (state[otherSide(side)].board.length === 0) return false; // 敌方无随从不可施放
-  } else if (key === 'summonDemon') {
-    // 召唤恶鬼：需要己方墓地有单位卡 + 墓地载荷（由选取浮层提供）
-    if (p.board.length >= BOARD_CAP) { log('【' + m.name + '】场上已达上限，无法召唤'); return false; }
-    if (!p.graveyard.some(g => !g._isSpell)) return false;
+  if (!unitSpellBoardCond(m, key, side)) return false; // 纯场面条件（与按钮置灰/AI 同一套）
+  if (key === 'summonDemon') {
+    // 召唤恶鬼：需要墓地载荷（由选取浮层提供）
     const g = payload && p.graveyard[payload.graveIndex];
     if (!payload || !g || g._isSpell) return false;
   } else if (key === 'bless') {
     // 祝福：需要指定友方单位目标
-    const t = payload && p.board.find(x => x.uid === payload.targetUid && !x.isSpellShell && !x.faceDown);
+    const t = payload && p.board.find(x => x.uid === payload.targetUid && isTargetable(x));
     if (!t) return false;
   } else if (key === 'iceBolt') {
     // 冰箭：需要指定敌方单位目标
-    const t = payload && state[otherSide(side)].board.find(x => x.uid === payload.targetUid && !x.isSpellShell && !x.faceDown);
+    const t = payload && state[otherSide(side)].board.find(x => x.uid === payload.targetUid && isTargetable(x));
     if (!t) return false;
   } else if (key === 'repair') {
     // 修理：需要指定己方机械单位目标
-    const t = payload && p.board.find(x => x.uid === payload.targetUid && !x.isSpellShell && !x.faceDown && x.traits.includes('机械'));
+    const t = payload && p.board.find(x => x.uid === payload.targetUid && isTargetable(x) && x.traits.includes('机械'));
     if (!t) return false;
   }
-  if (key === 'manaGain' && p.mana >= manaCap()) return false; // 法力已满不可施放（不扣法力）
-  if (key === 'heroHeal' && p.hp >= p.maxHp) return false; // 英雄满血不可施放（不扣法力）
-  if (key === 'genieBless' && genieBuffPool(m.spellMana).length === 0) return false; // 无对应费用的增益法术不可施放
   m.spellMana -= entry.cost;
   m._usedSpell = true; // 标记已使用法术：本回合不可再收回
   spellHitQueue = [];
@@ -7570,8 +7852,7 @@ function castUnitSpell(side, minionUid, payload) {
     t.curHp -= dmg;
     log('【' + m.name + '】施放火球：对【' + t.name + '】造成 ' + dmg + ' 点法术伤害（掷出 ' + roll + (shield ? '，法术护盾-' + shield : '') + '）');
     sfx('hit');
-    cleanupDead('player');
-    cleanupDead('enemy');
+    cleanupAllDead();
   } else if (key === 'harvest') {
     log('【' + m.name + '】施放收获：' + sideName(side) + '摸一张牌');
     sfx('flip');
@@ -7584,8 +7865,7 @@ function castUnitSpell(side, minionUid, payload) {
     if (targets.length === 0) log('【' + m.name + '】施放巨浪：敌方前排没有单位，无效果');
     targets.forEach(x => dealSpellDamage({ name: '巨浪' }, x, 2));
     sfx('hit');
-    cleanupDead('player');
-    cleanupDead('enemy');
+    cleanupAllDead();
   } else if (key === 'study') {
     // 研读：摸一张牌（收获式结算）
     log('【' + m.name + '】施放研读：' + sideName(side) + '摸一张牌');
@@ -7616,8 +7896,7 @@ function castUnitSpell(side, minionUid, payload) {
     const t = state[otherSide(side)].board.find(x => x.uid === payload.targetUid);
     dealSpellDamage({ name: '冰箭', school: '水' }, t, 4);
     sfx('hit');
-    cleanupDead('player');
-    cleanupDead('enemy');
+    cleanupAllDead();
   } else if (key === 'repair') {
     // 修理：目标机械单位恢复 2 点生命
     const t = p.board.find(x => x.uid === payload.targetUid);
@@ -7636,7 +7915,7 @@ function castUnitSpell(side, minionUid, payload) {
     const x = m.spellMana; m.spellMana = 0;
     const pool = genieBuffPool(x);
     const def2 = pool[Math.floor(Math.random() * pool.length)];
-    const allies = p.board.filter(o => !o.isSpellShell && !o.faceDown);
+    const allies = p.board.filter(o => isTargetable(o));
     const t = allies[Math.floor(Math.random() * allies.length)];
     log('【' + m.name + '】施放祝福：消耗全部 ' + x + ' 点法力，为【' + t.name + '】施放【' + def2.name + '】');
     resolveSpellEffect(side, def2, t, x);
@@ -7670,8 +7949,7 @@ function flipUnit(side, minionUid) {
     if (def.target !== 'none' && !target) log('【' + def.name + '】没有合法目标，未能生效');
     else resolveSpellEffect(side, def, target);
     discardSpellToGraveyard(side, def);
-    cleanupDead('player');
-    cleanupDead('enemy');
+    cleanupAllDead();
     recalcAuras();
     checkGameOver();
     render();
@@ -7681,8 +7959,7 @@ function flipUnit(side, minionUid) {
   log('【' + m.name + '】翻开！');
   sfx('flip');
   if (m.pendingBattlecry) { m.pendingBattlecry = false; battlecry(side, m); }
-  cleanupDead('player');
-  cleanupDead('enemy');
+  cleanupAllDead();
   recalcAuras();
   checkGameOver();
   render();
@@ -7739,18 +8016,14 @@ function aiCastSpells() {
     const e = state.enemy;
     let found = null;
     for (const m of e.board) {
-      const entries = m.actSpells || (m.actSpell ? [{ key: m.actSpell, cost: m.spellCost }] : []);
+      const entries = unitSpellEntries(m);
       for (const en of entries) {
         if (m.spellMana < en.cost) continue;
         const key = en.key;
-        if (key === 'split' && !(m.curHp > 0 && m.curHp % 2 === 0 && e.board.length < BOARD_CAP)) continue;
-        if ((key === 'fireball' || key === 'tidalWave' || key === 'iceBolt') && state.player.board.length === 0) continue;
-        if (key === 'summonDemon' && !(e.board.length < BOARD_CAP && e.graveyard.some(g => !g._isSpell))) continue;
-        if (key === 'bless' && !e.board.some(x => !x.isSpellShell && !x.faceDown)) continue;
-        if (key === 'repair' && !e.board.some(x => !x.isSpellShell && !x.faceDown && x.traits.includes('机械') && x.curHp < x.maxHp)) continue;
-        if (key === 'manaGain' && e.mana >= manaCap()) continue;
-        if (key === 'heroHeal' && e.hp >= e.maxHp) continue;
-        if (key === 'genieBless' && genieBuffPool(m.spellMana).length === 0) continue;
+        if (!unitSpellBoardCond(m, key, 'enemy')) continue;
+        if (key === 'iceBolt' && state.player.board.length === 0) continue;
+        if (key === 'bless' && !e.board.some(x => isTargetable(x))) continue;
+        if (key === 'repair' && !e.board.some(x => isTargetable(x) && x.traits.includes('机械') && x.curHp < x.maxHp)) continue;
         found = { m: m, en: en };
         break;
       }
@@ -7767,13 +8040,13 @@ function aiCastSpells() {
       });
       castUnitSpell('enemy', m.uid, { key: en.key, graveIndex: best });
     } else if (en.key === 'bless') {
-      const t = e.board.filter(x => !x.isSpellShell && !x.faceDown).sort((a, b) => b.atk - a.atk)[0];
+      const t = e.board.filter(x => isTargetable(x)).sort((a, b) => b.atk - a.atk)[0];
       castUnitSpell('enemy', m.uid, { key: en.key, targetUid: t.uid });
     } else if (en.key === 'iceBolt') {
-      const t = state.player.board.filter(x => !x.isSpellShell && !x.faceDown).sort((a, b) => b.atk - a.atk)[0];
+      const t = state.player.board.filter(x => isTargetable(x)).sort((a, b) => b.atk - a.atk)[0];
       castUnitSpell('enemy', m.uid, { key: en.key, targetUid: t.uid });
     } else if (en.key === 'repair') {
-      const t = e.board.filter(x => !x.isSpellShell && !x.faceDown && x.traits.includes('机械') && x.curHp < x.maxHp).sort((a, b) => (b.maxHp - b.curHp) - (a.maxHp - a.curHp))[0];
+      const t = e.board.filter(x => isTargetable(x) && x.traits.includes('机械') && x.curHp < x.maxHp).sort((a, b) => (b.maxHp - b.curHp) - (a.maxHp - a.curHp))[0];
       if (t) castUnitSpell('enemy', m.uid, { key: en.key, targetUid: t.uid });
     } else {
       castUnitSpell('enemy', m.uid, { key: en.key });
@@ -7968,6 +8241,8 @@ function minionHtml(m, isEnemy, ghost) {
     ? '<span class="trait-badge" style="background:#2a4a7a;color:#b0d0ff;" title="守备表示：不主动攻击；无限次反击且反击同时结算；被随机选取概率×2">守备</span>' : '';
   const landBadge = m.grounded
     ? '<span class="trait-badge" style="background:#4a5a3a;color:#c8e0a0;" title="落地：暂时失去飞行效果，参与地面阵型；可再起飞">落地</span>' : '';
+  const boonBadge = m.boonOfLife
+    ? '<span class="trait-badge" style="background:#4a5e2a;color:#d0e8a0;" title="生还的宝礼：在场时，我方每次从墓地召唤卡牌进入手牌或战场，摸一张牌">宝礼</span>' : '';
   const blindBadge = (m.blind || 0) > 0
     ? '<span class="trait-badge" style="background:#3a3a4e;color:#b0b0e0;" title="失明：无法攻击/反击/施放法术/切换形态，剩余 ' + m.blind + ' 回合">失明' + m.blind + '</span>' : '';
   const moraleBadge = (m.morale || 0) !== 0
@@ -7994,18 +8269,14 @@ function minionHtml(m, isEnemy, ghost) {
   let castRow = '';
   if (!ghost && (m.actSpell || m.actSpells)) {
     const foe = state[otherSide(mySide)];
-    const condOf = key => (key === 'fireball' || key === 'tidalWave') ? foe.board.length > 0
-      : key === 'split' ? (m.curHp > 0 && m.curHp % 2 === 0 && state[mySide].board.length < BOARD_CAP)
-      : key === 'summonDemon' ? (state[mySide].board.length < BOARD_CAP && state[mySide].graveyard.some(g => !g._isSpell))
-      : key === 'bless' ? state[mySide].board.some(x => !x.isSpellShell && !x.faceDown)
-      : key === 'iceBolt' ? foe.board.some(x => !x.isSpellShell && !x.faceDown)
-      : key === 'repair' ? state[mySide].board.some(x => !x.isSpellShell && !x.faceDown && x.traits.includes('机械'))
-      : key === 'genieBless' ? genieBuffPool(m.spellMana).length > 0 && state[mySide].board.some(x => !x.isSpellShell && !x.faceDown)
-      : key === 'manaGain' ? state[mySide].mana < manaCap()
-      : key === 'heroHeal' ? state[mySide].hp < state[mySide].maxHp
+    const condOf = key => !unitSpellBoardCond(m, key, mySide) ? false
+      : key === 'bless' ? state[mySide].board.some(x => isTargetable(x))
+      : key === 'iceBolt' ? foe.board.some(x => isTargetable(x))
+      : key === 'repair' ? state[mySide].board.some(x => isTargetable(x) && x.traits.includes('机械'))
+      : key === 'genieBless' ? state[mySide].board.some(x => isTargetable(x))
       : true; // 研读/收获等无条件
     const labelOf = UNIT_SPELL_LABEL;
-    const entries = m.actSpells || [{ key: m.actSpell, cost: m.spellCost }];
+    const entries = unitSpellEntries(m);
     const canAct = !isEnemy && state.phase === 'deploy' && !state.gameOver && NET.role !== 'spectator';
     castRow = '<div class="m-cast-row"><span class="m-mana">法 ' + m.spellMana + '/' + m.spellManaMax + '</span>' +
       (canAct
@@ -8037,7 +8308,7 @@ function minionHtml(m, isEnemy, ghost) {
     (spellHitStyle ? ' style="' + spellHitStyle + '"' : '') + action + '>' +
     '<div class="m-name">' + m.name + '</div>' +
     (def ? artHtml(def) : '') +
-    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + blindBadge + chargeBadge + defBadge + landBadge + moraleBadge + '</div>' +
+    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + blindBadge + boonBadge + chargeBadge + defBadge + landBadge + moraleBadge + '</div>' +
     castRow +
     defBtn +
     spell +
@@ -8082,7 +8353,7 @@ function handCardHtml(def, i, side) {
     artHtml(def) +
     '<div class="c-traits">' + traitsHtml(def.traits) + '</div>' +
     spell +
-    '<div class="c-stats"><span class="stat-atk">攻' + def.atk + '</span><span class="stat-arm">甲' + def.arm + '</span><span class="stat-hp">血' + def.hp + '</span></div>' +
+    cardStatsHtml(def) +
     setBtn +
     hCorners +
   '</div>';
@@ -8166,6 +8437,44 @@ function showGravePick(mode) {
   state.spellTargetMode = mode;
   renderGravePickBody(mode);
   document.getElementById('grave-pick').classList.add('show');
+}
+
+// 通用选牌浮层：entries = [{ html, data }]，点击调用 onPick(entry)；cancelable 显示取消按钮
+function showCardPick(mode) {
+  state.cardPick = mode;
+  document.getElementById('card-pick-body').innerHTML =
+    '<h3>' + mode.title + '</h3>' +
+    mode.entries.map((en, i) =>
+      '<button class="gp-entry" data-action="card-pick" data-idx="' + i + '">' + en.html + '</button>').join('') +
+    (mode.cancelable ? '<button class="gp-cancel" data-action="card-pick-cancel">取消</button>' : '');
+  document.getElementById('card-pick').classList.add('show');
+}
+function hideCardPick() {
+  const cp = document.getElementById('card-pick');
+  if (cp) cp.classList.remove('show');
+  if (state) state.cardPick = null;
+}
+// 谦逊之壶：保留 drawn[idx] 入手（满则烧毁），其余洗入卡组随机位置
+function keepHumblePick(side, drawn, idx) {
+  const p = state[side];
+  const keep = drawn[idx];
+  drawn.forEach((d2, i2) => {
+    if (i2 !== idx) p.deck.splice(Math.floor(Math.random() * (p.deck.length + 1)), 0, d2);
+  });
+  if (p.hand.length < HAND_LIMIT) {
+    p.hand.push(keep);
+    log('【谦逊之壶】：保留了【' + keep.name + '】，其余洗入卡组');
+  } else {
+    log('【谦逊之壶】：手牌已满，【' + keep.name + '】被烧毁，其余洗入卡组');
+  }
+  render();
+}
+// 生还的宝礼：我方每次从墓地召唤卡牌进入手牌/战场，摸一张牌（多个宝礼不叠加）
+function lifeBoonProc(side, n) {
+  const p = state[side];
+  if (!p || n <= 0 || !p.board.some(m => m.boonOfLife)) return;
+  for (let i = 0; i < n; i++) drawCard(side);
+  log('【生还的宝礼】触发：' + sideName(side) + '摸 ' + n + ' 张牌');
 }
 
 function hideGravePick() {
@@ -8405,7 +8714,7 @@ function dbCardHtml(def) {
     artHtml(def) +
     '<div class="c-traits">' + traitsHtml(def.traits) + '</div>' +
     spell +
-    '<div class="c-stats"><span class="stat-atk">攻' + def.atk + '</span><span class="stat-arm">甲' + def.arm + '</span><span class="stat-hp">血' + def.hp + '</span></div>' +
+    cardStatsHtml(def) +
   '</div>';
 }
 
@@ -8922,6 +9231,22 @@ document.addEventListener('click', e => {
     return;
   }
 
+  // 通用选牌浮层：点击结算 onPick，取消仅关闭
+  if (action === 'card-pick') {
+    const mode = state && state.cardPick;
+    const i = parseInt(el.dataset.idx, 10);
+    document.getElementById('card-pick').classList.remove('show');
+    if (state) state.cardPick = null;
+    if (mode && mode.entries[i]) mode.onPick(mode.entries[i]);
+    render();
+    return;
+  }
+  if (action === 'card-pick-cancel') {
+    hideCardPick();
+    render();
+    return;
+  }
+
   // 对战界面
   if (!state) return;
 
@@ -8945,11 +9270,11 @@ document.addEventListener('click', e => {
     if (!mode) { render(); return; }
     // 单位法术（召唤恶鬼）：执行施放而非出牌
     if (mode.unitSpell) {
-      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'cast', uid: mode.minionUid, graveSide: payload.graveSide, graveIndex: payload.graveIndex }); render(); return; }
+      if (netAct({ kind: 'cast', uid: mode.minionUid, graveSide: payload.graveSide, graveIndex: payload.graveIndex })) { render(); return; }
       castUnitSpell(as, mode.minionUid, payload);
       return;
     }
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: mode.def.name, graveSide: payload.graveSide, graveIndex: payload.graveIndex }); render(); return; }
+    if (netAct({ kind: 'play', name: mode.def.name, graveSide: payload.graveSide, graveIndex: payload.graveIndex })) { render(); return; }
     const gi = state[as].hand.indexOf(mode.def);
     if (gi >= 0 && playCard(as, gi, null, null, false, payload)) render();
     else render();
@@ -8984,7 +9309,7 @@ document.addEventListener('click', e => {
     });
     document.getElementById('grave-pick').classList.remove('show');
     state.spellTargetMode = null;
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: mode.def.name, picks: picks }); render(); return; }
+    if (netAct({ kind: 'play', name: mode.def.name, picks: picks })) { render(); return; }
     const gi = state[as].hand.indexOf(mode.def);
     if (gi >= 0) playCard(as, gi, null, null, false, { picks: picks });
     render();
@@ -8996,7 +9321,7 @@ document.addEventListener('click', e => {
     // 治疗：允许直接点击己方英雄治疗英雄
     if (mode.def && mode.def.spellEffect === 'heal' && e.target.closest('#player-hero')) {
       state.spellTargetMode = null;
-      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: mode.def.name, healHero: true }); return; }
+      if (netAct({ kind: 'play', name: mode.def.name, healHero: true })) return;
       const hi = state[as].hand.indexOf(mode.def);
       if (hi >= 0) playCard(as, hi, null, null, false, { hero: true });
       render();
@@ -9010,10 +9335,10 @@ document.addEventListener('click', e => {
     if (mode.unitSpell) {
       const mySideT = state.player.board.find(m => m.uid === u) ? 'player' : 'enemy';
       const want = (mode.key === 'bless' || mode.key === 'repair') ? mySideT === as : mySideT !== as;
-      const target = state[mySideT].board.find(m => m.uid === u && !m.isSpellShell && !m.faceDown);
+      const target = state[mySideT].board.find(m => m.uid === u && isTargetable(m));
       state.spellTargetMode = null;
       if (target && want) {
-        if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'cast', uid: mode.minionUid, key: mode.key, targetUid: u }); return; }
+        if (netAct({ kind: 'cast', uid: mode.minionUid, key: mode.key, targetUid: u })) return;
         castUnitSpell(as, mode.minionUid, { key: mode.key, targetUid: u });
       }
       render();
@@ -9038,17 +9363,17 @@ document.addEventListener('click', e => {
     const key = el.dataset.key || m.actSpell;
     // 祝福/冰箭：进入选目标模式（祝福点友方、冰箭点敌方）
     if (key === 'bless' || key === 'iceBolt' || key === 'repair') {
-      const entry = m.actSpells ? m.actSpells.find(e2 => e2.key === key) : { cost: m.spellCost };
+      const entry = unitSpellEntry(m, key);
       if (m.spellMana < entry.cost) { log('法力不足，无法施放'); return; }
       const poolSide = key === 'bless' ? state[as] : state[otherSide(as)];
-      if (!poolSide.board.some(x => !x.isSpellShell && !x.faceDown)) { log('没有合法目标'); return; }
+      if (!poolSide.board.some(x => isTargetable(x))) { log('没有合法目标'); return; }
       state.spellTargetMode = { unitSpell: true, minionUid: u, key: key };
       render();
       return;
     }
     // 召唤恶鬼：需要选择己方墓地单位卡——打开墓地选取浮层（仅己方）
     if (key === 'summonDemon') {
-      const sdEntry = m.actSpells ? m.actSpells.find(e2 => e2.key === key) : { cost: m.spellCost };
+      const sdEntry = unitSpellEntry(m, key);
       if (m.spellMana < sdEntry.cost) { log('法力不足，无法施放'); return; }
       if (state[as].board.length >= BOARD_CAP) { log('场上使魔已达上限（' + BOARD_CAP + '）'); return; }
       if (!state[as].graveyard.some(g => !g._isSpell)) { log('己方墓地没有单位卡，无法召唤恶鬼'); return; }
@@ -9058,19 +9383,19 @@ document.addEventListener('click', e => {
       });
       return;
     }
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'cast', uid: u, key: key }); return; } // guest 动作发给房主
+    if (netAct({ kind: 'cast', uid: u, key: key })) return; // guest 动作发给房主
     castUnitSpell(as, u, { key: key }); // 直接执行，不走单击延时
     return;
   }
   if (action === 'toggle-defense') {
     const u = parseInt(el.dataset.uid, 10);
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'defense', uid: u }); return; } // guest 动作发给房主
+    if (netAct({ kind: 'defense', uid: u })) return; // guest 动作发给房主
     toggleDefense(as, u);
     return;
   }
   if (action === 'toggle-land') {
     const u = parseInt(el.dataset.uid, 10);
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'land', uid: u }); return; }
+    if (netAct({ kind: 'land', uid: u })) return;
     toggleLand(as, u);
     return;
   }
@@ -9078,7 +9403,7 @@ document.addEventListener('click', e => {
   if (action === 'rot-attack' || action === 'rot-defense') {
     const u = parseInt(el.dataset.uid, 10);
     const val = action === 'rot-defense';
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'defense', uid: u, value: val }); return; }
+    if (netAct({ kind: 'defense', uid: u, value: val })) return;
     toggleDefense(as, u, val);
     return;
   }
@@ -9090,7 +9415,7 @@ document.addEventListener('click', e => {
     if (!def) return;
     if (effCost(as, def) > state[as].mana) { log('法力不足，无法打出【' + def.name + '】'); return; }
     const withDef = action === 'rot-play-defense';
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: def.name, defense: withDef }); return; }
+    if (netAct({ kind: 'play', name: def.name, defense: withDef })) return;
     const m = playCard(as, idx);
     if (m && withDef) { m.defense = true; log('【' + m.name + '】以守备表示入场'); }
     if (m) render();
@@ -9098,7 +9423,7 @@ document.addEventListener('click', e => {
   }
   if (action === 'flip-unit') {
     const u = parseInt(el.dataset.uid, 10);
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'flip', uid: u }); return; }
+    if (netAct({ kind: 'flip', uid: u })) return;
     flipUnit(as, u);
     return;
   }
@@ -9108,7 +9433,7 @@ document.addEventListener('click', e => {
     const def = state[as].hand[idx];
     if (!def) return;
     if (effCost(as, def) > state[as].mana) { log('法力不足，无法盖放【' + def.name + '】'); return; }
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'set', name: def.name }); return; }
+    if (netAct({ kind: 'set', name: def.name })) return;
     if (playCard(as, idx, null, null, true)) render(); // 盖放：默认落位（近战前排/远程后排），直接执行需手动重绘
     return;
   }
@@ -9129,6 +9454,24 @@ document.addEventListener('click', e => {
         showGravePick({ idx: idx, def: def, multi: true, budget: budget });
         return;
       }
+      if (def.spellEffect === 'darkSacrifice') { // 恶魔的祭品：选己方一张手牌/场上卡消灭，摸两张
+        const p2 = state[as];
+        const entries = [];
+        p2.hand.forEach((c, i2) => { if (i2 !== idx) entries.push({ html: '手牌【' + c.name + '】费用 ' + c.cost, data: { sacHand: i2 } }); });
+        p2.board.forEach(u => { if (!u.isSpellShell) entries.push({ html: '场上【' + u.name + '】攻' + u.atk + '/血' + Math.max(0, u.curHp), data: { sacUid: u.uid } }); });
+        if (entries.length === 0) { log('【恶魔的祭品】：没有可献祭的卡牌'); return; }
+        showCardPick({
+          title: '【恶魔的祭品】：选择一张己方卡牌消灭（随后摸两张牌）',
+          entries: entries, cancelable: true,
+          onPick: en => {
+            if (netAct(Object.assign({ kind: 'play', name: def.name }, en.data))) return;
+            const sd = activeSide();
+            const i3 = state[sd].hand.indexOf(def);
+            if (i3 >= 0) playCard(sd, i3, null, null, false, en.data);
+          },
+        });
+        return;
+      }
       if (def.target === 'graveUnit') { // 墓地选目标（召唤骷髅兵）：打开墓地选取浮层
         if (legalSpellTargets(as, def).length === 0) { log('【' + def.name + '】双方墓地都没有单位'); return; }
         showGravePick({ idx: idx, def: def });
@@ -9146,7 +9489,7 @@ document.addEventListener('click', e => {
       state.spellTargetMode = null;
       scheduleClickAction('hand:' + idx, () => {
         if (!state || state.phase !== 'deploy' || state.gameOver) return;
-        if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: def.name }); return; }
+        if (netAct({ kind: 'play', name: def.name })) return;
         const sd = activeSide();
         const i = state[sd].hand.indexOf(def);
         if (i >= 0 && playCard(sd, i)) render();
@@ -9156,7 +9499,7 @@ document.addEventListener('click', e => {
     // 单击延时执行（给双击留窗口）；执行时按 def 引用重新定位下标，避免手牌变动错位
     scheduleClickAction('hand:' + idx, () => {
       if (!state || state.phase !== 'deploy' || state.gameOver) return;
-      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: def.name }); return; } // guest 出牌发给房主（按卡名定位）
+      if (netAct({ kind: 'play', name: def.name })) return; // guest 出牌发给房主（按卡名定位）
       const sd = activeSide();
       const i = state[sd].hand.indexOf(def);
       if (i < 0) return;
@@ -9171,7 +9514,7 @@ document.addEventListener('click', e => {
     // 单击延时执行收回（双击取消收回并打开详情）
     scheduleClickAction('recall:' + u, () => {
       if (!state || state.phase !== 'deploy' || state.gameOver) return;
-      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'recall', uid: u }); return; } // guest 收回发给房主
+      if (netAct({ kind: 'recall', uid: u })) return; // guest 收回发给房主
       const sd = activeSide();
       const m = state[sd].board.find(x => x.uid === u);
       if (!m) return;
@@ -9271,12 +9614,12 @@ function applyRotation(g, snapped) {
     if (!def) return;
     if (effCost(as, def) > state[as].mana) { log('法力不足，无法打出【' + def.name + '】'); return; }
     if (snapped === 180) { // 盖放
-      if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'set', name: def.name }); return; }
+      if (netAct({ kind: 'set', name: def.name })) return;
       if (playCard(as, g.idx, null, null, true)) render();
       return;
     }
     const withDef = snapped !== 0 && gameConfig.allowDefense; // 守备禁用时 90° 按攻击入场
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'play', name: def.name, defense: withDef }); return; }
+    if (netAct({ kind: 'play', name: def.name, defense: withDef })) return;
     const m = playCard(as, g.idx);
     if (m && withDef) { m.defense = true; log('【' + m.name + '】以守备表示入场'); }
     if (m) render();
@@ -9287,14 +9630,14 @@ function applyRotation(g, snapped) {
   if (!m) return;
   if (m.faceDown) {
     if (snapped === 0) return; // 没转够 90°，不翻开
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'flip', uid: g.uid }); return; }
+    if (netAct({ kind: 'flip', uid: g.uid })) return;
     flipUnit(as, g.uid);
     return;
   }
   const wantDef = snapped === 90 || snapped === 270;
   // 飞行单位转 180°：切换 落地/起飞
   if (snapped === 180 && m.traits.includes('飞行')) {
-    if (NET.role === 'guest') { clientSend({ t: 'act', kind: 'land', uid: g.uid, value: !m.grounded }); return; }
+    if (netAct({ kind: 'land', uid: g.uid, value: !m.grounded })) return;
     toggleLand(as, g.uid, !m.grounded);
     return;
   }

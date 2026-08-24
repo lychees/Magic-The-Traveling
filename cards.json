@@ -110,6 +110,51 @@
       }
     },
     {
+      "name": "强欲之壶",
+      "race": "中立",
+      "cost": 2,
+      "atk": 0,
+      "arm": 0,
+      "hp": 2,
+      "rating": 4,
+      "traits": [],
+      "spell": "potOfGreed",
+      "art": {
+        "icon": "🏺",
+        "hue": 45
+      }
+    },
+    {
+      "name": "北宋之壶",
+      "race": "中立",
+      "cost": 4,
+      "atk": 0,
+      "arm": 0,
+      "hp": 7,
+      "rating": 9,
+      "traits": [],
+      "spell": "songPot",
+      "art": {
+        "icon": "🫖",
+        "hue": 200
+      }
+    },
+    {
+      "name": "谦逊之壶",
+      "race": "中立",
+      "cost": 1,
+      "atk": 0,
+      "arm": 0,
+      "hp": 1,
+      "rating": 3,
+      "traits": [],
+      "spell": "humblePot",
+      "art": {
+        "icon": "🍶",
+        "hue": 160
+      }
+    },
+    {
       "name": "弓箭手",
       "race": "城堡",
       "cost": 2,
@@ -1472,8 +1517,8 @@
       "cost": 4,
       "atk": 4,
       "arm": 0,
-      "hp": 6,
-      "rating": 10,
+      "hp": 10,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "🦹",
@@ -1503,8 +1548,8 @@
       "cost": 5,
       "atk": 5,
       "arm": 0,
-      "hp": 7,
-      "rating": 12,
+      "hp": 12,
+      "rating": 17,
       "traits": [],
       "art": {
         "icon": "🐃",
@@ -1515,10 +1560,10 @@
       "name": "邪神",
       "race": "地狱",
       "cost": 5,
-      "atk": 4,
-      "arm": 1,
-      "hp": 7,
-      "rating": 14,
+      "atk": 7,
+      "arm": 0,
+      "hp": 10,
+      "rating": 17,
       "traits": [],
       "art": {
         "icon": "⛓️",
@@ -1546,10 +1591,10 @@
       "name": "邪神王",
       "race": "地狱",
       "cost": 6,
-      "atk": 5,
-      "arm": 1,
-      "hp": 8,
-      "rating": 18,
+      "atk": 8,
+      "arm": 0,
+      "hp": 11,
+      "rating": 21,
       "traits": [],
       "actSpell": "summonDemon",
       "spellCost": 4,
@@ -2023,8 +2068,10 @@
       "atk": 6,
       "arm": 0,
       "hp": 12,
-      "rating": 18,
-      "traits": [],
+      "rating": 20,
+      "traits": [
+        "心智免疫"
+      ],
       "art": {
         "icon": "🏔️",
         "hue": 210
@@ -2037,9 +2084,10 @@
       "atk": 7,
       "arm": 0,
       "hp": 14,
-      "rating": 24,
+      "rating": 26,
       "traits": [
-        "远程"
+        "远程",
+        "心智免疫"
       ],
       "art": {
         "icon": "⚡",
@@ -2904,6 +2952,20 @@
       }
     },
     {
+      "name": "生还的宝礼",
+      "type": "spell",
+      "race": "中立",
+      "cost": 1,
+      "school": "土",
+      "spellEffect": "lifeBoon",
+      "target": "friendlyUnit",
+      "rating": 2,
+      "art": {
+        "icon": "🎁",
+        "hue": 95
+      }
+    },
+    {
       "name": "迟缓",
       "type": "spell",
       "race": "中立",
@@ -2943,6 +3005,34 @@
       "art": {
         "icon": "💀",
         "hue": 40
+      }
+    },
+    {
+      "name": "奥术智慧",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "水",
+      "spellEffect": "arcaneDraw",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "📜",
+        "hue": 210
+      }
+    },
+    {
+      "name": "恶魔的祭品",
+      "type": "spell",
+      "race": "中立",
+      "cost": 1,
+      "school": "火",
+      "spellEffect": "darkSacrifice",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "🩸",
+        "hue": 0
       }
     },
     {
@@ -3058,10 +3148,24 @@
       }
     },
     {
+      "name": "禁断之炎",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "火",
+      "spellEffect": "forbiddenFlame",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "🕯️",
+        "hue": 10
+      }
+    },
+    {
       "name": "末日审判",
       "type": "spell",
       "race": "中立",
-      "cost": 8,
+      "cost": 6,
       "school": "火",
       "spellEffect": "doom",
       "target": "none",
@@ -3215,7 +3319,7 @@
       "name": "地狱烈焰",
       "type": "spell",
       "race": "中立",
-      "cost": 6,
+      "cost": 5,
       "school": "火",
       "spellEffect": "hellfire",
       "target": "none",
@@ -3369,7 +3473,7 @@
       "name": "流星火雨",
       "type": "spell",
       "race": "中立",
-      "cost": 7,
+      "cost": 3,
       "school": "火",
       "spellEffect": "meteorShower",
       "target": "none",
@@ -3480,14 +3584,12 @@
     {
       "name": "海洋精灵",
       "race": "港口",
-      "cost": 2,
-      "atk": 1,
+      "cost": 1,
+      "atk": 3,
       "arm": 0,
-      "hp": 3,
-      "rating": 6,
+      "hp": 2,
+      "rating": 5,
       "traits": [],
-      "spell": "heal",
-      "spellParam": 2,
       "art": {
         "icon": "🌊",
         "hue": 195
@@ -3499,8 +3601,8 @@
       "cost": 2,
       "atk": 2,
       "arm": 0,
-      "hp": 4,
-      "rating": 6,
+      "hp": 6,
+      "rating": 8,
       "traits": [],
       "art": {
         "icon": "⚓",
@@ -3513,8 +3615,8 @@
       "cost": 2,
       "atk": 3,
       "arm": 0,
-      "hp": 3,
-      "rating": 6,
+      "hp": 5,
+      "rating": 8,
       "traits": [],
       "art": {
         "icon": "⛵",
