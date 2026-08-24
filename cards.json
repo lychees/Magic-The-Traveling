@@ -7,7 +7,7 @@
     "atk": "攻击（数值）",
     "arm": "护甲（数值）",
     "hp": "生命（数值）",
-    "rating": "强度评分 1-100（白板锚定 60）",
+    "rating": "战斗力评分 = 生命 + 攻击 + 护甲×3 + 词条/法术分值（飞行/远程/石像形态 3，法术护盾X=X 分，再生 1，拒马 0.5，其它每项 2）；法术卡计 1 个法术",
     "traits": "特性字符串数组，如 [\"远程\",\"飞行\",\"骑兵\",\"毒Lv2\",\"再生1\",\"法术护盾2\",\"连击\",\"反击2\",\"掠夺\",\"高级水系魔法\"]",
     "spell": "战吼/亡语 key（prayer/draw/wisp/elfHeal/heal/witch/dragoness/charm/necro/reaper/resurrect/skeletonSearch/curse/boneDragon）",
     "spellParam": "spell 的数值参数（如 heal 的治疗量）",
@@ -80,7 +80,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 61,
+      "rating": 5.5,
       "traits": [
         "拒马"
       ],
@@ -96,7 +96,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 56,
+      "rating": 7,
       "traits": [
         "和平"
       ],
@@ -116,7 +116,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 60,
+      "rating": 6,
       "traits": [
         "远程"
       ],
@@ -132,7 +132,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 60,
+      "rating": 8,
       "traits": [],
       "art": {
         "icon": "⚔️",
@@ -145,8 +145,8 @@
       "cost": 3,
       "atk": 3,
       "arm": 0,
-      "hp": 7,
-      "rating": 63,
+      "hp": 5,
+      "rating": 11,
       "traits": [
         "飞行"
       ],
@@ -162,7 +162,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 6,
-      "rating": 60,
+      "rating": 11,
       "traits": [
         "连击"
       ],
@@ -178,7 +178,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 8,
-      "rating": 58,
+      "rating": 16,
       "traits": [
         "法力燃烧2",
         "驱魔"
@@ -195,7 +195,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 6,
-      "rating": 66,
+      "rating": 13,
       "traits": [
         "远程"
       ],
@@ -209,10 +209,10 @@
       "name": "骑兵",
       "race": "城堡",
       "cost": 6,
-      "atk": 3,
+      "atk": 5,
       "arm": 0,
       "hp": 12,
-      "rating": 58,
+      "rating": 19,
       "traits": [
         "骑兵"
       ],
@@ -225,11 +225,13 @@
       "name": "女武神",
       "race": "城堡",
       "cost": 7,
-      "atk": 8,
+      "atk": 7,
       "arm": 0,
       "hp": 15,
-      "rating": 60,
-      "traits": [],
+      "rating": 24,
+      "traits": [
+        "英灵感召"
+      ],
       "art": {
         "icon": "👼",
         "hue": 55
@@ -242,7 +244,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 1,
-      "rating": 58,
+      "rating": 4,
       "traits": [],
       "spell": "wisp",
       "art": {
@@ -257,7 +259,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 57,
+      "rating": 6,
       "traits": [
         "再生1"
       ],
@@ -277,7 +279,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 3,
-      "rating": 63,
+      "rating": 6,
       "traits": [
         "骑兵"
       ],
@@ -293,27 +295,24 @@
       "atk": 0,
       "arm": 0,
       "hp": 3,
-      "rating": 53,
+      "rating": 7,
       "traits": [],
-      "spell": "elfHeal",
       "art": {
         "icon": "🧝",
         "hue": 140
-      }
-    },
-    {
-      "name": "石头人",
-      "race": "塔楼",
-      "cost": 3,
-      "atk": 4,
-      "arm": 0,
-      "hp": 7,
-      "rating": 60,
-      "traits": [],
-      "art": {
-        "icon": "🪨",
-        "hue": 30
-      }
+      },
+      "actSpells": [
+        {
+          "key": "manaGain",
+          "cost": 1
+        },
+        {
+          "key": "heroHeal",
+          "cost": 1
+        }
+      ],
+      "spellMana0": 1,
+      "spellManaMax": 5
     },
     {
       "name": "棕熊",
@@ -322,7 +321,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 9,
-      "rating": 60,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "🐻",
@@ -336,7 +335,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 6,
-      "rating": 58,
+      "rating": 12,
       "traits": [
         "远程"
       ],
@@ -356,7 +355,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 6,
-      "rating": 51,
+      "rating": 12,
       "traits": [
         "再生1"
       ],
@@ -376,7 +375,7 @@
       "atk": 0,
       "arm": 0,
       "hp": 6,
-      "rating": 55,
+      "rating": 8,
       "traits": [],
       "spell": "dragoness",
       "art": {
@@ -391,7 +390,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 9,
-      "rating": 56,
+      "rating": 16,
       "traits": [
         "骑兵",
         "法术护盾2"
@@ -407,8 +406,8 @@
       "cost": 1,
       "atk": 1,
       "arm": 0,
-      "hp": 3,
-      "rating": 60,
+      "hp": 2,
+      "rating": 5,
       "traits": [
         "毒Lv1"
       ],
@@ -424,7 +423,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 5,
-      "rating": 61,
+      "rating": 11,
       "traits": [
         "飞行",
         "三姐妹"
@@ -441,7 +440,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 5,
-      "rating": 61,
+      "rating": 11,
       "traits": [
         "飞行",
         "三姐妹"
@@ -458,7 +457,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 5,
-      "rating": 61,
+      "rating": 11,
       "traits": [
         "飞行",
         "三姐妹"
@@ -472,11 +471,13 @@
       "name": "钻石人",
       "race": "塔楼",
       "cost": 4,
-      "atk": 4,
+      "atk": 3,
       "arm": 1,
-      "hp": 8,
-      "rating": 60,
-      "traits": [],
+      "hp": 7,
+      "rating": 14,
+      "traits": [
+        "法术护盾1"
+      ],
       "art": {
         "icon": "💎",
         "hue": 190
@@ -489,7 +490,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 14,
-      "rating": 62,
+      "rating": 21,
       "traits": [
         "毒Lv3"
       ],
@@ -505,7 +506,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 4,
-      "rating": 61,
+      "rating": 7,
       "traits": [],
       "spell": "charm",
       "art": {
@@ -520,7 +521,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 18,
-      "rating": 60,
+      "rating": 23,
       "traits": [
         "范围攻击"
       ],
@@ -536,7 +537,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 55,
+      "rating": 5,
       "traits": [],
       "spell": "skeletonSearch",
       "art": {
@@ -549,15 +550,31 @@
       "race": "塔楼",
       "cost": 2,
       "atk": 2,
-      "arm": 1,
+      "arm": 0,
       "hp": 2,
-      "rating": 59,
+      "rating": 7,
       "traits": [
-        "石化"
+        "石像形态"
       ],
       "art": {
         "icon": "🗿",
         "hue": 200
+      }
+    },
+    {
+      "name": "石像怪",
+      "race": "塔楼",
+      "cost": 3,
+      "atk": 3,
+      "arm": 0,
+      "hp": 3,
+      "rating": 9,
+      "traits": [
+        "石像形态"
+      ],
+      "art": {
+        "icon": "🪨",
+        "hue": 205
       }
     },
     {
@@ -567,7 +584,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 6,
-      "rating": 66,
+      "rating": 10,
       "traits": [],
       "spell": "curse",
       "art": {
@@ -582,7 +599,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 59,
+      "rating": 9,
       "traits": [
         "再生2"
       ],
@@ -598,7 +615,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 7,
-      "rating": 57,
+      "rating": 12,
       "traits": [
         "吸血"
       ],
@@ -614,7 +631,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 6,
-      "rating": 59,
+      "rating": 13,
       "traits": [
         "远程"
       ],
@@ -631,7 +648,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 4,
-      "rating": 58,
+      "rating": 8,
       "traits": [],
       "spell": "reaper",
       "art": {
@@ -646,7 +663,7 @@
       "atk": 3,
       "arm": 1,
       "hp": 9,
-      "rating": 53,
+      "rating": 17,
       "traits": [
         "骑兵"
       ],
@@ -662,7 +679,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 9,
-      "rating": 58,
+      "rating": 14,
       "traits": [],
       "spell": "boneDragon",
       "art": {
@@ -677,7 +694,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 1,
-      "rating": 60,
+      "rating": 2,
       "traits": [],
       "art": {
         "icon": "🪖",
@@ -691,7 +708,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 57,
+      "rating": 6,
       "traits": [
         "飞行"
       ],
@@ -703,11 +720,11 @@
     {
       "name": "剑士",
       "race": "城堡",
-      "cost": 2,
-      "atk": 2,
+      "cost": 4,
+      "atk": 4,
       "arm": 0,
-      "hp": 6,
-      "rating": 60,
+      "hp": 10,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "🤺",
@@ -721,7 +738,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 58,
+      "rating": 10,
       "traits": [
         "远程",
         "护甲穿透2"
@@ -738,7 +755,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 4,
-      "rating": 53,
+      "rating": 7,
       "traits": [],
       "spell": "heal",
       "spellParam": 3,
@@ -752,9 +769,9 @@
       "race": "城堡",
       "cost": 4,
       "atk": 2,
-      "arm": 2,
-      "hp": 8,
-      "rating": 60,
+      "arm": 1,
+      "hp": 9,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "💂",
@@ -768,7 +785,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 4,
-      "rating": 54,
+      "rating": 10,
       "traits": [
         "远程"
       ],
@@ -784,7 +801,7 @@
       "atk": 5,
       "arm": 1,
       "hp": 9,
-      "rating": 54,
+      "rating": 18,
       "traits": [
         "法术护盾1"
       ],
@@ -800,7 +817,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 8,
-      "rating": 64,
+      "rating": 16,
       "traits": [
         "远程"
       ],
@@ -817,7 +834,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 10,
-      "rating": 56,
+      "rating": 21,
       "traits": [
         "骑兵",
         "飞行"
@@ -834,7 +851,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 62,
+      "rating": 10,
       "traits": [
         "远程",
         "连击"
@@ -848,10 +865,10 @@
       "name": "皇家狮鹫",
       "race": "城堡",
       "cost": 4,
-      "atk": 4,
+      "atk": 3,
       "arm": 0,
-      "hp": 8,
-      "rating": 61,
+      "hp": 6,
+      "rating": 14,
       "traits": [
         "飞行",
         "反击2"
@@ -868,7 +885,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 5,
-      "rating": 55,
+      "rating": 10,
       "traits": [
         "远程"
       ],
@@ -883,8 +900,8 @@
       "cost": 7,
       "atk": 6,
       "arm": 0,
-      "hp": 12,
-      "rating": 58,
+      "hp": 14,
+      "rating": 22,
       "traits": [
         "骑兵"
       ],
@@ -900,7 +917,7 @@
       "atk": 7,
       "arm": 0,
       "hp": 14,
-      "rating": 58,
+      "rating": 24,
       "traits": [
         "飞行"
       ],
@@ -916,7 +933,7 @@
       "atk": 8,
       "arm": 0,
       "hp": 16,
-      "rating": 68,
+      "rating": 31,
       "traits": [
         "飞行",
         "鼓舞1"
@@ -934,7 +951,7 @@
       "atk": 0,
       "arm": 0,
       "hp": 1,
-      "rating": 56,
+      "rating": 3,
       "traits": [],
       "spell": "wisp",
       "art": {
@@ -948,8 +965,8 @@
       "cost": 2,
       "atk": 2,
       "arm": 0,
-      "hp": 2,
-      "rating": 57,
+      "hp": 4,
+      "rating": 8,
       "traits": [
         "骑兵"
       ],
@@ -964,8 +981,8 @@
       "cost": 2,
       "atk": 2,
       "arm": 0,
-      "hp": 2,
-      "rating": 57,
+      "hp": 4,
+      "rating": 8,
       "traits": [
         "恐狼光环"
       ],
@@ -981,7 +998,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 3,
-      "rating": 56,
+      "rating": 6,
       "traits": [
         "毒Lv2"
       ],
@@ -997,7 +1014,7 @@
       "atk": 1,
       "arm": 1,
       "hp": 6,
-      "rating": 58,
+      "rating": 11,
       "traits": [
         "再生1"
       ],
@@ -1013,7 +1030,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 4,
-      "rating": 54,
+      "rating": 11,
       "traits": [
         "飞行",
         "骑兵"
@@ -1030,7 +1047,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 4,
-      "rating": 62,
+      "rating": 11,
       "traits": [
         "远程"
       ],
@@ -1049,8 +1066,8 @@
       "cost": 5,
       "atk": 3,
       "arm": 0,
-      "hp": 5,
-      "rating": 55,
+      "hp": 6,
+      "rating": 14,
       "traits": [
         "远程",
         "骑兵"
@@ -1067,7 +1084,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 8,
-      "rating": 57,
+      "rating": 15,
       "traits": [
         "再生2"
       ],
@@ -1087,7 +1104,7 @@
       "atk": 4,
       "arm": 1,
       "hp": 8,
-      "rating": 60,
+      "rating": 16,
       "traits": [
         "再生2"
       ],
@@ -1103,7 +1120,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 12,
-      "rating": 58,
+      "rating": 21,
       "traits": [
         "再生2",
         "法术护盾2"
@@ -1116,11 +1133,11 @@
     {
       "name": "半人马首领",
       "race": "壁垒",
-      "cost": 1,
+      "cost": 2,
       "atk": 2,
       "arm": 0,
-      "hp": 3,
-      "rating": 64,
+      "hp": 5,
+      "rating": 9,
       "traits": [
         "骑兵"
       ],
@@ -1134,9 +1151,9 @@
       "race": "壁垒",
       "cost": 2,
       "atk": 2,
-      "arm": 1,
-      "hp": 4,
-      "rating": 62,
+      "arm": 0,
+      "hp": 5,
+      "rating": 8,
       "traits": [
         "法术护盾1"
       ],
@@ -1152,7 +1169,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 60,
+      "rating": 6,
       "traits": [
         "远程"
       ],
@@ -1166,9 +1183,9 @@
       "race": "壁垒",
       "cost": 3,
       "atk": 3,
-      "arm": 1,
-      "hp": 5,
-      "rating": 60,
+      "arm": 0,
+      "hp": 7,
+      "rating": 11,
       "traits": [
         "法术护盾1"
       ],
@@ -1184,7 +1201,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 62,
+      "rating": 10,
       "traits": [
         "远程",
         "连击"
@@ -1200,8 +1217,8 @@
       "cost": 3,
       "atk": 2,
       "arm": 0,
-      "hp": 4,
-      "rating": 55,
+      "hp": 6,
+      "rating": 11,
       "traits": [
         "飞行"
       ],
@@ -1216,10 +1233,11 @@
       "cost": 4,
       "atk": 3,
       "arm": 0,
-      "hp": 5,
-      "rating": 53,
+      "hp": 6,
+      "rating": 14,
       "traits": [
-        "飞行"
+        "飞行",
+        "破法"
       ],
       "art": {
         "icon": "❄️",
@@ -1233,7 +1251,7 @@
       "atk": 7,
       "arm": 0,
       "hp": 14,
-      "rating": 61,
+      "rating": 27,
       "traits": [
         "飞行",
         "法术护盾3"
@@ -1244,16 +1262,14 @@
       }
     },
     {
-      "name": "小恶魔",
+      "name": "小怪物",
       "race": "地狱",
       "cost": 1,
       "atk": 2,
       "arm": 0,
-      "hp": 1,
-      "rating": 61,
-      "traits": [
-        "飞行"
-      ],
+      "hp": 3,
+      "rating": 5,
+      "traits": [],
       "art": {
         "icon": "👿",
         "hue": 300
@@ -1266,7 +1282,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 2,
-      "rating": 54,
+      "rating": 6,
       "traits": [
         "毒Lv1"
       ],
@@ -1282,7 +1298,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 62,
+      "rating": 8,
       "traits": [
         "飞行",
         "吸血"
@@ -1293,27 +1309,13 @@
       }
     },
     {
-      "name": "双头犬",
-      "race": "地狱",
-      "cost": 3,
-      "atk": 5,
-      "arm": 0,
-      "hp": 6,
-      "rating": 60,
-      "traits": [],
-      "art": {
-        "icon": "🐕",
-        "hue": 20
-      }
-    },
-    {
       "name": "石像魔",
       "race": "要塞",
       "cost": 4,
       "atk": 3,
       "arm": 2,
       "hp": 5,
-      "rating": 59,
+      "rating": 16,
       "traits": [
         "石化"
       ],
@@ -1329,7 +1331,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 6,
-      "rating": 48,
+      "rating": 11,
       "traits": [
         "范围攻击"
       ],
@@ -1345,7 +1347,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 7,
-      "rating": 62,
+      "rating": 15,
       "traits": [
         "飞行",
         "三姐妹"
@@ -1362,7 +1364,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 8,
-      "rating": 50,
+      "rating": 15,
       "traits": [
         "范围攻击"
       ],
@@ -1378,7 +1380,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 6,
-      "rating": 64,
+      "rating": 10,
       "traits": [],
       "spell": "charm",
       "art": {
@@ -1393,7 +1395,7 @@
       "atk": 10,
       "arm": 0,
       "hp": 16,
-      "rating": 60,
+      "rating": 26,
       "traits": [],
       "art": {
         "icon": "🕳️",
@@ -1407,12 +1409,13 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 56,
+      "rating": 5,
       "traits": [],
       "art": {
         "icon": "👾",
         "hue": 280
-      }
+      },
+      "spell": "impBurst"
     },
     {
       "name": "歌革",
@@ -1421,7 +1424,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 60,
+      "rating": 6,
       "traits": [
         "远程"
       ],
@@ -1437,7 +1440,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 3,
-      "rating": 55,
+      "rating": 8,
       "traits": [
         "骑兵"
       ],
@@ -1453,7 +1456,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 4,
-      "rating": 56,
+      "rating": 11,
       "traits": [
         "远程",
         "范围攻击"
@@ -1470,7 +1473,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 6,
-      "rating": 52,
+      "rating": 10,
       "traits": [],
       "art": {
         "icon": "🦹",
@@ -1484,7 +1487,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 6,
-      "rating": 53,
+      "rating": 15,
       "traits": [
         "飞行",
         "火系魔法免疫"
@@ -1501,7 +1504,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 7,
-      "rating": 50,
+      "rating": 12,
       "traits": [],
       "art": {
         "icon": "🐃",
@@ -1515,7 +1518,7 @@
       "atk": 4,
       "arm": 1,
       "hp": 7,
-      "rating": 52,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "⛓️",
@@ -1529,7 +1532,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 7,
-      "rating": 51,
+      "rating": 17,
       "traits": [
         "飞行",
         "火系魔法免疫"
@@ -1546,7 +1549,7 @@
       "atk": 5,
       "arm": 1,
       "hp": 8,
-      "rating": 55,
+      "rating": 18,
       "traits": [],
       "actSpell": "summonDemon",
       "spellCost": 4,
@@ -1561,10 +1564,10 @@
       "name": "恶魔",
       "race": "地狱",
       "cost": 7,
-      "atk": 5,
+      "atk": 4,
       "arm": 0,
-      "hp": 8,
-      "rating": 56,
+      "hp": 12,
+      "rating": 21,
       "traits": [
         "飞行",
         "不受反击"
@@ -1578,10 +1581,10 @@
       "name": "大恶魔",
       "race": "地狱",
       "cost": 8,
-      "atk": 6,
+      "atk": 9,
       "arm": 0,
-      "hp": 10,
-      "rating": 56,
+      "hp": 13,
+      "rating": 27,
       "traits": [
         "飞行",
         "不受反击"
@@ -1598,7 +1601,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 55,
+      "rating": 8,
       "traits": [
         "远程"
       ],
@@ -1615,7 +1618,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 4,
-      "rating": 58,
+      "rating": 7,
       "traits": [
         "再生1"
       ],
@@ -1631,7 +1634,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 4,
-      "rating": 57,
+      "rating": 10,
       "traits": [
         "飞行"
       ],
@@ -1647,7 +1650,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 53,
+      "rating": 7,
       "traits": [],
       "spell": "curse",
       "art": {
@@ -1662,7 +1665,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 3,
-      "rating": 54,
+      "rating": 6,
       "traits": [],
       "spell": "necro",
       "art": {
@@ -1677,7 +1680,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 54,
+      "rating": 13,
       "traits": [
         "远程",
         "毒Lv2"
@@ -1694,7 +1697,7 @@
       "atk": 3,
       "arm": 1,
       "hp": 6,
-      "rating": 53,
+      "rating": 14,
       "traits": [],
       "spell": "curse",
       "art": {
@@ -1709,7 +1712,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 8,
-      "rating": 54,
+      "rating": 17,
       "traits": [
         "飞行",
         "吸血"
@@ -1726,7 +1729,7 @@
       "atk": 5,
       "arm": 1,
       "hp": 13,
-      "rating": 60,
+      "rating": 21,
       "traits": [],
       "art": {
         "icon": "👺",
@@ -1740,7 +1743,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 9,
-      "rating": 68,
+      "rating": 19,
       "traits": [
         "飞行"
       ],
@@ -1757,7 +1760,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 5,
-      "rating": 58,
+      "rating": 7,
       "traits": [],
       "art": {
         "icon": "🚶",
@@ -1771,7 +1774,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 56,
+      "rating": 7,
       "traits": [],
       "spell": "skeletonSearch",
       "art": {
@@ -1786,7 +1789,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 6,
-      "rating": 54,
+      "rating": 10,
       "traits": [
         "再生2"
       ],
@@ -1802,7 +1805,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 6,
-      "rating": 52,
+      "rating": 15,
       "traits": [
         "远程",
         "毒Lv2"
@@ -1819,7 +1822,7 @@
       "atk": 5,
       "arm": 1,
       "hp": 10,
-      "rating": 53,
+      "rating": 20,
       "traits": [
         "骑兵"
       ],
@@ -1835,7 +1838,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 12,
-      "rating": 52,
+      "rating": 23,
       "traits": [
         "飞行",
         "威吓1"
@@ -1849,10 +1852,10 @@
       "name": "小妖精",
       "race": "塔楼",
       "cost": 1,
-      "atk": 1,
+      "atk": 2,
       "arm": 0,
-      "hp": 1,
-      "rating": 60,
+      "hp": 3,
+      "rating": 5,
       "traits": [],
       "art": {
         "icon": "🧚",
@@ -1862,12 +1865,14 @@
     {
       "name": "大妖精",
       "race": "塔楼",
-      "cost": 2,
-      "atk": 2,
+      "cost": 1,
+      "atk": 1,
       "arm": 0,
-      "hp": 2,
-      "rating": 52,
-      "traits": [],
+      "hp": 1,
+      "rating": 5,
+      "traits": [
+        "远程"
+      ],
       "art": {
         "icon": "🧚‍♂️",
         "hue": 210
@@ -1879,8 +1884,8 @@
       "cost": 3,
       "atk": 2,
       "arm": 1,
-      "hp": 5,
-      "rating": 56,
+      "hp": 6,
+      "rating": 11,
       "traits": [],
       "art": {
         "icon": "🗿",
@@ -1891,10 +1896,10 @@
       "name": "铁人",
       "race": "塔楼",
       "cost": 4,
-      "atk": 2,
+      "atk": 3,
       "arm": 1,
-      "hp": 6,
-      "rating": 56,
+      "hp": 8,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "🤖",
@@ -1908,7 +1913,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 4,
-      "rating": 52,
+      "rating": 9,
       "traits": [
         "远程"
       ],
@@ -1924,7 +1929,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 50,
+      "rating": 11,
       "traits": [
         "远程"
       ],
@@ -1940,14 +1945,22 @@
       "atk": 4,
       "arm": 0,
       "hp": 6,
-      "rating": 51,
+      "rating": 15,
       "traits": [
         "飞行"
       ],
       "art": {
         "icon": "🧞",
         "hue": 230
-      }
+      },
+      "actSpells": [
+        {
+          "key": "genieBless",
+          "cost": 0
+        }
+      ],
+      "spellMana0": 0,
+      "spellManaMax": 2
     },
     {
       "name": "神怪",
@@ -1956,14 +1969,22 @@
       "atk": 5,
       "arm": 0,
       "hp": 7,
-      "rating": 49,
+      "rating": 17,
       "traits": [
         "飞行"
       ],
       "art": {
         "icon": "🧞‍♂️",
         "hue": 240
-      }
+      },
+      "actSpells": [
+        {
+          "key": "genieBless",
+          "cost": 0
+        }
+      ],
+      "spellMana0": 1,
+      "spellManaMax": 3
     },
     {
       "name": "蛇女",
@@ -1971,8 +1992,8 @@
       "cost": 6,
       "atk": 5,
       "arm": 0,
-      "hp": 9,
-      "rating": 48,
+      "hp": 15,
+      "rating": 20,
       "traits": [],
       "art": {
         "icon": "🐍",
@@ -1980,14 +2001,16 @@
       }
     },
     {
-      "name": "蛇发女妖",
+      "name": "蛇妖",
       "race": "塔楼",
       "cost": 7,
       "atk": 6,
       "arm": 0,
-      "hp": 10,
-      "rating": 46,
-      "traits": [],
+      "hp": 15,
+      "rating": 23,
+      "traits": [
+        "不受反击"
+      ],
       "art": {
         "icon": "👩‍🎤",
         "hue": 205
@@ -2000,7 +2023,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 12,
-      "rating": 50,
+      "rating": 18,
       "traits": [],
       "art": {
         "icon": "🏔️",
@@ -2014,7 +2037,7 @@
       "atk": 7,
       "arm": 0,
       "hp": 14,
-      "rating": 52,
+      "rating": 24,
       "traits": [
         "远程"
       ],
@@ -2029,9 +2052,11 @@
       "cost": 1,
       "atk": 2,
       "arm": 0,
-      "hp": 1,
-      "rating": 56,
-      "traits": [],
+      "hp": 3,
+      "rating": 7,
+      "traits": [
+        "无目"
+      ],
       "art": {
         "icon": "🧌",
         "hue": 270
@@ -2044,7 +2069,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 2,
-      "rating": 54,
+      "rating": 5,
       "traits": [],
       "art": {
         "icon": "👹",
@@ -2058,7 +2083,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 4,
-      "rating": 54,
+      "rating": 10,
       "traits": [
         "远程"
       ],
@@ -2074,7 +2099,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 52,
+      "rating": 13,
       "traits": [
         "远程",
         "毒Lv1"
@@ -2091,7 +2116,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 5,
-      "rating": 54,
+      "rating": 10,
       "traits": [
         "远程"
       ],
@@ -2107,7 +2132,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 6,
-      "rating": 52,
+      "rating": 12,
       "traits": [
         "远程"
       ],
@@ -2123,7 +2148,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 6,
-      "rating": 48,
+      "rating": 11,
       "traits": [],
       "art": {
         "icon": "🐂",
@@ -2137,7 +2162,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 7,
-      "rating": 46,
+      "rating": 13,
       "traits": [],
       "art": {
         "icon": "🐃",
@@ -2151,9 +2176,10 @@
       "atk": 6,
       "arm": 0,
       "hp": 11,
-      "rating": 53,
+      "rating": 23,
       "traits": [
-        "飞行"
+        "飞行",
+        "法术护盾3"
       ],
       "art": {
         "icon": "🐉",
@@ -2167,10 +2193,10 @@
       "atk": 8,
       "arm": 0,
       "hp": 14,
-      "rating": 57,
+      "rating": 30,
       "traits": [
         "飞行",
-        "法术护盾3"
+        "法术护盾5"
       ],
       "art": {
         "icon": "🐲",
@@ -2183,8 +2209,8 @@
       "cost": 1,
       "atk": 2,
       "arm": 0,
-      "hp": 1,
-      "rating": 56,
+      "hp": 3,
+      "rating": 5,
       "traits": [],
       "art": {
         "icon": "👂",
@@ -2194,11 +2220,11 @@
     {
       "name": "大耳怪王",
       "race": "据点",
-      "cost": 1,
+      "cost": 2,
       "atk": 2,
       "arm": 0,
-      "hp": 2,
-      "rating": 58,
+      "hp": 6,
+      "rating": 8,
       "traits": [],
       "art": {
         "icon": "👺",
@@ -2212,7 +2238,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 2,
-      "rating": 57,
+      "rating": 6,
       "traits": [
         "骑兵"
       ],
@@ -2228,7 +2254,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 63,
+      "rating": 9,
       "traits": [
         "骑兵",
         "连击"
@@ -2245,7 +2271,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 3,
-      "rating": 60,
+      "rating": 7,
       "traits": [
         "远程"
       ],
@@ -2261,7 +2287,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 4,
-      "rating": 58,
+      "rating": 9,
       "traits": [
         "远程"
       ],
@@ -2277,7 +2303,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 7,
-      "rating": 54,
+      "rating": 11,
       "traits": [],
       "art": {
         "icon": "🫏",
@@ -2291,7 +2317,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 52,
+      "rating": 9,
       "traits": [
         "再生2"
       ],
@@ -2307,7 +2333,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 8,
-      "rating": 52,
+      "rating": 13,
       "traits": [],
       "art": {
         "icon": "👹",
@@ -2321,7 +2347,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 9,
-      "rating": 48,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "👁️‍🗨️",
@@ -2335,7 +2361,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 10,
-      "rating": 50,
+      "rating": 18,
       "traits": [
         "范围攻击"
       ],
@@ -2351,7 +2377,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 8,
-      "rating": 49,
+      "rating": 15,
       "traits": [
         "飞行"
       ],
@@ -2367,7 +2393,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 9,
-      "rating": 47,
+      "rating": 17,
       "traits": [
         "飞行"
       ],
@@ -2383,7 +2409,7 @@
       "atk": 9,
       "arm": 0,
       "hp": 14,
-      "rating": 50,
+      "rating": 25,
       "traits": [
         "护甲穿透1"
       ],
@@ -2399,7 +2425,7 @@
       "atk": 10,
       "arm": 0,
       "hp": 17,
-      "rating": 54,
+      "rating": 29,
       "traits": [
         "护甲穿透2"
       ],
@@ -2411,11 +2437,11 @@
     {
       "name": "狼人",
       "race": "要塞",
-      "cost": 2,
+      "cost": 1,
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 54,
+      "rating": 5,
       "traits": [],
       "art": {
         "icon": "🐺",
@@ -2427,10 +2453,12 @@
       "race": "要塞",
       "cost": 2,
       "atk": 1,
-      "arm": 1,
-      "hp": 3,
-      "rating": 56,
-      "traits": [],
+      "arm": 0,
+      "hp": 2,
+      "rating": 6,
+      "traits": [
+        "远程"
+      ],
       "art": {
         "icon": "🦎",
         "hue": 95
@@ -2440,10 +2468,10 @@
       "name": "蜥蜴勇士",
       "race": "要塞",
       "cost": 3,
-      "atk": 2,
+      "atk": 3,
       "arm": 1,
-      "hp": 4,
-      "rating": 54,
+      "hp": 3,
+      "rating": 9,
       "traits": [],
       "art": {
         "icon": "🛡️",
@@ -2457,7 +2485,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 53,
+      "rating": 8,
       "traits": [
         "飞行"
       ],
@@ -2473,7 +2501,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 4,
-      "rating": 53,
+      "rating": 12,
       "traits": [
         "飞行",
         "毒Lv1"
@@ -2490,7 +2518,7 @@
       "atk": 3,
       "arm": 1,
       "hp": 6,
-      "rating": 51,
+      "rating": 14,
       "traits": [
         "石化"
       ],
@@ -2506,7 +2534,7 @@
       "atk": 4,
       "arm": 1,
       "hp": 7,
-      "rating": 49,
+      "rating": 16,
       "traits": [
         "石化"
       ],
@@ -2522,7 +2550,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 7,
-      "rating": 56,
+      "rating": 14,
       "traits": [
         "死亡凝视"
       ],
@@ -2538,7 +2566,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 9,
-      "rating": 44,
+      "rating": 15,
       "traits": [],
       "art": {
         "icon": "🐃",
@@ -2552,7 +2580,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 7,
-      "rating": 47,
+      "rating": 14,
       "traits": [
         "飞行"
       ],
@@ -2568,7 +2596,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 20,
-      "rating": 56,
+      "rating": 28,
       "traits": [
         "范围攻击"
       ],
@@ -2584,7 +2612,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 4,
-      "rating": 57,
+      "rating": 10,
       "traits": [
         "飞行"
       ],
@@ -2600,7 +2628,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 53,
+      "rating": 11,
       "traits": [
         "飞行"
       ],
@@ -2616,7 +2644,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 6,
-      "rating": 54,
+      "rating": 8,
       "traits": [],
       "art": {
         "icon": "💧",
@@ -2630,7 +2658,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 7,
-      "rating": 52,
+      "rating": 10,
       "traits": [],
       "art": {
         "icon": "🧊",
@@ -2644,7 +2672,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 4,
-      "rating": 50,
+      "rating": 10,
       "traits": [
         "火系魔法免疫"
       ],
@@ -2660,7 +2688,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 5,
-      "rating": 48,
+      "rating": 12,
       "traits": [
         "火系魔法免疫"
       ],
@@ -2676,7 +2704,7 @@
       "atk": 3,
       "arm": 1,
       "hp": 6,
-      "rating": 54,
+      "rating": 12,
       "traits": [],
       "art": {
         "icon": "🪨",
@@ -2690,7 +2718,7 @@
       "atk": 4,
       "arm": 1,
       "hp": 7,
-      "rating": 52,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "⛰️",
@@ -2704,7 +2732,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 8,
-      "rating": 48,
+      "rating": 14,
       "traits": [
         "法术护盾2"
       ],
@@ -2720,7 +2748,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 9,
-      "rating": 46,
+      "rating": 16,
       "traits": [
         "范围攻击"
       ],
@@ -2736,7 +2764,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 9,
-      "rating": 51,
+      "rating": 20,
       "traits": [
         "飞行",
         "再生1",
@@ -2754,7 +2782,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 10,
-      "rating": 51,
+      "rating": 22,
       "traits": [
         "飞行",
         "再生2",
@@ -2771,9 +2799,11 @@
       "cost": 1,
       "atk": 2,
       "arm": 0,
-      "hp": 1,
-      "rating": 56,
-      "traits": [],
+      "hp": 2,
+      "rating": 6,
+      "traits": [
+        "刺客"
+      ],
       "art": {
         "icon": "🗡️",
         "hue": 30
@@ -2786,7 +2816,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 3,
-      "rating": 55,
+      "rating": 8,
       "traits": [
         "骑兵"
       ],
@@ -2802,7 +2832,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 8,
-      "rating": 49,
+      "rating": 18,
       "traits": [
         "飞行",
         "法术护盾2"
@@ -2819,7 +2849,7 @@
       "atk": 7,
       "arm": 0,
       "hp": 12,
-      "rating": 46,
+      "rating": 19,
       "traits": [],
       "art": {
         "icon": "💎",
@@ -2833,7 +2863,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 14,
-      "rating": 52,
+      "rating": 22,
       "traits": [
         "毒Lv2"
       ],
@@ -2849,7 +2879,7 @@
       "atk": 8,
       "arm": 0,
       "hp": 16,
-      "rating": 60,
+      "rating": 28,
       "traits": [
         "法术护盾2",
         "威光"
@@ -2867,7 +2897,7 @@
       "school": "土",
       "spellEffect": "stoneSkin",
       "target": "friendlyUnit",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🪨",
         "hue": 30
@@ -2881,7 +2911,7 @@
       "school": "土",
       "spellEffect": "slow",
       "target": "enemyUnit",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🐌",
         "hue": 35
@@ -2895,7 +2925,7 @@
       "school": "土",
       "spellEffect": "earthSpikes",
       "target": "none",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🌋",
         "hue": 25
@@ -2909,7 +2939,7 @@
       "school": "土",
       "spellEffect": "deathRipple",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "💀",
         "hue": 40
@@ -2923,7 +2953,7 @@
       "school": "水",
       "spellEffect": "heal",
       "target": "friendlyUnit",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "💧",
         "hue": 200
@@ -2937,7 +2967,7 @@
       "school": "水",
       "spellEffect": "iceBolt",
       "target": "enemyUnit",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🧊",
         "hue": 195
@@ -2951,7 +2981,7 @@
       "school": "水",
       "spellEffect": "bless",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "🙏",
         "hue": 210
@@ -2965,10 +2995,24 @@
       "school": "水",
       "spellEffect": "dispel",
       "target": "enemyUnit",
-      "rating": 55,
+      "rating": 2,
       "art": {
         "icon": "🌀",
         "hue": 190
+      }
+    },
+    {
+      "name": "双目失明",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "火",
+      "spellEffect": "blind",
+      "target": "enemyUnit",
+      "rating": 2,
+      "art": {
+        "icon": "🙈",
+        "hue": 20
       }
     },
     {
@@ -2979,7 +3023,7 @@
       "school": "火",
       "spellEffect": "fireballSpell",
       "target": "enemyUnit",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🔥",
         "hue": 15
@@ -2993,7 +3037,7 @@
       "school": "火",
       "spellEffect": "bloodlust",
       "target": "none",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🩸",
         "hue": 0
@@ -3007,7 +3051,7 @@
       "school": "火",
       "spellEffect": "fireShield",
       "target": "friendlyUnit",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "🛡️",
         "hue": 10
@@ -3021,7 +3065,7 @@
       "school": "火",
       "spellEffect": "doom",
       "target": "none",
-      "rating": 60,
+      "rating": 2,
       "art": {
         "icon": "☄️",
         "hue": 5
@@ -3035,7 +3079,7 @@
       "school": "气",
       "spellEffect": "lightningBolt",
       "target": "enemyUnit",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "⚡",
         "hue": 55
@@ -3049,7 +3093,7 @@
       "school": "气",
       "spellEffect": "chainLightning",
       "target": "none",
-      "rating": 60,
+      "rating": 2,
       "art": {
         "icon": "🌩️",
         "hue": 60
@@ -3063,7 +3107,7 @@
       "school": "气",
       "spellEffect": "summonAir",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "💨",
         "hue": 180
@@ -3077,7 +3121,7 @@
       "school": "土",
       "spellEffect": "holyShield",
       "target": "none",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🔰",
         "hue": 35
@@ -3091,7 +3135,7 @@
       "school": "土",
       "spellEffect": "meteor",
       "target": "enemyUnit",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "☄️",
         "hue": 20
@@ -3105,7 +3149,7 @@
       "school": "土",
       "spellEffect": "revive",
       "target": "none",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "✝️",
         "hue": 45
@@ -3119,7 +3163,7 @@
       "school": "水",
       "spellEffect": "healingWave",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "🌊",
         "hue": 200
@@ -3133,7 +3177,7 @@
       "school": "水",
       "spellEffect": "mirror",
       "target": "friendlyUnit",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🪞",
         "hue": 190
@@ -3147,7 +3191,7 @@
       "school": "水",
       "spellEffect": "teleport",
       "target": "friendlyUnit",
-      "rating": 52,
+      "rating": 2,
       "art": {
         "icon": "🚪",
         "hue": 205
@@ -3161,7 +3205,7 @@
       "school": "火",
       "spellEffect": "sear",
       "target": "enemyUnit",
-      "rating": 55,
+      "rating": 2,
       "art": {
         "icon": "♨️",
         "hue": 10
@@ -3175,7 +3219,7 @@
       "school": "火",
       "spellEffect": "hellfire",
       "target": "none",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🔥",
         "hue": 350
@@ -3189,7 +3233,7 @@
       "school": "火",
       "spellEffect": "confuse",
       "target": "enemyUnit",
-      "rating": 55,
+      "rating": 2,
       "art": {
         "icon": "😵‍💫",
         "hue": 320
@@ -3203,7 +3247,7 @@
       "school": "气",
       "spellEffect": "tornado",
       "target": "none",
-      "rating": 55,
+      "rating": 2,
       "art": {
         "icon": "🌬️",
         "hue": 170
@@ -3217,7 +3261,7 @@
       "school": "气",
       "spellEffect": "inspire",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "📣",
         "hue": 60
@@ -3231,7 +3275,7 @@
       "school": "气",
       "spellEffect": "summonThunder",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "⚡",
         "hue": 50
@@ -3245,7 +3289,7 @@
       "school": "土",
       "spellEffect": "thunderBolt",
       "target": "enemyUnit",
-      "rating": 62,
+      "rating": 2,
       "art": {
         "icon": "💥",
         "hue": 45
@@ -3259,7 +3303,7 @@
       "school": "土",
       "spellEffect": "animateDead",
       "target": "graveUnit",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🧟",
         "hue": 110
@@ -3273,7 +3317,7 @@
       "school": "土",
       "spellEffect": "summonEarth",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "🪨",
         "hue": 35
@@ -3287,7 +3331,7 @@
       "school": "土",
       "spellEffect": "quicksand",
       "target": "none",
-      "rating": 55,
+      "rating": 2,
       "art": {
         "icon": "🏜️",
         "hue": 40
@@ -3301,7 +3345,7 @@
       "school": "水",
       "spellEffect": "forget",
       "target": "enemyUnit",
-      "rating": 55,
+      "rating": 2,
       "art": {
         "icon": "🌫️",
         "hue": 200
@@ -3315,7 +3359,7 @@
       "school": "水",
       "spellEffect": "summonWater",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "💧",
         "hue": 205
@@ -3329,7 +3373,7 @@
       "school": "火",
       "spellEffect": "meteorShower",
       "target": "none",
-      "rating": 60,
+      "rating": 2,
       "art": {
         "icon": "🌠",
         "hue": 15
@@ -3343,7 +3387,7 @@
       "school": "火",
       "spellEffect": "summonFire",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "🔥",
         "hue": 25
@@ -3357,7 +3401,7 @@
       "school": "火",
       "spellEffect": "frenzy",
       "target": "friendlyUnit",
-      "rating": 55,
+      "rating": 2,
       "art": {
         "icon": "😡",
         "hue": 0
@@ -3371,7 +3415,7 @@
       "school": "气",
       "spellEffect": "twister",
       "target": "none",
-      "rating": 55,
+      "rating": 2,
       "art": {
         "icon": "🌪️",
         "hue": 180
@@ -3385,7 +3429,7 @@
       "school": "气",
       "spellEffect": "airShield",
       "target": "friendlyUnit",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "🛡️",
         "hue": 190
@@ -3399,7 +3443,7 @@
       "school": "土",
       "spellEffect": "raiseSkeletons",
       "target": "graveUnit",
-      "rating": 57,
+      "rating": 2,
       "art": {
         "icon": "💀",
         "hue": 120
@@ -3413,7 +3457,7 @@
       "school": "水",
       "spellEffect": "slimeSwarm",
       "target": "none",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🟢",
         "hue": 120
@@ -3423,10 +3467,10 @@
       "name": "泉水精灵",
       "race": "港口",
       "cost": 1,
-      "atk": 1,
+      "atk": 2,
       "arm": 0,
-      "hp": 2,
-      "rating": 56,
+      "hp": 3,
+      "rating": 5,
       "traits": [],
       "art": {
         "icon": "🧚",
@@ -3440,7 +3484,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 3,
-      "rating": 57,
+      "rating": 6,
       "traits": [],
       "spell": "heal",
       "spellParam": 2,
@@ -3456,7 +3500,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 4,
-      "rating": 56,
+      "rating": 6,
       "traits": [],
       "art": {
         "icon": "⚓",
@@ -3470,7 +3514,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 3,
-      "rating": 56,
+      "rating": 6,
       "traits": [],
       "art": {
         "icon": "⛵",
@@ -3484,7 +3528,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 3,
-      "rating": 55,
+      "rating": 8,
       "traits": [
         "骑兵"
       ],
@@ -3500,7 +3544,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 5,
-      "rating": 59,
+      "rating": 13,
       "traits": [
         "骑兵",
         "掠夺"
@@ -3517,7 +3561,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 53,
+      "rating": 11,
       "traits": [
         "飞行"
       ],
@@ -3533,7 +3577,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 6,
-      "rating": 51,
+      "rating": 13,
       "traits": [
         "飞行"
       ],
@@ -3549,7 +3593,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 6,
-      "rating": 60,
+      "rating": 15,
       "traits": [
         "远程"
       ],
@@ -3577,7 +3621,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 7,
-      "rating": 62,
+      "rating": 17,
       "traits": [
         "远程"
       ],
@@ -3605,7 +3649,7 @@
       "atk": 5,
       "arm": 1,
       "hp": 8,
-      "rating": 53,
+      "rating": 16,
       "traits": [],
       "art": {
         "icon": "🐟",
@@ -3619,7 +3663,7 @@
       "atk": 6,
       "arm": 1,
       "hp": 10,
-      "rating": 53,
+      "rating": 19,
       "traits": [],
       "art": {
         "icon": "🐠",
@@ -3633,7 +3677,7 @@
       "atk": 7,
       "arm": 0,
       "hp": 13,
-      "rating": 52,
+      "rating": 22,
       "traits": [
         "毒Lv2"
       ],
@@ -3649,7 +3693,7 @@
       "atk": 8,
       "arm": 0,
       "hp": 15,
-      "rating": 56,
+      "rating": 27,
       "traits": [
         "毒Lv2",
         "复仇1"
@@ -3666,7 +3710,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 15,
-      "rating": 53,
+      "rating": 19,
       "traits": [
         "再生1"
       ],
@@ -3681,8 +3725,8 @@
       "cost": 1,
       "atk": 2,
       "arm": 0,
-      "hp": 1,
-      "rating": 56,
+      "hp": 2,
+      "rating": 4,
       "traits": [],
       "art": {
         "icon": "🐕",
@@ -3696,8 +3740,10 @@
       "atk": 2,
       "arm": 0,
       "hp": 2,
-      "rating": 58,
-      "traits": [],
+      "rating": 6,
+      "traits": [
+        "狗头人领袖"
+      ],
       "art": {
         "icon": "⛏️",
         "hue": 215
@@ -3710,7 +3756,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 2,
-      "rating": 57,
+      "rating": 6,
       "traits": [
         "骑兵"
       ],
@@ -3726,7 +3772,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 3,
-      "rating": 55,
+      "rating": 8,
       "traits": [
         "骑兵"
       ],
@@ -3742,7 +3788,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 56,
+      "rating": 8,
       "traits": [
         "远程"
       ],
@@ -3758,7 +3804,7 @@
       "atk": 3,
       "arm": 1,
       "hp": 4,
-      "rating": 58,
+      "rating": 13,
       "traits": [
         "远程"
       ],
@@ -3774,7 +3820,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 6,
-      "rating": 52,
+      "rating": 10,
       "traits": [],
       "art": {
         "icon": "❄️",
@@ -3788,7 +3834,7 @@
       "atk": 4,
       "arm": 1,
       "hp": 7,
-      "rating": 52,
+      "rating": 14,
       "traits": [],
       "art": {
         "icon": "🔤",
@@ -3802,7 +3848,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 6,
-      "rating": 66,
+      "rating": 13,
       "traits": [
         "远程"
       ],
@@ -3819,7 +3865,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 7,
-      "rating": 64,
+      "rating": 15,
       "traits": [
         "远程"
       ],
@@ -3836,7 +3882,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 11,
-      "rating": 57,
+      "rating": 18,
       "traits": [
         "骑兵"
       ],
@@ -3852,7 +3898,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 13,
-      "rating": 57,
+      "rating": 21,
       "traits": [
         "骑兵"
       ],
@@ -3868,7 +3914,7 @@
       "atk": 7,
       "arm": 0,
       "hp": 14,
-      "rating": 50,
+      "rating": 21,
       "traits": [],
       "art": {
         "icon": "🏔️",
@@ -3882,7 +3928,7 @@
       "atk": 8,
       "arm": 0,
       "hp": 16,
-      "rating": 54,
+      "rating": 26,
       "traits": [
         "范围攻击"
       ],
@@ -3898,7 +3944,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 1,
-      "rating": 62,
+      "rating": 5,
       "traits": [
         "远程"
       ],
@@ -3914,7 +3960,7 @@
       "atk": 1,
       "arm": 0,
       "hp": 2,
-      "rating": 64,
+      "rating": 8,
       "traits": [
         "远程",
         "范围攻击"
@@ -3931,7 +3977,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 3,
-      "rating": 54,
+      "rating": 5,
       "traits": [],
       "art": {
         "icon": "🔧",
@@ -3945,7 +3991,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 5,
-      "rating": 58,
+      "rating": 9,
       "traits": [],
       "art": {
         "icon": "⚙️",
@@ -3967,7 +4013,7 @@
       "atk": 2,
       "arm": 2,
       "hp": 5,
-      "rating": 56,
+      "rating": 13,
       "traits": [],
       "art": {
         "icon": "🦔",
@@ -3981,7 +4027,7 @@
       "atk": 3,
       "arm": 2,
       "hp": 7,
-      "rating": 60,
+      "rating": 16,
       "traits": [],
       "art": {
         "icon": "🛡️",
@@ -3995,7 +4041,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 6,
-      "rating": 52,
+      "rating": 12,
       "traits": [
         "再生1",
         "机械"
@@ -4012,7 +4058,7 @@
       "atk": 3,
       "arm": 1,
       "hp": 7,
-      "rating": 52,
+      "rating": 16,
       "traits": [
         "再生1",
         "机械"
@@ -4029,7 +4075,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 7,
-      "rating": 50,
+      "rating": 13,
       "traits": [
         "毒Lv1"
       ],
@@ -4045,7 +4091,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 8,
-      "rating": 50,
+      "rating": 15,
       "traits": [
         "毒Lv2"
       ],
@@ -4061,7 +4107,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 5,
-      "rating": 56,
+      "rating": 14,
       "traits": [
         "远程",
         "连击"
@@ -4078,7 +4124,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 6,
-      "rating": 54,
+      "rating": 16,
       "traits": [
         "远程",
         "连击"
@@ -4095,7 +4141,7 @@
       "atk": 7,
       "arm": 0,
       "hp": 15,
-      "rating": 56,
+      "rating": 26,
       "traits": [
         "范围攻击",
         "机械"
@@ -4112,7 +4158,7 @@
       "atk": 8,
       "arm": 0,
       "hp": 17,
-      "rating": 59,
+      "rating": 31,
       "traits": [
         "范围攻击",
         "护甲穿透1",
@@ -4130,7 +4176,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 8,
-      "rating": 62,
+      "rating": 15,
       "traits": [
         "高级水系魔法"
       ],
@@ -4150,7 +4196,7 @@
       "atk": 2,
       "arm": 0,
       "hp": 6,
-      "rating": 60,
+      "rating": 12,
       "traits": [
         "高级学术"
       ],
@@ -4171,7 +4217,7 @@
       "school": "水",
       "spellEffect": "vortex",
       "target": "none",
-      "rating": 58,
+      "rating": 2,
       "art": {
         "icon": "🌀",
         "hue": 190
@@ -4185,7 +4231,7 @@
       "school": "水",
       "spellEffect": "inspireAll",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "🎉",
         "hue": 50
@@ -4199,7 +4245,7 @@
       "school": "土",
       "spellEffect": "dreadAll",
       "target": "none",
-      "rating": 56,
+      "rating": 2,
       "art": {
         "icon": "😱",
         "hue": 240
