@@ -671,6 +671,51 @@
   .pack-face:not(.race0) { background: linear-gradient(160deg, #262636, #181822); }
   #pack-summary { font-size: 13px; color: #cfc8b8; line-height: 1.8; margin-bottom: 10px; min-height: 20px; }
   #pack-screen .btn { margin: 0 4px; }
+
+    body { font: 13px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; color: #c9c9d4; }
+  #holo-stage { position: fixed; inset: 0; }
+  #holo-panel {
+    position: fixed; left: 14px; top: 14px; width: 240px; z-index: 10;
+    background: rgba(20, 22, 30, 0.62); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 14px; padding: 12px 14px; backdrop-filter: blur(10px);
+    max-height: calc(100vh - 28px); overflow-y: auto;
+  }
+  #holo-panel h3 { margin: 0 0 8px; font-size: 13px; color: #e8d8a0; letter-spacing: 1px; }
+  #holo-panel label { display: block; margin: 6px 0 2px; font-size: 11px; color: #8a8a9a; }
+  #holo-panel select, #holo-panel input[type="text"] {
+    width: 100%; box-sizing: border-box; background: #1a1a28; color: #d8d8e0;
+    border: 1px solid #3a3a55; border-radius: 6px; padding: 4px 6px; font-size: 12px; outline: none;
+  }
+  #holo-panel input[type="range"] { width: 100%; accent-color: #c9a0f0; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 4px 0; }
+  .row > * { flex: 1; }
+  .pats { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin: 4px 0; }
+  .pats label { display: flex; gap: 4px; align-items: center; font-size: 11px; color: #b8b8c8; margin: 0; }
+  .toggles { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
+  .toggles label { display: flex; gap: 6px; align-items: center; font-size: 12px; color: #b8b8c8; margin: 0; }
+  #holo-panel button {
+    width: 100%; margin-top: 6px; background: #2a2a40; color: #d8d8e0; border: 1px solid #4a4a70;
+    border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer;
+  }
+  #holo-panel button:hover { background: #3a3a58; }
+  #holo-panel details { margin-top: 6px; font-size: 11px; }
+  #holo-panel details summary { cursor: pointer; color: #8a8a9a; }
+  #holo-panel .home-link { display: block; margin-top: 8px; font-size: 11px; color: #6a6a8a; text-align: center; }
+  #holo-hint {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    font-size: 12px; color: #5a5a70; letter-spacing: 2px; z-index: 10; pointer-events: none;
+  }
+
+  #holo-viewer { display: none; position: fixed; inset: 0; background: #0a0b0d; z-index: 60; }
+  #holo-viewer.show { display: block; }
+  #holo-stage { position: absolute; inset: 0; }
+  #holo-close {
+    position: absolute; right: 14px; top: 14px; z-index: 11;
+    background: #2a2a40; color: #d8d8e0; border: 1px solid #4a4a70; border-radius: 8px;
+    padding: 6px 14px; font-size: 13px; cursor: pointer;
+  }
+  #holo-close:hover { background: #3a3a58; }
+
 </style>
 </head>
 <body>
@@ -719,6 +764,7 @@
       <div class="sb-label">预设卡组</div>
       <div id="preset-decks"></div>
       <button class="btn" id="random-deck">随机牌组</button>
+      <button class="btn" id="open-holo">✨ 3D 检视</button>
       <button class="btn" id="clear-deck">清空</button>
       <button class="btn" id="start-battle" disabled>开始战斗</button>
     </div>
@@ -771,7 +817,7 @@
       连击（神射手）：攻击随从时连续攻击 2 次，第二次不触发反击；目标已死于第一次攻击则第二次落空。复活（大天使）：战吼——将己方墓地中最后死亡的一张随从满状态复活到其原排。<br>
       远程：可攻击任意一排，优先攻击飞行单位，且对飞行单位伤害加倍；攻击不会触发反击。飞行：只能被远程或飞行单位攻击，被远程攻击时受到的伤害加倍；悬浮于空中区域、不参与战场宽度；正面表示时可在 落地/起飞 间切换（落地暂时失去飞行、移到前排地面阵型，可用按钮或旋转 180° 切换）。骑兵：速度翻倍（行动顺序按三围总和×2）；攻击时若速度大于对方两倍，不会触发反击。掠夺：攻击敌方英雄时获得 5 金币。拒马：可以对骑兵进行反击。<br>
       再生X：每轮部署阶段开始时恢复 X 点生命。毒LvX：被攻击造成伤害的随从中毒（重复取最高 Lv），中毒者在每轮部署阶段开始时受 X 点伤害。<br>
-      单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限。恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）。和平：不会发起可能令自己死亡的攻击（若目标反击会致死则跳过）。死亡凝视（蛮牛）：攻击时 25% 概率直接消灭目标随从（无视生命与护甲）。护甲穿透X（比蒙系）：攻击无视目标 X 点护甲。守备表示：部署阶段可在攻击/守备之间切换；守备单位不主动攻击，但无限次反击且反击伤害与对手的攻击同时结算，被随机选取的概率 ×2（卡面变宽两倍）。翻面表示：手牌可盖放部署（默认守备表示，不触发战吼）；翻面单位不会成为攻击目标、不主动攻击、不反击，但仍每轮恢复法术、可吃到 buff；部署阶段可翻开（翻开时结算战吼；已在场的单位不能再盖回）。盖牌守备的单位会被选中攻击，并在被攻击前揭示。<br>
+      单位法术：部分随从带可主动施放的法术，部署阶段点击随从卡上的施放按钮即可（不占用出牌）。随从法力在每轮准备阶段开始时恢复 1 点（不超过上限）。分裂（史莱姆系，1 法力）：当前生命为偶数时一分为二，各半血、其它特效保留；火球（魔女/精灵法师，1 法力）：对随机一个敌方随从造成 1~6 点法术伤害。三姐妹：场上每个其它名称包含「鹰身女妖」的单位 +2攻/+2血（可叠加）。恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）。和平：不会发起可能令自己死亡的攻击（若目标反击会致死则跳过）。死亡凝视（蛮牛）：攻击时 25% 概率直接消灭目标随从（无视生命与护甲）。护甲穿透X（比蒙系）：攻击无视目标 X 点护甲。守备表示：部署阶段可在攻击/守备之间切换；守备单位不主动攻击，但无限次反击且反击伤害与对手的攻击同时结算，被随机选取的概率 ×2（卡面变宽两倍）。翻面表示：手牌可盖放部署（默认守备表示，不触发战吼）；翻面单位不会成为攻击目标、不主动攻击、不反击，但仍每轮恢复法术、可吃到 buff；部署阶段可翻开（翻开时结算战吼；已在场的单位不能再盖回）。盖牌守备的单位会被选中攻击，并在被攻击前揭示。<br>
       法术卡牌：紫边卡牌（土/水/火/气四系），从手牌打出不入场、结算后进墓地（骨龙可减费）。无需目标的法术点击直接结算；需要目标的法术点击进入选目标模式（高亮合法目标，点击目标结算，点空白或再点该卡取消）。法术卡也可盖放：成为场上的盖牌（非单位、不被攻击），翻开时立即结算——需要目标的法术随机选合法目标，无合法目标则不生效。法术伤害受「法术护盾X」减免。<br>
       范围攻击：攻击随从时，对被攻击随从左右两边相邻的随从造成等量溅射（各自结算护甲，溅射受伤也会触发反击）。石化：生命未满时护甲视为 4。石像形态：守备表示时护甲 +2、攻击 -2。吸血：造成的伤害等量恢复自身生命。法术护盾X：受到的法术伤害 -X。火系魔法免疫（凤凰、火鸟、火精灵、烈火精灵、火元素、烈火元素）：不受火系法术影响（火球术、烧灼、地狱烈焰、末日审判、魔女火球等）。<br>
       法力燃烧X：攻击敌方英雄时对方下一轮法力 -X。驱魔（如圣骑士）：被该单位击杀的使魔不触发亡语。<br>
@@ -808,6 +854,7 @@
 <div id="detail">
   <div class="panel" id="detail-panel">
     <div id="detail-body"></div>
+    <button class="btn" id="detail-holo">✨ 3D 检视</button>
     <button class="btn" id="detail-close">关闭</button>
   </div>
 </div>
@@ -864,7 +911,7 @@
     "atk": "攻击（数值）",
     "arm": "护甲（数值）",
     "hp": "生命（数值）",
-    "rating": "战斗力评分 = 生命 + 攻击 + 护甲×3 + 词条/法术分值（飞行/远程/石像形态 3，法术护盾X=X 分，再生 1，拒马 0.5，其它每项 2）；法术卡计 1 个法术",
+    "rating": "战斗力评分 = 生命 + 攻击 + 护甲×3 + 词条/法术分值（飞行/远程/石像形态 3，法术护盾X/再生X = X 分，拒马 0.5，其它每项 2）；法术卡计 1 个法术",
     "traits": "特性字符串数组，如 [\"远程\",\"飞行\",\"骑兵\",\"毒Lv2\",\"再生1\",\"法术护盾2\",\"连击\",\"反击2\",\"掠夺\",\"高级水系魔法\"]",
     "spell": "战吼/亡语 key（prayer/draw/wisp/elfHeal/heal/witch/dragoness/charm/necro/reaper/resurrect/skeletonSearch/curse/boneDragon）",
     "spellParam": "spell 的数值参数（如 heal 的治疗量）",
@@ -1060,11 +1107,11 @@
     {
       "name": "十字军",
       "race": "城堡",
-      "cost": 4,
-      "atk": 3,
+      "cost": 5,
+      "atk": 4,
       "arm": 0,
-      "hp": 6,
-      "rating": 11,
+      "hp": 11,
+      "rating": 17,
       "traits": [
         "连击"
       ],
@@ -1291,8 +1338,8 @@
       "cost": 6,
       "atk": 3,
       "arm": 0,
-      "hp": 9,
-      "rating": 16,
+      "hp": 12,
+      "rating": 19,
       "traits": [
         "骑兵",
         "法术护盾2"
@@ -1333,7 +1380,8 @@
       "art": {
         "icon": "🦉",
         "hue": 0
-      }
+      },
+      "legend": true
     },
     {
       "name": "鹰身女妖G",
@@ -1350,7 +1398,8 @@
       "art": {
         "icon": "🦉",
         "hue": 120
-      }
+      },
+      "legend": true
     },
     {
       "name": "鹰身女妖B",
@@ -1367,7 +1416,8 @@
       "art": {
         "icon": "🦉",
         "hue": 220
-      }
+      },
+      "legend": true
     },
     {
       "name": "钻石人",
@@ -1394,7 +1444,7 @@
       "hp": 14,
       "rating": 21,
       "traits": [
-        "毒Lv3"
+        "毒Lv2"
       ],
       "art": {
         "icon": "🦂",
@@ -1501,7 +1551,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 9,
+      "rating": 10,
       "traits": [
         "再生2"
       ],
@@ -1572,6 +1622,42 @@
       "art": {
         "icon": "🏴",
         "hue": 210
+      }
+    },
+    {
+      "name": "尸体发火",
+      "race": "墓园",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 7,
+      "legend": true,
+      "rating": 13,
+      "traits": [
+        "尸火"
+      ],
+      "spell": "foeDraw",
+      "art": {
+        "icon": "🧟",
+        "hue": 120
+      }
+    },
+    {
+      "name": "骷髅王李奥锐刻",
+      "race": "墓园",
+      "cost": 6,
+      "atk": 4,
+      "arm": 0,
+      "hp": 13,
+      "legend": true,
+      "rating": 19,
+      "traits": [],
+      "spell": "leoric",
+      "spellMana0": 0,
+      "spellManaMax": 3,
+      "art": {
+        "icon": "👑",
+        "hue": 260
       }
     },
     {
@@ -1700,12 +1786,13 @@
       "name": "圣殿骑士",
       "race": "城堡",
       "cost": 6,
-      "atk": 5,
+      "atk": 4,
       "arm": 1,
       "hp": 9,
-      "rating": 18,
+      "rating": 19,
       "traits": [
-        "法术护盾1"
+        "法术护盾1",
+        "骑兵"
       ],
       "art": {
         "icon": "🤴",
@@ -1844,6 +1931,26 @@
       "art": {
         "icon": "👼",
         "hue": 48
+      }
+    },
+    {
+      "name": "大天使秦瑞雨",
+      "race": "城堡",
+      "cost": 12,
+      "atk": 12,
+      "arm": 1,
+      "hp": 24,
+      "legend": true,
+      "rating": 46,
+      "traits": [
+        "飞行",
+        "鼓舞1",
+        "觉醒2"
+      ],
+      "spell": "resurrect",
+      "art": {
+        "icon": "😇",
+        "hue": 50
       }
     },
     {
@@ -1986,7 +2093,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 8,
-      "rating": 15,
+      "rating": 16,
       "traits": [
         "再生2"
       ],
@@ -2003,10 +2110,10 @@
       "name": "远古树人",
       "race": "壁垒",
       "cost": 6,
-      "atk": 4,
+      "atk": 3,
       "arm": 1,
-      "hp": 8,
-      "rating": 16,
+      "hp": 11,
+      "rating": 19,
       "traits": [
         "再生2"
       ],
@@ -2022,7 +2129,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 12,
-      "rating": 21,
+      "rating": 22,
       "traits": [
         "再生2",
         "法术护盾2"
@@ -2257,7 +2364,8 @@
       "art": {
         "icon": "👸",
         "hue": 310
-      }
+      },
+      "legend": true
     },
     {
       "name": "地狱三头犬",
@@ -2691,7 +2799,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 6,
-      "rating": 10,
+      "rating": 11,
       "traits": [
         "再生2"
       ],
@@ -2847,7 +2955,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 6,
-      "rating": 15,
+      "rating": 17,
       "traits": [
         "飞行"
       ],
@@ -2862,7 +2970,8 @@
         }
       ],
       "spellMana0": 0,
-      "spellManaMax": 2
+      "spellManaMax": 2,
+      "spell": "genieCry"
     },
     {
       "name": "神怪",
@@ -2871,7 +2980,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 7,
-      "rating": 17,
+      "rating": 19,
       "traits": [
         "飞行"
       ],
@@ -2886,7 +2995,8 @@
         }
       ],
       "spellMana0": 1,
-      "spellManaMax": 3
+      "spellManaMax": 3,
+      "spell": "genieCry"
     },
     {
       "name": "蛇女",
@@ -2984,7 +3094,7 @@
     {
       "name": "邪眼",
       "race": "地下城",
-      "cost": 4,
+      "cost": 3,
       "atk": 3,
       "arm": 0,
       "hp": 4,
@@ -3000,7 +3110,7 @@
     {
       "name": "毒眼",
       "race": "地下城",
-      "cost": 5,
+      "cost": 4,
       "atk": 3,
       "arm": 0,
       "hp": 5,
@@ -3020,8 +3130,8 @@
       "cost": 4,
       "atk": 2,
       "arm": 0,
-      "hp": 5,
-      "rating": 10,
+      "hp": 9,
+      "rating": 14,
       "traits": [
         "远程"
       ],
@@ -3036,10 +3146,11 @@
       "cost": 5,
       "atk": 3,
       "arm": 0,
-      "hp": 6,
-      "rating": 12,
+      "hp": 10,
+      "rating": 18,
       "traits": [
-        "远程"
+        "远程",
+        "石化凝视"
       ],
       "art": {
         "icon": "👸",
@@ -3050,29 +3161,31 @@
       "name": "牛头人",
       "race": "地下城",
       "cost": 5,
-      "atk": 5,
+      "atk": 7,
       "arm": 0,
-      "hp": 6,
-      "rating": 11,
+      "hp": 8,
+      "rating": 15,
       "traits": [],
       "art": {
         "icon": "🐂",
         "hue": 255
-      }
+      },
+      "morale0": 3
     },
     {
       "name": "牛头王",
       "race": "地下城",
       "cost": 6,
-      "atk": 6,
+      "atk": 8,
       "arm": 0,
-      "hp": 7,
-      "rating": 13,
+      "hp": 9,
+      "rating": 17,
       "traits": [],
       "art": {
         "icon": "🐃",
         "hue": 265
-      }
+      },
+      "morale0": 5
     },
     {
       "name": "红龙",
@@ -3222,7 +3335,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 9,
+      "rating": 10,
       "traits": [
         "再生2"
       ],
@@ -3687,7 +3800,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 10,
-      "rating": 22,
+      "rating": 23,
       "traits": [
         "飞行",
         "再生2",
@@ -3868,7 +3981,7 @@
       "name": "奥术智慧",
       "type": "spell",
       "race": "中立",
-      "cost": 3,
+      "cost": 4,
       "school": "水",
       "spellEffect": "arcaneDraw",
       "target": "none",
@@ -4190,7 +4303,7 @@
       "name": "混乱",
       "type": "spell",
       "race": "中立",
-      "cost": 3,
+      "cost": 2,
       "school": "火",
       "spellEffect": "confuse",
       "target": "enemyUnit",
@@ -5241,9 +5354,12 @@ const SPELL_TEXT = {
   charm: '战吼：随机获得一个敌方随从的控制权',
   skeletonSearch: '亡语：从牌库检索一张同名卡置入手牌；没有则检索其家族卡（骷髅↔骷髅勇士）',
   impBurst: '亡语：被近战单位杀死时，对伤害来源造成 2 点火系魔法伤害',
+  foeDraw: '亡语：对手摸一张牌',
+  leoric: '亡语：若有 3 点法术，消耗全部法术，下个准备阶段从墓地重新被召唤（法力每轮准备阶段 +1，上限 3）',
   potOfGreed: '战吼：摸两张牌。亡语：被击败时，加入对方的卡组顶端',
-  songPot: '战吼：摸三张牌。亡语：击败这张卡牌的玩家摸三张牌',
+  songPot: '战吼：摸两张牌。亡语：击杀这张卡牌的玩家摸两张牌，并获得 5 金币',
   humblePot: '战吼：抽三张牌，保留一张，其余两张洗入卡组。亡语：洗入对手的牌组',
+  genieCry: '战吼：随机为一个友方单位施放一个随机增益魔法（护体石肤/治疗/大气神盾/烈火神盾/狂暴/镜像术）',
   curse: '亡语·诅咒：所有敌方随从攻击 -1',
   necro: '战吼·招魂术：召唤一个【骷髅】',
   reaper: '战吼：消灭攻击力最高的敌方随从',
@@ -5281,13 +5397,16 @@ const TRAIT_TEXT = {
   '毒Lv': '攻击造成伤害使目标中毒，目标在每轮部署阶段开始时受 X 点伤害（X=等级，重复中毒取最高）',
   '毒Lv1': '攻击造成伤害使目标中毒，目标在每轮部署阶段开始时受 1 点伤害',
   '毒Lv3': '攻击造成伤害使目标中毒，目标在每轮部署阶段开始时受 3 点伤害',
-  '三姐妹': '场上每多一种鹰身女妖，我方全体鹰身女妖 +1攻/+1血上限',
+  '三姐妹': '场上每个其它名称包含「鹰身女妖」的单位 +2攻/+2血（可叠加）',
   '范围攻击': '攻击随从时，对被攻击随从左右两边相邻的随从造成等量溅射伤害（各自结算护甲，溅射受伤也会触发反击）',
   '石化': '生命未满时护甲视为 4',
   '石像形态': '守备表示时护甲 +2、攻击 -2',
   '破法': '攻击拥有法术（可施放单位法术）的单位时，造成伤害翻倍',
   '无目': '免疫双目失明',
   '心智免疫': '免疫心智魔法（双目失明/混乱/失忆/悲痛欲绝/魅魔夺取）',
+  '尸火': '被近战攻击时，随机对伤害来源造成 0-2 点闪电/火焰/冰冻伤害',
+  '觉醒': '觉醒X：需被攻击 X 次后才能攻击/反击/切换守备表示',
+  '石化凝视': '此单位反击时，1/2 概率使被反击者石化 2 回合（无法行动/反击，护甲 +3）',
   '刺客': '优先攻击相对更靠后的单位，无视阻挡',
   '狗头人领袖': '所有狗头人 +1 攻击（含自身，多个可叠加）',
   '英灵感召': '当全场所有其它单位（盖牌与墓园/元素除外）都处于正士气时，自身 +1 攻击',
@@ -5384,9 +5503,10 @@ function ownedOf(name) { return collection[name] || 0; }
 function ownedTotal() { return CARD_DEFS.reduce((s, d) => s + ownedOf(d.name), 0); }
 function ownedDefs() { return CARD_DEFS.filter(d => ownedOf(d.name) > 0); }
 // 某种卡可携带数量 = min(MAX_COPIES, 拥有数)
-function maxCopiesOf(def) { return Math.min(MAX_COPIES, ownedOf(def.name)); }
+function maxCopiesOf(def) { return def.legend ? Math.min(1, ownedOf(def.name)) : Math.min(MAX_COPIES, ownedOf(def.name)); } // 传说随从限 1 张
 // 稀有度：按战斗力 <11 普通(灰) / 11–14 精良(蓝) / 15–19 稀有(紫) / ≥20 传说(金)
 function rarityOf(def) {
+  if (def.legend) return 3; // 传说随从恒为金卡
   const r = def.rating == null ? 0 : def.rating;
   return r < 11 ? 0 : r <= 14 ? 1 : r <= 19 ? 2 : 3;
 }
@@ -6015,7 +6135,7 @@ function targetableUnits(board) { return board.filter(isTargetable); }
 // 有效护甲：石化生命未满时视为 4；石像形态守备表示时护甲 +2
 function effArmor(m) {
   if (m.traits.includes('石化') && m.curHp < m.maxHp) return 4;
-  return m.arm + (m.traits.includes('石像形态') && m.defense ? 2 : 0);
+  return m.arm + (m.traits.includes('石像形态') && m.defense ? 2 : 0) + ((m.petrified || 0) > 0 ? 3 : 0); // 被石化时护甲 +3
 }
 
 // 有效飞行：守备表示的飞行单位暂时失去飞行效果（可被任何单位攻击、不再被远程加倍）
@@ -6083,6 +6203,7 @@ function startRound() {
     // 失明：持续回合 -1，结束时报日志
     p.board.forEach(m => {
       if ((m.blind || 0) > 0) { m.blind--; if (m.blind === 0) log('【' + m.name + '】的失明结束了'); }
+      if ((m.petrified || 0) > 0) { m.petrified--; if (m.petrified === 0) log('【' + m.name + '】的石化结束了'); }
     });
     cleanupDead(side);
     // 士气：我方战场所有单位同一阵营时全场 +1（两种无影响，x≥3 种 -(x-2)）；
@@ -6100,8 +6221,19 @@ function startRound() {
     }
     // 单位法力：每轮准备阶段开始自然恢复 1 点（不超过上限）
     p.board.forEach(m => {
-      if ((m.actSpell || m.actSpells) && m.spellMana < m.spellManaMax) m.spellMana++;
+      if ((m.actSpell || m.actSpells || m.spellManaMax > 0) && m.spellMana < m.spellManaMax) m.spellMana++;
     });
+    // 骷髅王李奥锐刻：亡语标记的单位在准备阶段从墓地归来（放在回蓝之后：返场当轮不再回蓝；视为从墓地召唤，触发生还的宝礼）
+    let leoricBack = 0;
+    for (let i = p.graveyard.length - 1; i >= 0; i--) {
+      const g = p.graveyard[i];
+      if (!g._leoricReturn) continue;
+      p.graveyard.splice(i, 1);
+      if (p.board.length >= BOARD_CAP) { log('【骷髅王李奥锐刻】场上已达上限，未能归来'); continue; }
+      const back = summonMinion(side, findDef('骷髅王李奥锐刻'), g.row);
+      if (back) { back.spellMana = 0; leoricBack++; log('【骷髅王李奥锐刻】从墓地归来！'); sfx('summon'); }
+    }
+    lifeBoonProc(side, leoricBack);
     drawCard(side);
   });
   checkGameOver();
@@ -6139,7 +6271,7 @@ function makeMinion(def) {
     // 落地：飞行单位正面表示时可在 飞行/落地 两种形态间切换；落地时失去飞行效果、落到地面阵型
     grounded: false,
     // 士气 [-10, 10]：正值每点 = 10% 概率额外行动一次；负值每点 = 10% 概率无法行动/无法反击
-    morale: 0,
+    morale: def.morale0 || 0,
     // 翻面表示：盖放部署。不会成为攻击目标、不主动攻击；仍每轮恢复法术、可吃到 buff；
     // 翻开时才触发战吼（pendingBattlecry）
     faceDown: false, pendingBattlecry: false,
@@ -6708,7 +6840,7 @@ const SPELL_FX_TEXT = {
   confuse: '目标敌方单位士气 -6（最低 -10）',
   blind: '目标敌方单位失明：无法攻击/反击/施放法术/切换形态，持续（施放后剩余法力 +1 − 目标法术护盾）回合',
   arcaneDraw: '摸两张牌',
-  darkSacrifice: '消灭一张己方手牌或场上卡牌送入墓地，摸两张牌',
+  darkSacrifice: '将一张手牌或场上的随从送入墓地，摸两张牌',
   lifeBoon: '赋予一个友方单位「生还的宝礼」：其在场时，每当我方从墓地召唤卡牌进入手牌或战场，摸一张牌',
   tornado: '消灭一个随机敌方飞行单位',
   inspire: '全场友方单位士气 +3（最高 10）',
@@ -6818,8 +6950,16 @@ function canHitHero(attacker, foeSide) {
 // 骑兵：速度翻倍；攻击时若自身速度大于对方两倍则不触发反击——除非防守方有「拒马」（可反击骑兵）；
 // 远程单位的攻击不会触发反击。
 // 远程单位的攻击不会触发反击；「不受反击」特性的单位攻击同样不会触发反击（包括守备表示的同时结算反击）。
+// 觉醒X：需被攻击 X 次后才能攻击/反击/切换守备表示（m._awaken 计数）
+function awake(m) {
+  const need = traitLv(m, '觉醒');
+  return need === 0 || (m._awaken || 0) >= need;
+}
+
 function canCounter(defender, attacker, attackerSide) {
   if (defender.blind) return false; // 失明无法反击
+  if ((defender.petrified || 0) > 0) return false; // 被石化无法反击
+  if (!awake(defender)) return false; // 未觉醒无法反击
   if (attacker.traits.includes('远程') || attacker.traits.includes('不受反击')) return false;
   if (attacker.traits.includes('骑兵') && !defender.traits.includes('拒马') &&
       speedOf(attacker) > 2 * speedOf(defender)) return false; // 速度大于对方两倍：免反击
@@ -6869,7 +7009,7 @@ function recallMinion(uid, side) {
   return true;
 }
 
-// 三姐妹光环：场上有 x 种鹰身女妖时，我方全体鹰身女妖 +(x-1)攻 / +(x-1)血上限
+// 三姐妹光环：场上每个带三姐妹词条的单位，使其它名称包含「鹰身女妖」的单位 +2攻/+2血（可叠加）
 // 恐狼光环：同排左右相邻的友方随从 +1 攻击（多只可叠加）
 function adjAtkBonus(p, m) {
   const rowMins = p.board.filter(o => o.row === m.row);
@@ -6889,11 +7029,10 @@ function inspireBonus(m) {
 function recalcAuras() {
   ['player', 'enemy'].forEach(side => {
     const p = state[side];
-    const kinds = new Set(p.board.filter(m => m.traits.includes('三姐妹')).map(m => m.name)).size;
-    const bonus = Math.max(0, kinds - 1);
+    const sisters = p.board.filter(o => o.traits.includes('三姐妹')); // 三姐妹：每个使其它「鹰身女妖」+2攻/+2血
     const koboldLead = p.board.filter(o => o.traits.includes('狗头人领袖')).length; // 狗头人工长：每个使所有狗头人 +1攻（含自身，可叠加）
     p.board.forEach(m => {
-      const b = m.traits.includes('三姐妹') ? bonus : 0;
+      const b = m.name.includes('鹰身女妖') ? 2 * sisters.filter(o => o !== m).length : 0;
       const newMax = m.baseMaxHp + b;
       const delta = newMax - m.maxHp;
       m.maxHp = newMax;
@@ -6927,7 +7066,7 @@ function playCard(side, idx, row, beforeUid, faceDown, targetUid) {
   // 收回信息：无战吼类入场效果的随从可收回（亡语类打出时没有即时收益，收回无套利风险，允许收回；
   // 骨龙因打出即除外墓地无法回滚，仍排除）。带单位法术（actSpell）的也可收回，
   // 但部署回合使用过法术之后不可（recallMinion 里校验）。
-  const DEATHRATTLE_SPELLS = ['skeletonSearch', 'curse', 'draw', 'impBurst'];
+  const DEATHRATTLE_SPELLS = ['skeletonSearch', 'curse', 'draw', 'impBurst', 'foeDraw'];
   m.playedRound = state.round;
   m.costPaid = cost;
   m.recallable = !def.spell || DEATHRATTLE_SPELLS.indexOf(def.spell) >= 0;
@@ -6983,12 +7122,22 @@ function battlecry(side, m) {
       drawCard(side);
       break;
     case 'songPot':
-      log('【北宋之壶】战吼：' + sideName(side) + '摸三张牌');
+      log('【北宋之壶】战吼：' + sideName(side) + '摸两张牌');
       sfx('flip');
       drawCard(side);
       drawCard(side);
-      drawCard(side);
       break;
+    case 'genieCry': {
+      // 灯神/神怪战吼：随机一个友方单位 + 随机一个增益魔法
+      const allies = p.board.filter(o => isTargetable(o));
+      if (!allies.length) { log('【' + m.name + '】战吼：没有可祝福的友方单位'); break; }
+      const pool = GENIE_BUFFS.map(n => findDef(n)).filter(Boolean);
+      const def2 = pool[Math.floor(Math.random() * pool.length)];
+      const t = allies[Math.floor(Math.random() * allies.length)];
+      log('【' + m.name + '】战吼：为【' + t.name + '】施放【' + def2.name + '】');
+      resolveSpellEffect(side, def2, t, 0);
+      break;
+    }
     case 'humblePot': {
       // 谦逊之壶：抽三张，保留一张（玩家三选一；AI/联机对方自动留最贵），其余洗入卡组
       const drawn = [];
@@ -7147,6 +7296,13 @@ function moraleFx(m, kind) {
 // 消耗本战斗阶段唯一一次反击机会；够不到或 0 攻则不消耗机会。
 // 反击造成的伤害不再触发反击（depth > 0 即为反击）。label 区分 主攻击/溅射/反击 的日志措辞。
 function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, label) {
+  // 觉醒计数：被普通攻击一次（无论是否造成伤害）
+  if (depth === 0 && label == null && traitLv(target, '觉醒') > 0) {
+    const need = traitLv(target, '觉醒');
+    target._awaken = (target._awaken || 0) + 1;
+    if (target._awaken === need) log('【' + target.name + '】觉醒了！现在可以攻击、反击和切换形态');
+    else if (target._awaken < need) log('【' + target.name + '】被攻击（觉醒 ' + target._awaken + '/' + need + '）');
+  }
   if (dmg <= 0) {
     // 伤害被护甲完全抵挡：防守方士气 +1；守备表示格挡时伤害来源额外 -1（士气此消彼长）
     changeMorale(target, 1);
@@ -7180,7 +7336,7 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
   }
   if (target.curHp <= 0 && attacker.traits.includes('驱魔')) target._noDR = true;
   if (depth === 0 && !target.faceDown && target.atk > 0) {
-    if (target.defense && !target.blind && !attacker.traits.includes('远程')) { // 失明的守备单位也无法反击
+    if (target.defense && !target.blind && !(target.petrified > 0) && awake(target) && !attacker.traits.includes('远程')) { // 失明/石化/未觉醒的守备单位也无法反击
       // 守备表示：攻击守备单位的同时必然受到反击——无视攻击方的免反击特性（骑兵/不受反击），但无法反击远程单位，
       // 无限次、与对手攻击同时结算（即使被打死反击也生效），不消耗反击机会；负士气可能导致反击失败
       if (moraleFail(target)) {
@@ -7194,6 +7350,10 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
       else {
         sfx('counter');
         dealAttackDamage(target, otherSide(attackerSide), attacker, back, shaken, depth + 1, 'defcounter');
+        if (target.traits.includes('石化凝视') && Math.random() < 0.5) { // 石化凝视：反击后 1/2 概率石化攻击者
+          attacker.petrified = 2;
+          log('【' + target.name + '】的石化凝视：【' + attacker.name + '】被石化 2 回合（无法行动/反击，护甲 +3）');
+        }
       }
       }
     } else if (target.curHp > 0 && target.counterLeft > 0 && canCounter(target, attacker, attackerSide)) {
@@ -7210,8 +7370,23 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
       } else {
         sfx('counter');
         dealAttackDamage(target, otherSide(attackerSide), attacker, back, shaken, depth + 1, 'counter');
+        if (target.traits.includes('石化凝视') && Math.random() < 0.5) { // 石化凝视：反击后 1/2 概率石化攻击者
+          attacker.petrified = 2;
+          log('【' + target.name + '】的石化凝视：【' + attacker.name + '】被石化 2 回合（无法行动/反击，护甲 +3）');
+        }
       }
       }
+    }
+  }
+  // 尸火：被近战普通攻击时，随机对伤害来源造成 0-2 点闪电/火焰/冰冻伤害（存活才触发）
+  if (depth === 0 && label == null && target.curHp > 0 && target.traits.includes('尸火') &&
+      !attacker.traits.includes('远程')) {
+    const elems = [{ school: '气', elem: '闪电' }, { school: '火', elem: '火焰' }, { school: '水', elem: '冰冻' }];
+    const el2 = elems[Math.floor(Math.random() * elems.length)];
+    const rd = Math.floor(Math.random() * 3); // 0-2
+    if (rd > 0) {
+      log('【尸体发火】的尸火：对【' + attacker.name + '】造成 ' + rd + ' 点' + el2.elem + '伤害');
+      dealSpellDamage({ name: '尸体发火', school: el2.school }, attacker, rd);
     }
   }
 }
@@ -7394,13 +7569,27 @@ function cleanupDead(side) {
         cleanupAllDead();
       }
     } else if (m.spell === 'songPot') {
-      // 北宋之壶：击败它的玩家摸三张牌（攻击致死记录方位；法术/毒等未记录时按对方计）
+      // 北宋之壶：击败它的玩家摸两张牌并获得 5 金币（攻击致死记录方位；法术/毒等未记录时按对方计）
       const killerSide = m._killedBySide || otherSide(side);
-      log('【北宋之壶】亡语触发：' + sideName(killerSide) + '摸三张牌');
+      log('【北宋之壶】亡语触发：' + sideName(killerSide) + '摸两张牌，获得 5 金币');
       sfx('flip');
       drawCard(killerSide);
       drawCard(killerSide);
-      drawCard(killerSide);
+      gold += 5;
+      saveEconomy();
+    } else if (m.spell === 'foeDraw') {
+      // 尸体发火：对手摸一张牌
+      log('【' + m.name + '】亡语触发：' + sideName(otherSide(side)) + '摸一张牌');
+      drawCard(otherSide(side));
+    } else if (m.spell === 'leoric') {
+      // 骷髅王李奥锐刻：有 3 点法术时消耗全部法术，下个准备阶段从墓地归来
+      if (m.spellMana >= 3) {
+        m.spellMana = 0;
+        m._leoricReturn = true;
+        log('【骷髅王李奥锐刻】亡语：消耗全部 3 点法术，将在下个准备阶段从墓地归来！');
+      } else {
+        log('【骷髅王李奥锐刻】法术不足（' + m.spellMana + '/3），亡语未能触发');
+      }
     } else if (m.spell === 'curse') {
       const foe = state[otherSide(side)];
       let n = 0;
@@ -7539,7 +7728,7 @@ function speedOf(m) {
 
 // 从「存活且本阶段尚未行动」的单位里挑速度最高者（并列随机）；守备/翻面表示的单位不主动攻击
 function nextActor() {
-  const all = state.player.board.concat(state.enemy.board).filter(m => m.canAttack && !m.defense && !m.faceDown && !m.blind); // 失明单位无法行动
+  const all = state.player.board.concat(state.enemy.board).filter(m => m.canAttack && !m.defense && !m.faceDown && !m.blind && !(m.petrified > 0) && awake(m)); // 失明/石化/未觉醒单位无法行动
   if (all.length === 0) return null;
   let max = -Infinity;
   all.forEach(m => { const pw = speedOf(m); if (pw > max) max = pw; });
@@ -7997,6 +8186,7 @@ function toggleDefense(side, minionUid, setValue) {
   // 翻面单位也可切换守备表示（但依然不会主动进攻）；守备墙只计算正面的守备单位
   const target = setValue == null ? !m.defense : !!setValue; // setValue 传入时为设置式（旋转热区），否则为切换式
   if (m.blind) { log('【' + m.name + '】失明中，无法切换形态'); return false; }
+  if (!awake(m)) { log('【' + m.name + '】尚未觉醒（被攻击 ' + (m._awaken || 0) + '/' + traitLv(m, '觉醒') + ' 次），无法切换形态'); return false; }
   if (target === m.defense) return false;
   m.defense = target;
   // 飞行单位：守备（失去飞行）落到前排队列；恢复攻击表示时回到空中（落地形态除外）
@@ -8241,6 +8431,10 @@ function minionHtml(m, isEnemy, ghost) {
     ? '<span class="trait-badge" style="background:#2a4a7a;color:#b0d0ff;" title="守备表示：不主动攻击；无限次反击且反击同时结算；被随机选取概率×2">守备</span>' : '';
   const landBadge = m.grounded
     ? '<span class="trait-badge" style="background:#4a5a3a;color:#c8e0a0;" title="落地：暂时失去飞行效果，参与地面阵型；可再起飞">落地</span>' : '';
+  const petrifiedBadge = (m.petrified || 0) > 0
+    ? '<span class="trait-badge" style="background:#4a4a4a;color:#c0c0c0;" title="石化：无法行动/反击，护甲 +3，剩余 ' + m.petrified + ' 回合">石化' + m.petrified + '</span>' : '';
+  const awakenBadge = !awake(m)
+    ? '<span class="trait-badge" style="background:#4a4a2a;color:#e8d8a0;" title="觉醒：需被攻击 ' + traitLv(m, '觉醒') + ' 次后才能攻击/反击/切换守备表示">觉醒' + (m._awaken || 0) + '/' + traitLv(m, '觉醒') + '</span>' : '';
   const boonBadge = m.boonOfLife
     ? '<span class="trait-badge" style="background:#4a5e2a;color:#d0e8a0;" title="生还的宝礼：在场时，我方每次从墓地召唤卡牌进入手牌或战场，摸一张牌">宝礼</span>' : '';
   const blindBadge = (m.blind || 0) > 0
@@ -8267,7 +8461,7 @@ function minionHtml(m, isEnemy, ghost) {
   }
   // 单位法术：法力显示 + 施放按钮（部署阶段、下方半场=当前部署方可操作；直接执行不走单击延时）
   let castRow = '';
-  if (!ghost && (m.actSpell || m.actSpells)) {
+  if (!ghost && (m.actSpell || m.actSpells || m.spellManaMax > 0)) {
     const foe = state[otherSide(mySide)];
     const condOf = key => !unitSpellBoardCond(m, key, mySide) ? false
       : key === 'bless' ? state[mySide].board.some(x => isTargetable(x))
@@ -8308,7 +8502,7 @@ function minionHtml(m, isEnemy, ghost) {
     (spellHitStyle ? ' style="' + spellHitStyle + '"' : '') + action + '>' +
     '<div class="m-name">' + m.name + '</div>' +
     (def ? artHtml(def) : '') +
-    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + blindBadge + boonBadge + chargeBadge + defBadge + landBadge + moraleBadge + '</div>' +
+    '<div class="m-traits">' + traitsHtml(m.traits) + poisonBadge + blindBadge + boonBadge + awakenBadge + petrifiedBadge + chargeBadge + defBadge + landBadge + moraleBadge + '</div>' +
     castRow +
     defBtn +
     spell +
@@ -8333,7 +8527,7 @@ function handCardHtml(def, i, side) {
       ' style="border-color:' + sch.color + ';box-shadow:0 0 10px ' + sch.color + '66;background:linear-gradient(160deg,' + sch.color + '33,#1e1e2e 55%)">' +
       '<div class="c-cost">' + cost + '</div>' +
       '<div class="school-badge" style="background:' + sch.color + '" title="' + sch.label + '系法术">' + sch.label + '</div>' +
-      '<div class="c-name">' + def.name + '</div>' +
+      '<div class="c-name">' + (def.legend ? '★' : '') + def.name + '</div>' +
       artHtml(def) +
       '<div class="spell-label">法术 · ' + sch.label + '系</div>' +
       '<div class="c-spell">' + SPELL_FX_TEXT[def.spellEffect] + '</div>' +
@@ -8349,7 +8543,7 @@ function handCardHtml(def, i, side) {
     ? '<div class="corner c-r rot-handle" data-idx="' + i + '" title="按住拖动旋转卡牌：90°=守备入场，180°=盖放，回正=攻击入场">↻</div>' : '';
   return '<div class="hand-card ' + raceClass(def) + (afford ? '' : ' unaffordable') + '" draggable="' + afford + '" data-action="play-hand" data-idx="' + i + '">' +
     '<div class="c-cost">' + cost + '</div>' +
-    '<div class="c-name">' + def.name + '</div>' +
+    '<div class="c-name">' + (def.legend ? '★' : '') + def.name + '</div>' +
     artHtml(def) +
     '<div class="c-traits">' + traitsHtml(def.traits) + '</div>' +
     spell +
@@ -8695,7 +8889,7 @@ function dbCardHtml(def) {
       '<div class="picked-badge">已选 ' + n + '/' + max + '</div>' +
       '<div class="rating-badge" title="强度评分">' + def.rating + '</div>' +
       '<div class="school-badge" style="background:' + sch.color + '" title="' + sch.label + '系法术">' + sch.label + '</div>' +
-      '<div class="c-name">' + def.name + '</div>' +
+      '<div class="c-name">' + (def.legend ? '★' : '') + def.name + '</div>' +
       '<div class="c-own" style="text-align:center;font-size:10px;color:#8a8a9a;">拥有 ×' + ownedOf(def.name) + '</div>' +
       artHtml(def) +
       '<div class="spell-label">法术 · ' + sch.label + '系</div>' +
@@ -8709,7 +8903,7 @@ function dbCardHtml(def) {
     '<div class="c-cost">' + def.cost + '</div>' +
     '<div class="picked-badge">已选 ' + n + '/' + max + '</div>' +
     '<div class="rating-badge" title="强度评分">' + def.rating + '</div>' +
-    '<div class="c-name">' + def.name + '</div>' +
+    '<div class="c-name">' + (def.legend ? '★' : '') + def.name + '</div>' +
     '<div class="c-own" style="text-align:center;font-size:10px;color:#8a8a9a;">拥有 ×' + ownedOf(def.name) + '</div>' +
     artHtml(def) +
     '<div class="c-traits">' + traitsHtml(def.traits) + '</div>' +
@@ -9019,7 +9213,8 @@ function ratingTraitW(t) {
   if (t === '拒马') return 0.5;
   if (t === '飞行' || t === '远程' || t === '石像形态') return 3;
   if (t.startsWith('法术护盾')) return parseInt(t.slice(4), 10) || 1; // 法术护盾X = X 分
-  if (t.startsWith('再生')) return 1;
+  if (t.startsWith('再生')) return parseInt(t.slice(2), 10) || 1; // 再生X = X 分
+  if (t.startsWith('觉醒')) return 0; // 觉醒是限制词条，不计分
   return 2;
 }
 function ratingBreakdownHtml(def) {
@@ -9041,6 +9236,7 @@ function ratingBreakdownHtml(def) {
 // def 为卡牌定义；m 为可选的随从对象（场上/墓地），传入时显示当前状态并注明基础值
 function showCardDetail(def, m) {
   if (!def) return;
+  window._detailDefName = def.name; // 供「3D 检视」按钮联动
   const art = def.art || { icon: '❔', hue: 200 };
   document.getElementById('detail-panel').className = 'panel ' + raceClass(def); // 描边随种族
   // 法术卡牌：显示系别与效果，不显示三维/特性
@@ -9545,12 +9741,15 @@ document.addEventListener('dblclick', e => {
   } else if (el.dataset.name) { // 组牌牌池卡 / 牌组列表项
     def = findDef(el.dataset.name);
   }
-  if (def) showCardDetail(def, mn);
+  if (def) {
+    if (window.__holo) { window.__holo.open(def.name); return; } // 统一使用 3D 检视
+    showCardDetail(def, mn); // 3D 不可用时回退 2D 详情
+  }
 });
 
 // Esc 关闭浮层
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeDetail(); closeViewer(); }
+  if (e.key === 'Escape') { if (window.__holo) window.__holo.close(); closeDetail(); closeViewer(); }
 });
 
 // ---------- 拖拽（仅部署阶段：己方随从布阵 + 手牌拖拽落位出牌） ----------
@@ -9779,7 +9978,14 @@ document.getElementById('viewer-close').addEventListener('click', closeViewer);
 document.getElementById('viewer').addEventListener('click', e => {
   if (e.target === document.getElementById('viewer')) closeViewer(); // 点击遮罩关闭
 });
+document.getElementById('detail-holo').addEventListener('click', () => {
+  closeDetail();
+  if (window.__holo) window.__holo.open(window._detailDefName || null);
+});
 document.getElementById('detail-close').addEventListener('click', closeDetail);
+document.getElementById('open-holo').addEventListener('click', () => {
+  if (window.__holo) window.__holo.open(null);
+});
 document.getElementById('detail').addEventListener('click', e => {
   if (e.target === document.getElementById('detail')) closeDetail(); // 点击遮罩关闭
 });
@@ -9910,5 +10116,1320 @@ globalThis.__api = {
   CARD_DEFS, GREEN_DRAGON,
 };
 </script>
+<div id="holo-viewer">
+  <canvas id="holo-stage"></canvas>
+  <div id="holo-panel">
+
+  <h3>卡牌检视 · HOLO VIEWER</h3>
+  <label>卡面（<span id="holo-c-count">0</span> 张）</label>
+  <input type="text" id="holo-c-search" placeholder="搜索卡牌名…">
+  <select id="holo-c-card"></select>
+  <label>覆膜范围</label>
+  <select id="holo-c-cov">
+    <option value="full">全卡面</option>
+    <option value="art">插画窗</option>
+    <option value="reverse">Reverse holo（窗外）</option>
+  </select>
+  <label>覆膜工艺（可叠加）</label>
+  <div class="pats" id="holo-c-pats"></div>
+  <label>箔曝光 <span id="holo-v-ex">1.00</span></label>
+  <input type="range" id="holo-c-ex" min="0" max="3" step="0.01" value="1">
+  <label>星闪强度 <span id="holo-v-si">1.00</span></label>
+  <input type="range" id="holo-c-si" min="0" max="3" step="0.01" value="1">
+  <label>工艺尺寸 <span id="holo-v-scale">1.00</span></label>
+  <input type="range" id="holo-c-scale" min="0.5" max="2" step="0.01" value="1">
+  <details>
+    <summary>高级参数</summary>
+    <label>A 层光栅间距 nm <span id="holo-v-pitch">1200</span></label>
+    <input type="range" id="holo-c-pitch" min="800" max="2000" step="10" value="1200">
+    <label>B 层光栅间距 nm <span id="holo-v-pitchB">1400</span></label>
+    <input type="range" id="holo-c-pitchB" min="800" max="2000" step="10" value="1400">
+    <label>A 层槽向° <span id="holo-v-angleA">30</span></label>
+    <input type="range" id="holo-c-angleA" min="0" max="360" step="1" value="30">
+    <label>B 层槽向° <span id="holo-v-angleB">100</span></label>
+    <input type="range" id="holo-c-angleB" min="0" max="360" step="1" value="100">
+    <label>B 层增益 <span id="holo-v-gainB">0.50</span></label>
+    <input type="range" id="holo-c-gainB" min="0" max="1.5" step="0.01" value="0.5">
+    <label>槽深 nm <span id="holo-v-relief">80</span></label>
+    <input type="range" id="holo-c-relief" min="0" max="300" step="1" value="80">
+    <label>拉丝强度 <span id="holo-v-brushA">0.70</span></label>
+    <input type="range" id="holo-c-brushA" min="0" max="1" step="0.01" value="0.7">
+    <label>闪粉密度 <span id="holo-v-glitterD">0.70</span></label>
+    <input type="range" id="holo-c-glitterD" min="0.3" max="1" step="0.01" value="0.7">
+    <label>方位散布 <span id="holo-v-spread">0.15</span></label>
+    <input type="range" id="holo-c-spread" min="0" max="1" step="0.01" value="0.15">
+    <label>星闪密度 <span id="holo-v-starD">0.45</span></label>
+    <input type="range" id="holo-c-starD" min="0" max="1" step="0.01" value="0.45">
+    <label>工艺强度 <span id="holo-v-patStr">1.00</span></label>
+    <input type="range" id="holo-c-patStr" min="0" max="1" step="0.01" value="1">
+    <label>蒙版阈值 <span id="holo-v-maskTh">0.50</span></label>
+    <input type="range" id="holo-c-maskTh" min="0" max="1" step="0.01" value="0.5">
+    <label>蒙版羽化 <span id="holo-v-maskSo">0.08</span></label>
+    <input type="range" id="holo-c-maskSo" min="0" max="0.3" step="0.01" value="0.08">
+  </details>
+  <div class="toggles">
+    <label><input type="checkbox" id="holo-c-auto" checked> 自动摆动（利萨茹）</label>
+    <label><input type="checkbox" id="holo-c-light"> 光源游走</label>
+    <label><input type="checkbox" id="holo-c-mul" checked> 乘性油墨模型</label>
+  </div>
+  <button id="holo-c-png">导出 PNG</button>
+  <button id="holo-c-pack">开卡包</button>
+  <button id="holo-c-back-viewer" style="display:none">返回检视</button>
+    </div>
+  <div id="holo-hint">drag card to rotate (inertial)</div>
+  <button id="holo-close">✕ 关闭</button>
+</div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/0.180.0/build/three.module.js",
+    "three/addons/": "./vendor/three/0.180.0/examples/jsm/"
+  }
+}
+</script>
+<script>window.VIEWER_TEXT = { traits: {
+  '远程': '可攻击对方任意一排；优先攻击飞行单位且对其伤害加倍；攻击不触发普通反击（守备表示的反击除外）',
+  '不受反击': '攻击不触发普通反击（守备表示的同时结算反击除外）',
+  '火系魔法免疫': '不受火系法术影响（火球术、地狱烈焰、末日审判、魔女火球等）',
+  '复仇': '每次反击前攻击 +X（X=等级，永久累积）',
+  '机械': '机械单位（可被工程师修理）',
+  '鼓舞': '战斗阶段开始前，我方所有单位士气 +X（X=等级）',
+  '威吓': '战斗阶段开始前，敌方所有单位士气 -X（X=等级）',
+  '威光': '与携带者交战的单位，战斗前后士气各 -1',
+  '飞行': '只能被远程或飞行单位攻击；被远程单位攻击时受到的伤害加倍',
+  '骑兵': '速度翻倍（行动顺序按三围总和×2）；攻击时若速度大于对方两倍，不会触发反击',
+  '掠夺': '攻击敌方英雄时获得 5 金币',
+  '高级水系魔法': '你施放的水系法术卡费用 -1（最低 0）',
+  '高级学术': '你施放的法术卡费用 -1（最低 0）',
+  '连击': '攻击时连续攻击 2 次（第二次不触发反击）',
+  '反击': '每战斗阶段可反击 X 次（X=等级，默认 1 次）',
+  '拒马': '可以对骑兵进行反击（无视骑兵的速度免反击）',
+  '恐狼光环': '同排左右相邻的友方随从 +1 攻击（多只可叠加）',
+  '和平': '不会发起可能令自己死亡的攻击（若反击致死则跳过该攻击）',
+  '死亡凝视': '攻击时 25% 概率直接消灭目标随从（无视生命与护甲）',
+  '护甲穿透': '攻击无视目标 X 点护甲（X=等级）',
+  '法力燃烧': '攻击英雄时对手下一轮法力 -X（X=等级）',
+  '法力燃烧2': '攻击英雄时对手下一轮法力 -2',
+  '驱魔': '被该单位击杀的使魔不触发亡语',
+  '再生': '每轮部署阶段开始时恢复 X 点生命（X=等级）',
+  '再生1': '每轮部署阶段开始时恢复 1 点生命',
+  '再生2': '每轮部署阶段开始时恢复 2 点生命',
+  '毒Lv': '攻击造成伤害使目标中毒，目标在每轮部署阶段开始时受 X 点伤害（X=等级，重复中毒取最高）',
+  '毒Lv1': '攻击造成伤害使目标中毒，目标在每轮部署阶段开始时受 1 点伤害',
+  '毒Lv3': '攻击造成伤害使目标中毒，目标在每轮部署阶段开始时受 3 点伤害',
+  '三姐妹': '场上每个其它名称包含「鹰身女妖」的单位 +2攻/+2血（可叠加）',
+  '范围攻击': '攻击随从时，对被攻击随从左右两边相邻的随从造成等量溅射伤害（各自结算护甲，溅射受伤也会触发反击）',
+  '石化': '生命未满时护甲视为 4',
+  '石像形态': '守备表示时护甲 +2、攻击 -2',
+  '破法': '攻击拥有法术（可施放单位法术）的单位时，造成伤害翻倍',
+  '无目': '免疫双目失明',
+  '心智免疫': '免疫心智魔法（双目失明/混乱/失忆/悲痛欲绝/魅魔夺取）',
+  '尸火': '被近战攻击时，随机对伤害来源造成 0-2 点闪电/火焰/冰冻伤害',
+  '觉醒': '觉醒X：需被攻击 X 次后才能攻击/反击/切换守备表示',
+  '石化凝视': '此单位反击时，1/2 概率使被反击者石化 2 回合（无法行动/反击，护甲 +3）',
+  '刺客': '优先攻击相对更靠后的单位，无视阻挡',
+  '狗头人领袖': '所有狗头人 +1 攻击（含自身，多个可叠加）',
+  '英灵感召': '当全场所有其它单位（盖牌与墓园/元素除外）都处于正士气时，自身 +1 攻击',
+  '吸血': '造成的伤害等量恢复自身生命',
+  '法术护盾': '受到的法术伤害 -X（X=等级）',
+  '法术护盾2': '受到的法术伤害 -2',
+},
+ spell: {
+  draw: '亡语：摸一张牌',
+  prayer: '战吼·祈祷：其他友方使魔 +1攻/+2血',
+  wisp: '战吼：本轮法力 +1',
+  elfHeal: '战吼：本轮法力 +1，英雄恢复 2 点生命',
+  dragoness: '下一轮准备阶段开始时变形为【绿龙】(8/0/16)并恢复 4 点生命（期间可被击杀）',
+  charm: '战吼：随机获得一个敌方随从的控制权',
+  skeletonSearch: '亡语：从牌库检索一张同名卡置入手牌；没有则检索其家族卡（骷髅↔骷髅勇士）',
+  impBurst: '亡语：被近战单位杀死时，对伤害来源造成 2 点火系魔法伤害',
+  foeDraw: '亡语：对手摸一张牌',
+  leoric: '亡语：若有 3 点法术，消耗全部法术，下个准备阶段从墓地重新被召唤（法力每轮准备阶段 +1，上限 3）',
+  potOfGreed: '战吼：摸两张牌。亡语：被击败时，加入对方的卡组顶端',
+  songPot: '战吼：摸两张牌。亡语：击杀这张卡牌的玩家摸两张牌，并获得 5 金币',
+  humblePot: '战吼：抽三张牌，保留一张，其余两张洗入卡组。亡语：洗入对手的牌组',
+  genieCry: '战吼：随机为一个友方单位施放一个随机增益魔法（护体石肤/治疗/大气神盾/烈火神盾/狂暴/镜像术）',
+  curse: '亡语·诅咒：所有敌方随从攻击 -1',
+  necro: '战吼·招魂术：召唤一个【骷髅】',
+  reaper: '战吼：消灭攻击力最高的敌方随从',
+  boneDragon: '打出时除外己方墓地，每张除外牌使费用 -1',
+  resurrect: '战吼·复活：将墓地中最后死亡的一张随从满状态复活到其原排',
+  heal: '战吼：己方英雄恢复 3 点生命',
+},
+ unitSpell: {
+  split: '分裂：消耗 1 法力，生命为偶数时一分为二（各半血，其它 buff/特效保留）',
+  fireball: '火球：消耗 1 法力，对随机一个敌方随从造成 1~6 点法术伤害',
+  harvest: '收获：消耗 4 法力，摸一张牌',
+  tidalWave: '巨浪：消耗 2 法力，对敌方前排所有单位造成 2 点法术伤害',
+  study: '研读：消耗 3 法力，摸一张牌',
+  summonDemon: '召唤恶鬼：消耗 4 法力，选择己方墓地中的一张单位卡除外，在场上召唤一个【恶鬼】',
+  bless: '祝福：消耗 2 法力，使一个友方单位 +1攻/+2血',
+  iceBolt: '冰箭：消耗 2 法力，对一个敌方单位造成 4 点水系伤害',
+  repair: '修理：消耗 1 法力，为一个友方机械单位恢复 2 点生命',
+  manaGain: '回魔：消耗 1 法力，本回合法力 +1（不超过上限）',
+  heroHeal: '治愈：消耗 1 法力，为你的英雄恢复 2 点生命',
+  genieBless: '祝福：消耗全部法力 X，随机为一个友方单位施放一个 X 费用的增益法术（护体石肤/治疗/大气神盾/烈火神盾/狂暴/镜像术）',
+},
+ spellFx: {
+  stoneSkin: '目标友方单位护甲 +3（永久）',
+  slow: '目标敌方单位攻击 -3（最低 0）',
+  earthSpikes: '对敌方前排所有单位造成 3 点伤害',
+  deathRipple: '对双方场上所有非墓园单位造成 3 点伤害',
+  heal: '恢复 7 点生命：选择一个友方单位治疗，或点击己方英雄治疗英雄',
+  iceBolt: '对目标敌方单位造成 4 点伤害',
+  bless: '全场友方单位 +2 攻击',
+  dispel: '移除目标敌方单位全部增益并解除中毒',
+  fireballSpell: '对目标敌方单位造成 2~7 点伤害',
+  bloodlust: '全场友方单位 +3 攻击',
+  fireShield: '目标友方单位获得「反击2」（重复无效）',
+  doom: '对双方场上所有单位造成 6 点伤害',
+  forbiddenFlame: '消耗所有剩余法力 X：对双方场上所有单位各造成 2X 点伤害，双方英雄各受到 X 点伤害',
+  lightningBolt: '对目标敌方单位造成 5 点伤害',
+  chainLightning: '对最多 3 个敌方单位各造成 4 点伤害（从攻击最高者开始）',
+  summonAir: '召唤一个【气元素】（4/0/5 飞行）',
+  holyShield: '全场友方单位护甲 +2',
+  meteor: '对目标及同排左右相邻单位各造成 4 点伤害',
+  revive: '从己方墓地复活最后死亡的一张单位卡到其原排',
+  healingWave: '全场友方单位恢复 4 点生命',
+  mirror: '在同排召唤一个目标友方单位的复制（复制当前数值与姿态）',
+  teleport: '将目标友方单位收回手牌（不退法力）',
+  sear: '对目标敌方单位造成 3 点伤害',
+  hellfire: '对敌方全场造成 3 点伤害',
+  confuse: '目标敌方单位士气 -6（最低 -10）',
+  blind: '目标敌方单位失明：无法攻击/反击/施放法术/切换形态，持续（施放后剩余法力 +1 − 目标法术护盾）回合',
+  arcaneDraw: '摸两张牌',
+  darkSacrifice: '将一张手牌或场上的随从送入墓地，摸两张牌',
+  lifeBoon: '赋予一个友方单位「生还的宝礼」：其在场时，每当我方从墓地召唤卡牌进入手牌或战场，摸一张牌',
+  tornado: '消灭一个随机敌方飞行单位',
+  inspire: '全场友方单位士气 +3（最高 10）',
+  inspireAll: '我方所有单位士气 +3（欢欣鼓舞）',
+  dreadAll: '敌方所有单位士气 -3（悲痛欲绝）',
+  summonThunder: '在空中区域召唤一个【雷元素】（4/0/6 飞行）',
+  thunderBolt: '对目标敌方单位造成 9 点伤害',
+  animateDead: '从双方墓地中至多选择费用总和不超过（剩余法力 ×2）的墓园单位，直接召唤回场上；选定后再消耗（所选费用总和 ÷2 向上取整）点法力',
+  summonEarth: '召唤一个【土元素】（5/1/7）',
+  quicksand: '敌方前排所有单位攻击 -2（最低 0）',
+  forget: '移除目标敌方单位的「远程」特性',
+  summonWater: '召唤一个【水元素】（3/0/7）',
+  meteorShower: '对随机至多 3 个敌方单位各造成 2 点伤害（守备加权，不重复）',
+  summonFire: '召唤一个【火元素】（5/0/5，带火系魔法免疫）',
+  frenzy: '目标友方单位攻击 +4 并中毒 Lv1',
+  twister: '随机重排敌方阵型：地面单位随机分配到前/中/后三排（飞行单位不动）',
+  airShield: '目标友方单位获得「法术护盾3」（重复无效）',
+  raiseSkeletons: '选择敌方或我方墓地任意一个单位除外，召唤（其费用÷2 向上取整 + 1）个骷髅兵到我方前排',
+  slimeSwarm: '消耗所有剩余法力，召唤等量史莱姆到前排；数量大于 4 时每 4 个史莱姆换成 1 个巨型史莱姆',
+  vortex: '对随机至多 2 个敌方单位各造成 3 点伤害（守备加权，不重复）',
+} };</script>
+<script type="module" id="holo-main-script">
+
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+// ==================== 数据 ====================
+const CARD_DATA = JSON.parse(document.getElementById('cards-json').textContent);
+const CARDS = CARD_DATA.cards || [];
+const RACE_COLOR = {
+  '城堡': '#8b9099', '壁垒': '#5a8a52', '塔楼': '#5a9aba', '地狱': '#8a5a42', '墓园': '#464650',
+  '地下城': '#6a4a8a', '据点': '#a89048', '要塞': '#4a6a4a', '元素': '#7ab8d8', '中立': '#9a9288',
+  '港口': '#2a6a8a', '堡垒': '#7a9ab8', '工厂': '#8a744a',
+};
+const SCHOOL_COLOR = { '土': '#5a9a3a', '水': '#4a9ae8', '火': '#e05a3a', '气': '#4ad8c8' };
+
+// ==================== 卡面绘制（canvas 2D，744×1039 = 63:88） ====================
+const W = 744, H = 1039;
+const ART_RECT = { x: 66, y: 130, w: 612, h: 510, r: 18 };
+
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function hexToHsl(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  const l = (mx + mn) / 2;
+  let h = 0, s = 0;
+  if (mx !== mn) {
+    const d = mx - mn;
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    if (mx === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function shade(hex, l) {
+  const c = hexToHsl(hex || '#888888');
+  return 'hsl(' + c[0] + ',' + Math.max(8, c[1]) + '%,' + l + '%)';
+}
+
+function starSpecks(ctx, x, y, w, h, n, seed) {
+  let s = seed || 1;
+  const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < n; i++) {
+    const px = x + rnd() * w, py = y + rnd() * h;
+    ctx.globalAlpha = 0.15 + rnd() * 0.5;
+    ctx.fillRect(px, py, 1.5, 1.5);
+  }
+  ctx.restore();
+}
+
+function drawCardFace(def, idx) {
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  const raceC = RACE_COLOR[def.race] || '#888888';
+  const isSpell = def.type === 'spell';
+  const schC = isSpell ? (SCHOOL_COLOR[def.school] || '#888888') : raceC;
+  // 底
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, shade(schC, 26));
+  bg.addColorStop(0.55, shade(schC, 14));
+  bg.addColorStop(1, '#0c0c12');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  // 外框
+  rr(ctx, 18, 18, W - 36, H - 36, 26);
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = shade(schC, 62);
+  ctx.stroke();
+  // 标题
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f0ead8';
+  ctx.font = 'bold 46px "Segoe UI", "Microsoft YaHei", sans-serif';
+  ctx.fillText((def.legend ? '★ ' : '') + def.name, W / 2 + 30, 76);
+  // 费用宝珠（左上）
+  ctx.beginPath(); ctx.arc(64, 72, 38, 0, Math.PI * 2);
+  ctx.fillStyle = '#2a4a9a'; ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = '#9ab8f0'; ctx.stroke();
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 44px sans-serif';
+  ctx.fillText(String(def.cost), 64, 74);
+  // 插画窗
+  const a = ART_RECT;
+  rr(ctx, a.x, a.y, a.w, a.h, a.r);
+  ctx.save();
+  ctx.clip();
+  const hue = def.art && typeof def.art.hue === 'number' ? def.art.hue : 220;
+  const ag = ctx.createRadialGradient(a.x + a.w * 0.35, a.y + a.h * 0.3, 40, a.x + a.w / 2, a.y + a.h / 2, a.w * 0.75);
+  ag.addColorStop(0, 'hsla(' + hue + ',65%,62%,0.98)');
+  ag.addColorStop(1, 'hsl(' + hue + ',45%,18%)');
+  ctx.fillStyle = ag;
+  ctx.fillRect(a.x, a.y, a.w, a.h);
+  // 斜光带
+  ctx.globalAlpha = 0.10;
+  ctx.fillStyle = '#ffffff';
+  for (let i = -1; i < 4; i++) {
+    ctx.save();
+    ctx.translate(a.x + i * 220, a.y);
+    ctx.rotate(-0.5);
+    ctx.fillRect(0, -100, 46, a.h + 300);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  starSpecks(ctx, a.x, a.y, a.w, a.h, 200, idx + 7);
+  // 主图标
+  ctx.font = '230px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'hsla(' + hue + ',80%,70%,0.9)';
+  ctx.shadowBlur = 40;
+  ctx.fillText(def.art ? def.art.icon : '❔', a.x + a.w / 2, a.y + a.h / 2 + 10);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+  rr(ctx, a.x, a.y, a.w, a.h, a.r);
+  ctx.lineWidth = 6; ctx.strokeStyle = shade(schC, 55); ctx.stroke();
+  // 词条徽标
+  let ty = 668;
+  ctx.font = 'bold 24px "Microsoft YaHei", sans-serif';
+  let tx = 66;
+  (def.traits || []).forEach(t => {
+    const tw = ctx.measureText(t).width + 26;
+    if (tx + tw > W - 60) { tx = 66; ty += 44; }
+    rr(ctx, tx, ty, tw, 34, 8);
+    ctx.fillStyle = '#26263a'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#7a7ab0'; ctx.stroke();
+    ctx.fillStyle = '#c8c8e8'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(t, tx + 13, ty + 18);
+    tx += tw + 10;
+  });
+  if (def.spell) {
+    const t = '战吼/亡语';
+    const tw = ctx.measureText(t).width + 26;
+    rr(ctx, tx, ty, tw, 34, 8);
+    ctx.fillStyle = '#3a2a4a'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#b08ae8'; ctx.stroke();
+    ctx.fillStyle = '#d8c0f8'; ctx.textAlign = 'left';
+    ctx.fillText(t, tx + 13, ty + 18);
+  }
+  if (def.actSpell || def.actSpells) {
+    const t = '法术 ' + (def.spellMana0 || 0) + '/' + (def.spellManaMax || 0);
+    const tw = ctx.measureText(t).width + 26;
+    rr(ctx, tx + (def.spell ? ctx.measureText('战吼/亡语').width + 36 : 0), ty, tw, 34, 8);
+    ctx.fillStyle = '#2a3a4a'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#8ac0e8'; ctx.stroke();
+    ctx.fillStyle = '#c0e0f8'; ctx.textAlign = 'left';
+    ctx.fillText(t, tx + (def.spell ? ctx.measureText('战吼/亡语').width + 36 : 0) + 13, ty + 18);
+  }
+  // 效果文本区：词条/战吼亡语/单位法术/法术卡的具体效果（文本表来自 index.html）
+  const VT = window.VIEWER_TEXT || { traits: {}, spell: {}, unitSpell: {}, spellFx: {} };
+  const traitDesc = t => VT.traits[t] || VT.traits[t.replace(/d+$/, '')] || '';
+  const fxLines = [];
+  if (isSpell) {
+    fxLines.push(VT.spellFx[def.spellEffect] || '');
+  } else {
+    (def.traits || []).forEach(t => { const d2 = traitDesc(t); if (d2) fxLines.push('· ' + t + '：' + d2); });
+    if (def.spell && VT.spell[def.spell]) fxLines.push('· ' + VT.spell[def.spell]);
+    if (def.actSpell && VT.unitSpell[def.actSpell]) fxLines.push('· ' + VT.unitSpell[def.actSpell]);
+    (def.actSpells || []).forEach(sp => { if (VT.unitSpell[sp.key]) fxLines.push('· ' + VT.unitSpell[sp.key]); });
+  }
+  let fontSize = 21;
+  const wrapLines = [];
+  const buildLines = () => {
+    wrapLines.length = 0;
+    ctx.font = fontSize + 'px "Microsoft YaHei", sans-serif';
+    fxLines.forEach(line => {
+      let cur = '';
+      for (const ch of line) {
+        if (cur && ctx.measureText(cur + ch).width > 620) { wrapLines.push(cur); cur = ch; }
+        else cur += ch;
+      }
+      if (cur) wrapLines.push(cur);
+    });
+  };
+  buildLines();
+  const maxY = 892; // 三围栏上方
+  const startY = ty + 52;
+  if (startY + wrapLines.length * (fontSize + 7) > maxY && fontSize > 16) { fontSize = 16; buildLines(); }
+  const lh = fontSize + 7;
+  ctx.fillStyle = '#a8a8c2';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  wrapLines.slice(0, Math.max(1, Math.floor((maxY - startY) / lh))).forEach((line, i) => {
+    ctx.fillText(line, 66, startY + i * lh);
+  });
+  ctx.textBaseline = 'middle';
+  // 三围 / 法术系别
+  const sy = 905;
+  if (isSpell) {
+    rr(ctx, 66, sy - 40, W - 132, 80, 14);
+    ctx.fillStyle = shade(schC, 22); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = schC; ctx.stroke();
+    ctx.fillStyle = '#f0ead8'; ctx.font = 'bold 40px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('法术 · ' + def.school + '系', W / 2, sy + 2);
+  } else {
+    const seg = ['攻 ' + def.atk, '甲 ' + def.arm, '血 ' + def.hp];
+    const cols = ['#e08a7a', '#9ab8d8', '#8ac88a'];
+    for (let i = 0; i < 3; i++) {
+      const sx = 66 + i * ((W - 132) / 3);
+      rr(ctx, sx, sy - 40, (W - 132) / 3 - 12, 80, 14);
+      ctx.fillStyle = '#1e1e2c'; ctx.fill();
+      ctx.lineWidth = 4; ctx.strokeStyle = cols[i]; ctx.stroke();
+      ctx.fillStyle = cols[i]; ctx.font = 'bold 42px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(seg[i], sx + ((W - 132) / 3 - 12) / 2, sy + 2);
+    }
+  }
+  // 底行
+  ctx.fillStyle = '#8a8a9a';
+  ctx.font = '24px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(def.race + (isSpell ? ' · ' + def.school + '系' : '') + ' · ' + String(idx + 1).padStart(3, '0') + '/' + CARDS.length, W / 2, 985);
+  return cv;
+}
+
+// ==================== 箔层蒙版 ====================
+function drawFoilMask(def, cov) {
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  const a = ART_RECT;
+  const drawWindow = on => {
+    ctx.save();
+    ctx.filter = 'blur(6px)';
+    rr(ctx, a.x, a.y, a.w, a.h, a.r);
+    ctx.fillStyle = on ? '#fff' : '#000';
+    ctx.fill();
+    ctx.restore();
+  };
+  if (cov === 'art') {
+    drawWindow(true);
+  } else if (cov === 'reverse') {
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    drawWindow(false);
+  } else { // full
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    if (cov === 'full-art') drawWindow(false);
+  }
+  // 边框环 + 传说星额外透箔
+  ctx.save();
+  ctx.filter = 'blur(2px)';
+  rr(ctx, 18, 18, W - 36, H - 36, 26);
+  ctx.lineWidth = 15;
+  ctx.strokeStyle = cov === 'art' ? '#000' : '#fff';
+  ctx.stroke();
+  if (def.legend && cov !== 'art') {
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 60px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('★', W / 2 - ctx.measureText(def.name).width / 2 - 20, 76);
+  }
+  ctx.restore();
+  return cv;
+}
+
+// ==================== 卡背 ====================
+function drawCardBack() {
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#1b2a5e');
+  g.addColorStop(0.55, '#141038');
+  g.addColorStop(1, '#080618');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  starSpecks(ctx, 0, 0, W, H, 260, 42);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(200,190,255,0.5)';
+  ctx.lineWidth = 10;
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, 190, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, 230, 0, Math.PI * 2); ctx.stroke();
+  ctx.font = '220px serif';
+  ctx.fillStyle = 'rgba(220,215,255,0.9)';
+  ctx.fillText('🂠', W / 2, H / 2 + 8);
+  ctx.font = 'bold 34px "Segoe UI", sans-serif';
+  ctx.fillStyle = 'rgba(180,175,220,0.75)';
+  ctx.fillText('MAGIC · THE · TRAVELING', W / 2, H - 120);
+  return cv;
+}
+
+// ==================== Shader ====================
+const VERT = /* glsl */`
+varying vec2 vUv;
+varying vec3 vNrm;
+varying vec3 vPos;
+void main() {
+  vUv = uv;
+  vNrm = normal;
+  vPos = position;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+const FRAG = /* glsl */`
+varying vec2 vUv;
+varying vec3 vNrm;
+varying vec3 vPos;
+
+uniform sampler2D uArt;
+uniform sampler2D uMask;
+uniform sampler2D uBack;
+uniform vec3 uLightDir;
+uniform mat4 uModel;
+uniform float uPitch, uPitchB, uAngleA, uAngleB, uGainB, uRelief, uBrushA, uGlitterD;
+uniform float uSpread, uExposure, uStarIntensity, uStarDensity;
+uniform float uPatternMask, uPatternScale, uPatternStrength;
+uniform float uMaskThreshold, uMaskSoftness, uFoilMultiply;
+
+vec2 gPar;
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+vec2 hash22(vec2 p) {
+  vec3 q = fract(vec3(p.xyx) * vec3(123.34, 234.34, 345.65));
+  q += dot(q, q + 34.45);
+  return fract(vec2(q.x * q.y, q.y * q.z));
+}
+
+// CIE 1931 配色函数（Wyman et al. 2013 分段高斯拟合）
+float pg(float x, float mu, float s1, float s2) {
+  float s = x < mu ? s1 : s2;
+  float t = (x - mu) / s;
+  return exp(-0.5 * t * t);
+}
+vec3 cie1931(float w) {
+  float X = 1.056 * pg(w, 599.8, 37.9, 31.0) + 0.362 * pg(w, 442.0, 16.0, 26.7) - 0.065 * pg(w, 501.1, 20.4, 26.2);
+  float Y = 0.821 * pg(w, 568.8, 46.9, 40.5) + 0.286 * pg(w, 530.9, 16.3, 31.1);
+  float Z = 1.217 * pg(w, 437.0, 11.8, 36.0) + 0.681 * pg(w, 459.0, 26.0, 13.8);
+  return vec3(X, Y, Z);
+}
+vec3 xyz2srgb(vec3 xyz) {
+  return vec3(
+     3.2406 * xyz.x - 1.5372 * xyz.y - 0.4986 * xyz.z,
+    -0.9689 * xyz.x + 1.8758 * xyz.y + 0.0415 * xyz.z,
+     0.0557 * xyz.x - 0.2040 * xyz.y + 1.0570 * xyz.z);
+}
+
+vec3 hueShift(vec3 c, float a) {
+  vec3 k = vec3(0.57735);
+  float cs = cos(a);
+  return c * cs + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - cs);
+}
+
+float patOn(float k) { return step(0.5, mod(floor(uPatternMask / pow(2.0, k)), 2.0)); }
+
+vec4 voronoi(vec2 p) {
+  vec2 ip = floor(p), fp = fract(p);
+  float f1 = 8.0, f2 = 8.0;
+  float cid = 0.0, cid2 = 0.0;
+  for (int j = -1; j <= 1; j++)
+  for (int i = -1; i <=1; i++) {
+    vec2 g = vec2(float(i), float(j));
+    vec2 o = hash22(ip + g);
+    vec2 r = g + o - fp;
+    float d = dot(r, r);
+    if (d < f1) { f2 = f1; f1 = d; cid = hash(ip + g); cid2 = o.x; }
+    else if (d < f2) { f2 = d; }
+  }
+  return vec4(sqrt(f1), f2 - f1, cid, cid2);
+}
+
+// 反解光栅方程：对每层线性光栅，逐衍射级次解出恰好到达眼睛的波长
+vec3 gratingLayer(vec3 N, vec3 V, vec3 L, vec3 T, float pitchNm, float sharpT, float kWin, float gain) {
+  vec3 B = cross(N, T);
+  B *= inversesqrt(max(dot(B, B), 1e-8));
+  vec3 R = reflect(-L, N);
+  float devS = dot(V, B) - dot(R, B);
+  float wSpec = exp(-devS * devS * kWin);       // 镜面方向角窗：彩虹收束成银底窄带
+  float dt = dot(V, T) - dot(R, T);
+  float azW = exp(-dt * dt * sharpT);            // 沿槽动量失配容忍度
+  float dev = dot(V, B) - dot(L, B);             // = m·λ/d
+  vec3 xyz = vec3(0.0);
+  float nOrd = 0.0;
+  for (int m = -10; m <= 10; m++) {
+    if (m == 0) continue;                        // 跳过镜面级
+    float fm = float(m);
+    float lam = pitchNm * dev / fm;
+    if (lam >= 380.0 && lam <= 720.0) {
+      float env = 1.0 / (1.0 + 0.25 * fm * fm);  // blaze 锯齿包络：高次级次仍有能量
+      xyz += cie1931(lam) * env;
+      nOrd += 1.0;
+    }
+  }
+  xyz /= (0.5 + 0.5 * max(nOrd, 1.0));           // 软归一化防多级次爆亮度
+  return xyz2srgb(max(xyz, vec3(0.0))) * (gain * wSpec * azW);
+}
+
+// 8 工艺覆膜：返回 (槽向扰动角, 强度因子, 色相旋转)
+vec3 patternFx(vec2 uv) {
+  vec2 p = uv * vec2(6.3, 8.8) / uPatternScale;
+  float rot = 0.0, modI = 1.0, hue = 0.0;
+  if (patOn(1.0) > 0.5) {                        // 拉丝
+    float lx = p.x * 11.0;
+    float col = floor(lx), fr = fract(lx);
+    float ph = hash(vec2(col, 7.0));
+    float amp = mix(0.6, 1.3, hash(vec2(col, 13.0)));
+    float line = pow(0.5 + 0.5 * sin((fr + ph) * 6.2831), 1.2) * amp;
+    modI *= mix(1.0, mix(0.12, 1.3, line), uBrushA);
+  }
+  if (patOn(2.0) > 0.5) {                        // 斜光柱
+    float beam = pow(0.5 + 0.5 * sin(p.x * 3.5 * 6.2831), 0.8);
+    modI *= mix(0.08, 1.6, beam);
+  }
+  if (patOn(3.0) > 0.5) {                        // 十字纹
+    vec2 q = vec2(p.x + p.y, p.x - p.y) * 0.7071 * 12.0;
+    float lu = pow(0.5 + 0.5 * sin(q.x * 6.2831), 2.0);
+    float lv = pow(0.5 + 0.5 * sin(q.y * 6.2831), 2.0);
+    modI *= 0.12 + 0.55 * (lu + lv) + 1.2 * lu * lv;
+  }
+  if (patOn(4.0) > 0.5) {                        // 碎玻璃
+    vec4 v = voronoi(p * 2.0);
+    rot += (v.z - 0.5) * 2.4;
+    float edge = 1.0 - smoothstep(0.0, 0.055, v.y);
+    hue += (v.w - 0.5) * 2.2;
+    modI *= 0.75 + 0.45 * v.z + 1.6 * edge;
+  }
+  if (patOn(5.0) > 0.5) {                        // 麻点闪粉
+    vec2 g = p * 6.25;
+    vec2 ip = floor(g), fp = fract(g);
+    vec2 o = 0.30 + 0.40 * hash22(ip);
+    float keep = step(hash(ip + 3.0), uGlitterD);
+    float d = length(fp - o);
+    float dot1 = smoothstep(0.28, 0.144, d) * keep;
+    hue += (hash(ip + 9.0) - 0.5) * 2.0 * dot1;
+    modI *= mix(0.10, 1.0, dot1);
+  }
+  if (patOn(6.0) > 0.5) {                        // 水波纹
+    float r1 = sin(length(p - vec2(-1.4, 1.8)) * 11.4) * exp(-length(p - vec2(-1.4, 1.8)) * 0.45) * 0.38;
+    float r2 = sin(length(p - vec2(1.6, -0.9)) * 11.4) * exp(-length(p - vec2(1.6, -0.9)) * 0.45) * 0.32;
+    float r3 = sin(length(p - vec2(0.2, 3.4)) * 11.4) * exp(-length(p - vec2(0.2, 3.4)) * 0.45) * 0.28;
+    float rip = r1 + r2 + r3;
+    rot += rip;
+    modI *= 1.0 + 0.66 * rip;
+  }
+  if (patOn(7.0) > 0.5) {                        // 猫眼
+    vec2 g = p / 0.8;
+    vec2 fp = fract(g);
+    vec2 pupil = vec2(0.5) - fp + gPar * 0.32;   // 视差
+    float pd = length(pupil);
+    float iris = smoothstep(0.30, 0.08, pd);
+    float rim = smoothstep(0.05, 0.0, abs(pd - 0.26));
+    hue += rim * 2.5;
+    modI *= 0.22 + 2.2 * iris;
+  }
+  if (patOn(8.0) > 0.5) {                        // 磨砂：霜粒扰动槽向，彩虹明显碎裂成霜斑
+    float n = hash(floor(p * 140.0));
+    float n2 = hash(floor(p * 55.0) + 7.0);
+    float fr = n * 0.6 + n2 * 0.4;
+    rot += (fr - 0.5) * 1.2;
+    modI *= 0.30 + 1.15 * fr;
+    hue += (n2 - 0.5) * 0.8;
+  }
+  if (patOn(9.0) > 0.5) {                        // 绸缎：对角柔波 + 轻微槽向摆动
+    float w1 = sin((p.x + p.y) * 4.2) * 0.5 + 0.5;
+    float w2 = sin((p.x - p.y) * 6.7 + 1.3) * 0.5 + 0.5;
+    modI *= 0.75 + 0.5 * w1 * w2;
+    rot += (w1 - 0.5) * 0.35;
+  }
+  if (patOn(10.0) > 0.5) {                       // 放射纹：中心放射细线
+    vec2 c = p - vec2(3.15, 4.4);
+    float ang = atan(c.y, c.x);
+    float ray = pow(0.5 + 0.5 * sin(ang * 36.0), 1.5);
+    modI *= 0.35 + 1.1 * ray;
+  }
+  return vec3(rot, modI, hue);
+}
+
+// 解析环境（无纹理，金属永不死黑）
+vec3 envColor(vec3 d, float rough) {
+  float up = clamp(d.y * 0.5 + 0.5, 0.0, 1.0);
+  vec3 env = mix(vec3(0.030), vec3(0.115), up);
+  vec3 kd = uLightDir;
+  vec3 t1 = normalize(cross(kd, vec3(0.0, 1.0, 0.0)));
+  vec3 t2 = cross(kd, t1);
+  float devS = dot(d, t1);
+  float devL = dot(d, t2);
+  float strip = exp(-devS * devS * mix(900.0, 60.0, rough)) * exp(-devL * devL * mix(80.0, 12.0, rough));
+  env += vec3(5.0, 5.3, 5.8) * strip;
+  env += vec3(0.16, 0.18, 0.21) * pow(max(dot(d, kd), 0.0), 2.0);
+  env += vec3(0.10, 0.10, 0.14) * pow(max(dot(d, normalize(vec3(0.75, -0.25, 0.45))), 0.0), mix(24.0, 3.0, rough));
+  return env;
+}
+
+// cosmos 星闪微光栅
+vec3 starField(vec3 N, vec3 V, vec3 L, vec2 xy, float F) {
+  vec3 sum = vec3(0.0);
+  vec2 g = xy / 1.6;
+  vec2 ip = floor(g);
+  vec3 H = normalize(V + L);
+  for (int j = -1; j <= 1; j++)
+  for (int i = -1; i <= 1; i++) {
+    vec2 cell = ip + vec2(float(i), float(j));
+    float rnd = hash(cell);
+    if (rnd > uStarDensity) continue;
+    vec2 pos = (cell + hash22(cell)) * 1.6;
+    vec2 dd = xy - pos;
+    float d = length(dd);
+    vec3 nS = normalize(N + vec3(hash(cell + 1.0) - 0.5, hash(cell + 2.0) - 0.5, 0.0));
+    float emb = exp(-d * d * 220.0) + 0.6 * exp(-d * d * 40.0);
+    float flare = exp(-dd.y * dd.y * 700.0) * exp(-dd.x * dd.x * 25.0)
+                + exp(-dd.x * dd.x * 700.0) * exp(-dd.y * dd.y * 25.0);
+    float core = exp(-d * d * 900.0);
+    float gate = pow(max(dot(nS, H), 0.0), 60.0);
+    float tw = pow(0.5 + 0.5 * sin(dot(nS, H) * 38.0 + rnd * 17.0), 10.0) * 0.85;
+    float flash = gate + tw;
+    float psi = rnd * 6.2831;
+    vec3 Bs = cross(N, normalize(vec3(cos(psi), sin(psi), 0.0)));
+    Bs *= inversesqrt(max(dot(Bs, Bs), 1e-8));
+    float lamS = 1250.0 * (dot(V, Bs) + dot(L, Bs));
+    vec3 tint;
+    if (lamS >= 380.0 && lamS <= 720.0) tint = max(xyz2srgb(cie1931(lamS)), vec3(0.0));
+    else tint = vec3(0.85, 0.88, 0.95);
+    sum += tint * (emb * 0.08 + (flare * 0.8 + core) * flash);
+  }
+  return sum * uStarIntensity * F;
+}
+
+void main() {
+  vec3 N = normalize(vNrm);
+  if (N.z < 0.0) { // 闭合盒体两面都是"正面"三角形，用物体空间法线区分卡背（gl_FrontFacing 不可用）
+    vec3 back = texture2D(uBack, vUv).rgb;
+    vec3 Lb = normalize((vec4(uLightDir, 0.0) * uModel).xyz);
+    float ndlB = max(dot(N, Lb), 0.0);
+    vec3 col = back * (0.35 + 0.65 * ndlB);
+    gl_FragColor = vec4(pow(max(col, vec3(0.0)), vec3(1.0 / 2.2)), 1.0);
+    return;
+  }
+  vec3 wV = normalize(cameraPosition - (uModel * vec4(vPos, 1.0)).xyz);
+  vec3 V = normalize((vec4(wV, 0.0) * uModel).xyz);
+  vec3 L = normalize((vec4(uLightDir, 0.0) * uModel).xyz);
+  vec3 art = texture2D(uArt, vUv).rgb;
+  float mask = texture2D(uMask, vUv).r;
+  float m = smoothstep(uMaskThreshold - uMaskSoftness, uMaskThreshold + uMaskSoftness, mask);
+  float ndl = max(dot(N, L), 0.0);
+  // 哑光纸底
+  float grain = mix(0.85, 1.15, hash(floor(vUv * vec2(420.0, 180.0))));
+  float fiber = 1.0 + 0.08 * (hash(vec2(floor(vUv.y * 300.0), 3.0)) - 0.5);
+  vec3 paper = art * (0.30 + 0.70 * ndl) * grain * fiber;
+  // 工艺
+  gPar = V.xy;
+  vec3 pf = patternFx(vUv);
+  float rot = pf.x * uPatternStrength;
+  float modI = mix(1.0, pf.y, uPatternStrength);
+  float hue = pf.z * uPatternStrength;
+  // 双层交叉光栅
+  float sharpT = mix(1.2, 0.3, uSpread);
+  float kWin = mix(2.2, 0.4, uSpread);
+  vec3 TA = normalize(vec3(cos(uAngleA + rot), sin(uAngleA + rot), 0.0));
+  vec3 TB = normalize(vec3(cos(uAngleB + rot * 0.7), sin(uAngleB + rot * 0.7), 0.0));
+  vec3 fcol = gratingLayer(N, V, L, TA, uPitch, sharpT, kWin, 1.0)
+            + gratingLayer(N, V, L, TB, uPitchB, sharpT, kWin, uGainB);
+  fcol = hueShift(fcol, hue);
+  float lum = dot(fcol, vec3(0.299, 0.587, 0.114));
+  fcol = mix(fcol, vec3(lum), uSpread * 0.35);
+  fcol *= modI;
+  // 银底金属（Schlick + 各向异性拉丝）
+  vec3 R = reflect(-V, N);
+  float stretch = mix(1.0, 4.5, uBrushA * patOn(1.0));
+  vec3 Rs = normalize(R - TA * dot(R, TA) * (1.0 - 1.0 / stretch));
+  vec3 env = envColor(Rs, 0.12);
+  float cnv = max(dot(N, V), 0.0);
+  float F = 0.04 + 0.96 * pow(1.0 - cnv, 5.0);
+  vec3 F0 = vec3(0.94, 0.95, 0.97);
+  vec3 metal = env * (F0 + (1.0 - F0) * pow(1.0 - cnv, 5.0));
+  float reliefGain = pow(clamp(uRelief / 120.0, 0.0, 2.5), 1.5);
+  float Ff = 0.22 + 0.78 * pow(1.0 - cnv, 3.0); // 箔项菲涅尔：正视弱、倾斜爆出（比 Schlick 更宽的角度响应）
+  vec3 foil = fcol * (uExposure * reliefGain * 3.0) * Ff * ndl * grain;
+  vec3 stars = starField(N, V, L, vPos.xy, Ff);
+  // 加性 vs 乘性合成
+  vec3 colAdd = mix(paper, metal + paper * 0.35, m) + (foil + stars) * m;
+  vec3 colMul = paper * (1.0 - m) + m * art * (metal * 2.0 + foil * 1.3 + stars * 0.7) + foil * m * 0.12;
+  vec3 col = mix(colAdd, colMul, uFoilMultiply);
+  // ACES + gamma
+  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  gl_FragColor = vec4(pow(max(col, vec3(0.0)), vec3(1.0 / 2.2)), 1.0);
+}
+`;
+
+// ==================== 场景 ====================
+const LIGHT_DIR = new THREE.Vector3(-0.55, 0.75, 0.60).normalize();
+const canvas = document.getElementById('holo-stage');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x0a0b0d);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 0, 16);
+camera.lookAt(0, 0, 0);
+
+const uniforms = {
+  uArt: { value: null },
+  uMask: { value: null },
+  uBack: { value: null },
+  uLightDir: { value: LIGHT_DIR },
+  uModel: { value: new THREE.Matrix4() },
+  uPitch: { value: 1200 }, uPitchB: { value: 1400 },
+  uAngleA: { value: 30 * Math.PI / 180 }, uAngleB: { value: 100 * Math.PI / 180 },
+  uGainB: { value: 0.5 }, uRelief: { value: 80 }, uBrushA: { value: 0.7 },
+  uGlitterD: { value: 0.7 }, uSpread: { value: 0.15 }, uExposure: { value: 1 },
+  uStarIntensity: { value: 1 }, uStarDensity: { value: 0.45 },
+  uPatternMask: { value: 2 }, uPatternScale: { value: 1 }, uPatternStrength: { value: 1 },
+  uMaskThreshold: { value: 0.5 }, uMaskSoftness: { value: 0.08 }, uFoilMultiply: { value: 1 },
+};
+const material = new THREE.ShaderMaterial({
+  vertexShader: VERT,
+  fragmentShader: FRAG,
+  uniforms: uniforms,
+  side: THREE.DoubleSide,
+});
+const mesh = new THREE.Mesh(new RoundedBoxGeometry(6.3, 8.8, 0.1, 4, 0.045), material);
+scene.add(mesh);
+
+function makeTex(cv) {
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+uniforms.uBack.value = makeTex(drawCardBack());
+
+function onResize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', onResize);
+onResize();
+
+// ==================== 状态与控件（单一代码路径：写控件值 → 推 uniform） ====================
+const PATTERNS = ['素面', '拉丝', '斜光柱', '十字纹', '碎玻璃', '麻点闪粉', '水波纹', '猫眼', '磨砂', '绸缎', '放射纹'];
+const state = {
+  cardIdx: 0, cov: 'full', patMask: 2,
+  ex: 1, si: 1, scale: 1,
+  auto: true, light: false, mul: 1,
+  rx: 0, ry: 0,
+};
+
+const texCache = {};
+function refreshTextures() {
+  const def = CARDS[state.cardIdx];
+  if (!def) return;
+  const key = def.name + '|' + state.cov;
+  if (!texCache[key]) {
+    texCache[key] = { art: makeTex(drawCardFace(def, state.cardIdx)), mask: makeTex(drawFoilMask(def, state.cov)) };
+  }
+  // 覆膜范围变化不能复用 mask
+  const maskKey = def.name + '|mask|' + state.cov;
+  if (!texCache[maskKey]) texCache[maskKey] = makeTex(drawFoilMask(def, state.cov));
+  const artKey = def.name + '|art';
+  if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, state.cardIdx));
+  uniforms.uArt.value = texCache[artKey];
+  uniforms.uMask.value = texCache[maskKey];
+}
+
+const SLIDERS = [
+  ['holo-c-ex', 'uExposure', 'holo-v-ex', 2], ['holo-c-si', 'uStarIntensity', 'holo-v-si', 2], ['holo-c-scale', 'uPatternScale', 'holo-v-scale', 2],
+  ['holo-c-pitch', 'uPitch', 'holo-v-pitch', 0], ['holo-c-pitchB', 'uPitchB', 'holo-v-pitchB', 0],
+  ['holo-c-angleA', 'uAngleA', 'holo-v-angleA', 0, Math.PI / 180], ['holo-c-angleB', 'uAngleB', 'holo-v-angleB', 0, Math.PI / 180],
+  ['holo-c-gainB', 'uGainB', 'holo-v-gainB', 2], ['holo-c-relief', 'uRelief', 'holo-v-relief', 0],
+  ['holo-c-brushA', 'uBrushA', 'holo-v-brushA', 2], ['holo-c-glitterD', 'uGlitterD', 'holo-v-glitterD', 2],
+  ['holo-c-spread', 'uSpread', 'holo-v-spread', 2], ['holo-c-starD', 'uStarDensity', 'holo-v-starD', 2],
+  ['holo-c-patStr', 'uPatternStrength', 'holo-v-patStr', 2],
+  ['holo-c-maskTh', 'uMaskThreshold', 'holo-v-maskTh', 2], ['holo-c-maskSo', 'uMaskSoftness', 'holo-v-maskSo', 2],
+];
+SLIDERS.forEach(([id, uni, label, digits, k]) => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    uniforms[uni].value = parseFloat(el.value) * (k || 1);
+    document.getElementById(label).textContent = parseFloat(el.value).toFixed(digits);
+  });
+});
+
+// 工艺 checkbox
+const patBox = document.getElementById('holo-c-pats');
+PATTERNS.forEach((name, i) => {
+  const lab = document.createElement('label');
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.dataset.bit = i;
+  cb.checked = i === 1;
+  cb.addEventListener('change', () => {
+    state.patMask = 0;
+    patBox.querySelectorAll('input').forEach(x => { if (x.checked) state.patMask |= (1 << parseInt(x.dataset.bit, 10)); });
+    uniforms.uPatternMask.value = state.patMask;
+  });
+  lab.appendChild(cb);
+  lab.appendChild(document.createTextNode(name));
+  patBox.appendChild(lab);
+});
+
+// 卡牌选择（按阵营分组 + 搜索）
+const cardSel = document.getElementById('holo-c-card');
+const searchEl = document.getElementById('holo-c-search');
+function buildCardOptions(filter) {
+  const kw = (filter || '').trim();
+  cardSel.innerHTML = '';
+  const groups = {};
+  CARDS.forEach((d, i) => {
+    if (kw && d.name.indexOf(kw) < 0 && d.race.indexOf(kw) < 0) return;
+    (groups[d.race] = groups[d.race] || []).push(i);
+  });
+  Object.keys(groups).forEach(race => {
+    const og = document.createElement('optgroup');
+    og.label = race;
+    groups[race].forEach(i => {
+      const op = document.createElement('option');
+      op.value = i;
+      op.textContent = (CARDS[i].legend ? '★' : '') + CARDS[i].name + '（' + CARDS[i].cost + '费）';
+      og.appendChild(op);
+    });
+    cardSel.appendChild(og);
+  });
+  if (cardSel.options.length > 0) cardSel.value = String(state.cardIdx);
+}
+buildCardOptions('');
+document.getElementById('holo-c-count').textContent = CARDS.length;
+cardSel.addEventListener('change', () => { state.cardIdx = parseInt(cardSel.value, 10) || 0; refreshTextures(); });
+searchEl.addEventListener('input', () => buildCardOptions(searchEl.value));
+document.getElementById('holo-c-cov').addEventListener('change', e => { state.cov = e.target.value; refreshTextures(); });
+document.getElementById('holo-c-auto').addEventListener('change', e => { state.auto = e.target.checked; });
+document.getElementById('holo-c-light').addEventListener('change', e => {
+  state.light = e.target.checked;
+  if (!state.light) LIGHT_DIR.set(-0.55, 0.75, 0.60).normalize();
+});
+document.getElementById('holo-c-mul').addEventListener('change', e => { uniforms.uFoilMultiply.value = e.target.checked ? 1 : 0; });
+
+// ==================== 姿态：利萨茹 + 拖拽惯性 ====================
+let dragging = false, lastX = 0, lastY = 0, vx = 0, vy = 0;
+let userRx = 0, userRy = 0, lastDragEnd = -1e9, autoT = Math.random() * 100;
+canvas.addEventListener('pointerdown', e => {
+  dragging = true;
+  lastX = e.clientX; lastY = e.clientY;
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  userRy += dx * 0.005;
+  userRx += dy * 0.005;
+  vy = dx * 0.005; vx = dy * 0.005;
+});
+function endDrag() { if (dragging) { dragging = false; lastDragEnd = performance.now(); } }
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+const D2R = Math.PI / 180;
+function poseAt(t, dt) {
+  if (dragging) return [userRx, userRy];
+  const since = (t - lastDragEnd) / 1000;
+  if (since < 2.5) {
+    userRy += vy; userRx += vx;
+    vx *= 0.94; vy *= 0.94;
+    return [userRx, userRy];
+  }
+  // 利萨茹自动摆动
+  const arx = 10 * D2R * Math.sin(0.47 * autoT);
+  const ary = 28 * D2R * Math.sin(0.31 * autoT);
+  if (!state.auto) return [userRx, userRy];
+  const k = Math.min(1, Math.max(0, (since - 2.5) / 1.2));
+  const s = k * k * (3 - 2 * k);
+  return [userRx + (arx - userRx) * s, userRy + (ary - userRy) * s];
+}
+
+// 光源游走
+function lightAt(t) {
+  if (!state.light) return;
+  const tt = t / 1000;
+  const az = Math.atan2(-0.55, 0.60) + 35 * D2R * Math.sin(0.21 * tt);
+  const el = (42.5 + 12.5 * Math.sin(0.13 * tt)) * D2R;
+  LIGHT_DIR.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).normalize();
+}
+
+function renderFrame(t, dt) {
+  autoT += dt;
+  lightAt(t);
+  if (mode !== 'viewer') {
+    packTick(t, dt);
+    renderer.render(scene, camera);
+    return;
+  }
+  const [rx, ry] = poseAt(t, dt);
+  mesh.rotation.set(rx, ry, 0);
+  mesh.updateMatrixWorld();
+  uniforms.uModel.value.copy(mesh.matrixWorld);
+  renderer.render(scene, camera);
+}
+
+let lastT = performance.now();
+let holoRunning = false;
+function loop(t) {
+  if (!holoRunning) return;
+  const dt = Math.min(0.05, (t - lastT) / 1000);
+  lastT = t;
+  renderFrame(t, dt);
+  requestAnimationFrame(loop);
+}
+
+// ==================== 导出 PNG ====================
+document.getElementById('holo-c-png').addEventListener('click', () => {
+  const w = 900, h = Math.round(900 * innerHeight / innerWidth);
+  const pr = renderer.getPixelRatio();
+  renderer.setPixelRatio(1);
+  renderer.setSize(w, h, false);
+  renderFrame(performance.now(), 0);
+  const url = renderer.domElement.toDataURL('image/png');
+  renderer.setPixelRatio(pr);
+  onResize();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (CARDS[state.cardIdx] ? CARDS[state.cardIdx].name : 'card') + '.png';
+  a.click();
+});
+
+
+// ==================== 开卡包（卡包物理 + 撕包动画 + 弹簧扇出） ====================
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+dirLight.position.copy(LIGHT_DIR).multiplyScalar(10);
+scene.add(dirLight);
+
+let mode = 'viewer'; // viewer | pack | opening | fan
+let modeT = 0;
+function setMode(m) {
+  mode = m; modeT = 0;
+  mesh.visible = m === 'viewer';
+  packGroup.visible = m === 'pack' || m === 'opening';
+  fanGroup.visible = m === 'fan';
+  document.getElementById('holo-c-pack').style.display = m === 'viewer' ? '' : 'none';
+  document.getElementById('holo-c-back-viewer').style.display = m === 'viewer' ? 'none' : '';
+  document.getElementById('holo-c-png').style.display = m === 'viewer' ? '' : 'none';
+  document.getElementById('holo-hint').textContent =
+    m === 'viewer' ? 'drag card to rotate (inertial)'
+    : m === 'fan' ? 'click a card to inspect it'
+    : 'drag to shake the pack · click it to tear open';
+}
+
+// 弹簧积分：return [pos, vel]
+function springStep(p, v, target, stiff, damp, dt) {
+  const a = (target - p) * stiff - v * damp;
+  return [p + v * dt + 0.5 * a * dt * dt, v + a * dt];
+}
+
+// ---- 卡包 ----
+function drawPackFace() {
+  const cv = document.createElement('canvas');
+  cv.width = 512; cv.height = 720;
+  const ctx = cv.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 512, 720);
+  g.addColorStop(0, '#2a1a4e');
+  g.addColorStop(0.5, '#141038');
+  g.addColorStop(1, '#080618');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 512, 720);
+  starSpecks(ctx, 0, 0, 512, 720, 160, 99);
+  const rg = ctx.createRadialGradient(256, 320, 20, 256, 320, 220);
+  rg.addColorStop(0, 'rgba(216,185,106,0.95)');
+  rg.addColorStop(0.4, 'rgba(150,110,220,0.5)');
+  rg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(0, 0, 512, 720);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e8d8a0';
+  ctx.font = 'bold 44px "Segoe UI", sans-serif';
+  ctx.fillText('MAGIC', 256, 300);
+  ctx.fillText('THE TRAVELING', 256, 352);
+  ctx.font = '30px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = '#b8b0e0';
+  ctx.fillText('扩 充 卡 包', 256, 420);
+  ctx.font = '22px sans-serif';
+  ctx.fillStyle = '#6a6a8a';
+  ctx.fillText('5 张 / 包', 256, 640);
+  ctx.fillStyle = '#0a0b0d';
+  for (let x = 0; x < 512; x += 24) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0); ctx.lineTo(x + 12, 16); ctx.lineTo(x + 24, 0);
+    ctx.fill();
+  }
+  return cv;
+}
+
+const packGroup = new THREE.Group();
+scene.add(packGroup);
+packGroup.visible = false;
+const packTex = makeTex(drawPackFace());
+const packMat = new THREE.MeshLambertMaterial({ map: packTex });
+const packBody = new THREE.Mesh(new RoundedBoxGeometry(4.2, 6.2, 0.9, 3, 0.12), packMat);
+packGroup.add(packBody);
+const halfL = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 6.2),
+  new THREE.MeshLambertMaterial({ map: packTex.clone(), side: THREE.DoubleSide, transparent: true }));
+halfL.material.map.repeat.set(0.5, 1);
+halfL.material.map.needsUpdate = true;
+const halfR = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 6.2),
+  new THREE.MeshLambertMaterial({ map: packTex.clone(), side: THREE.DoubleSide, transparent: true }));
+halfR.material.map.repeat.set(0.5, 1);
+halfR.material.map.offset.set(0.5, 0);
+halfR.material.map.needsUpdate = true;
+halfL.position.set(-1.05, 0, 0.46);
+halfR.position.set(1.05, 0, 0.46);
+halfL.visible = halfR.visible = false;
+packGroup.add(halfL, halfR);
+
+const packPhys = { rx: 0, ry: 0, vx: 0, vy: 0, scale: 1, vs: 0 };
+
+// ---- 扇出的 5 张卡 ----
+const fanGroup = new THREE.Group();
+scene.add(fanGroup);
+fanGroup.visible = false;
+let fanCards = [];
+
+function spawnFan() {
+  fanCards.forEach(c => fanGroup.remove(c.mesh));
+  fanCards = [];
+  const picks = new Set();
+  while (picks.size < Math.min(5, CARDS.length)) picks.add(Math.floor(Math.random() * CARDS.length));
+  const idxs = [...picks];
+  idxs.forEach((ci, k) => {
+    const def = CARDS[ci];
+    const artKey = def.name + '|art';
+    if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
+    const backKey = 'cardback-tex';
+    if (!texCache[backKey]) texCache[backKey] = uniforms.uBack.value;
+    const mats = [
+      new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
+      new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
+      new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
+      new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
+      new THREE.MeshLambertMaterial({ map: texCache[artKey] }),
+      new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
+    ];
+    const m = new THREE.Mesh(new THREE.BoxGeometry(2.1, 2.94, 0.03), mats);
+    m.userData = { ci };
+    fanGroup.add(m);
+    const ang = (k - 2) * 0.38;
+    fanCards.push({
+      mesh: m, def, idx: ci,
+      tx: Math.sin(ang) * 4.6, ty: -Math.abs(k - 2) * 0.22 - 0.4, tz: -Math.abs(k - 2) * 0.5,
+      trz: -ang * 0.9, delay: k * 0.22,
+      x: 0, y: 0, z: 0, flip: Math.PI, vf: 0,
+      vx: 0, vy: 0, vz: 0,
+    });
+  });
+}
+
+const raycaster = new THREE.Raycaster();
+const pointerNdc = new THREE.Vector2();
+let downX = 0, downY = 0;
+
+function packTick(t, dt) {
+  modeT += dt;
+  if (mode === 'pack') {
+    const bx = 0.06 * Math.sin(0.5 * t / 1000), by = 0.12 * Math.sin(0.33 * t / 1000);
+    [packPhys.rx, packPhys.vx] = springStep(packPhys.rx, packPhys.vx, bx, 26, 6, dt);
+    [packPhys.ry, packPhys.vy] = springStep(packPhys.ry, packPhys.vy, by, 26, 6, dt);
+    [packPhys.scale, packPhys.vs] = springStep(packPhys.scale, packPhys.vs, 1, 30, 8, dt);
+    packGroup.rotation.set(packPhys.rx, packPhys.ry, 0);
+    packGroup.scale.setScalar(Math.max(0.01, packPhys.scale));
+  } else if (mode === 'opening') {
+    const k = Math.min(1, modeT / 0.5);
+    packGroup.rotation.z = Math.sin(modeT * 60) * 0.06 * (1 - k);
+    packGroup.scale.setScalar(1 + 0.15 * k);
+    if (modeT > 0.5 && !halfL.visible) {
+      packBody.visible = false;
+      halfL.visible = halfR.visible = true;
+    }
+    if (modeT > 0.5) {
+      const k2 = Math.min(1, (modeT - 0.5) / 0.7);
+      halfL.rotation.y = -k2 * 1.6;
+      halfR.rotation.y = k2 * 1.6;
+      halfL.position.x = -1.05 - k2 * 3.2;
+      halfR.position.x = 1.05 + k2 * 3.2;
+      halfL.position.z = 0.46 - k2 * 1.2;
+      halfR.position.z = 0.46 - k2 * 1.2;
+      halfL.material.opacity = 1 - k2;
+      halfR.material.opacity = 1 - k2;
+    }
+    if (modeT > 1.1) { spawnFan(); setMode('fan'); }
+  } else if (mode === 'fan') {
+    fanCards.forEach(c => {
+      const local = Math.max(0, modeT - c.delay);
+      [c.x, c.vx] = springStep(c.x, c.vx, c.tx, 40, 8, dt);
+      [c.y, c.vy] = springStep(c.y, c.vy, c.ty, 40, 8, dt);
+      [c.z, c.vz] = springStep(c.z, c.vz, c.tz, 40, 8, dt);
+      const flipTarget = local > 0.4 ? 0 : Math.PI;
+      [c.flip, c.vf] = springStep(c.flip, c.vf, flipTarget, 34, 7, dt);
+      c.mesh.position.set(c.x, c.y, c.z);
+      c.mesh.rotation.set(0, c.flip, c.trz * Math.min(1, local * 1.6));
+    });
+  }
+}
+
+// 指针事件扩展：pack 模式拖拽扰动卡包；fan/pack 模式点选
+canvas.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  if (mode === 'pack') {
+    packPhys.vy += (e.movementX || 0) * 0.0035;
+    packPhys.vx += (e.movementY || 0) * 0.0035;
+  }
+});
+canvas.addEventListener('pointerdown', e => { downX = e.clientX; downY = e.clientY; });
+canvas.addEventListener('pointerup', e => {
+  if (mode !== 'fan' && mode !== 'pack') return;
+  if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return; // 拖拽不算点选
+  pointerNdc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(pointerNdc, camera);
+  if (mode === 'pack') {
+    if (raycaster.intersectObject(packBody).length > 0) setMode('opening');
+    return;
+  }
+  const hits = raycaster.intersectObjects(fanCards.map(c => c.mesh));
+  if (hits.length > 0) {
+    state.cardIdx = hits[0].object.userData.ci;
+    buildCardOptions('');
+    cardSel.value = String(state.cardIdx);
+    refreshTextures();
+    setMode('viewer');
+  }
+});
+
+document.getElementById('holo-c-pack').addEventListener('click', () => {
+  packPhys.rx = 0; packPhys.ry = 0; packPhys.vx = 0; packPhys.vy = 0; packPhys.scale = 0.01; packPhys.vs = 8;
+  packBody.visible = true;
+  halfL.visible = halfR.visible = false;
+  halfL.rotation.set(0, 0, 0); halfR.rotation.set(0, 0, 0);
+  halfL.position.set(-1.05, 0, 0.46); halfR.position.set(1.05, 0, 0.46);
+  halfL.material.opacity = halfR.material.opacity = 1;
+  packGroup.rotation.set(0, 0, 0);
+  setMode('pack');
+});
+document.getElementById('holo-c-back-viewer').addEventListener('click', () => setMode('viewer'));
+
+// ==================== URL 参数（与控件同一条代码路径） ====================
+(function applyUrl() {
+  const q = new URLSearchParams(location.search);
+  const setSlider = (id, v) => {
+    if (v == null) return;
+    const el = document.getElementById(id);
+    el.value = v;
+    el.dispatchEvent(new Event('input'));
+  };
+  if (q.get('card')) {
+    const i = CARDS.findIndex(d => d.name === q.get('card'));
+    if (i >= 0) { state.cardIdx = i; buildCardOptions(''); cardSel.value = String(i); }
+  }
+  if (q.get('cov')) {
+    const cov = q.get('cov');
+    if (['full', 'art', 'reverse'].indexOf(cov) >= 0) {
+      state.cov = cov;
+      document.getElementById('holo-c-cov').value = cov;
+    }
+  }
+  if (q.get('pat') != null && q.get('pat') !== '') {
+    const m = parseInt(q.get('pat'), 10);
+    if (!isNaN(m)) {
+      patBox.querySelectorAll('input').forEach(x => { x.checked = (m & (1 << parseInt(x.dataset.bit, 10))) !== 0; });
+      state.patMask = m;
+      uniforms.uPatternMask.value = m;
+    }
+  }
+  ['ex', 'si', 'scale'].forEach(k => { if (q.get(k)) setSlider('holo-c-' + k, q.get(k)); });
+  if (q.get('auto') === '0') { state.auto = false; document.getElementById('holo-c-auto').checked = false; }
+  if (q.get('light') === '1') { state.light = true; document.getElementById('holo-c-light').checked = true; }
+  if (q.get('mul') === '0') { uniforms.uFoilMultiply.value = 0; document.getElementById('holo-c-mul').checked = false; }
+  if (q.get('rx')) userRx = parseFloat(q.get('rx')) * D2R || 0;
+  if (q.get('ry')) userRy = parseFloat(q.get('ry')) * D2R || 0;
+  if (q.get('rx') || q.get('ry')) { state.auto = false; document.getElementById('holo-c-auto').checked = false; lastDragEnd = performance.now(); }
+})();
+
+refreshTextures();
+
+
+// ---- 与游戏页整合：开放/关闭接口 ----
+window.__holo = {
+  open(cardName) {
+    document.getElementById('holo-viewer').classList.add('show');
+    if (cardName) {
+      const i = CARDS.findIndex(d => d.name === cardName);
+      if (i >= 0) {
+        state.cardIdx = i;
+        buildCardOptions('');
+        cardSel.value = String(i);
+        refreshTextures();
+      }
+    }
+    if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
+  },
+  close() {
+    holoRunning = false;
+    document.getElementById('holo-viewer').classList.remove('show');
+  },
+};
+document.getElementById('holo-close').addEventListener('click', () => window.__holo.close());
+if (location.hash === '#holo' || new URLSearchParams(location.search).get('view') === 'holo') window.__holo.open();
+</script>
+
 </body>
 </html>

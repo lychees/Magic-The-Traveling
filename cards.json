@@ -7,7 +7,7 @@
     "atk": "攻击（数值）",
     "arm": "护甲（数值）",
     "hp": "生命（数值）",
-    "rating": "战斗力评分 = 生命 + 攻击 + 护甲×3 + 词条/法术分值（飞行/远程/石像形态 3，法术护盾X=X 分，再生 1，拒马 0.5，其它每项 2）；法术卡计 1 个法术",
+    "rating": "战斗力评分 = 生命 + 攻击 + 护甲×3 + 词条/法术分值（飞行/远程/石像形态 3，法术护盾X/再生X = X 分，拒马 0.5，其它每项 2）；法术卡计 1 个法术",
     "traits": "特性字符串数组，如 [\"远程\",\"飞行\",\"骑兵\",\"毒Lv2\",\"再生1\",\"法术护盾2\",\"连击\",\"反击2\",\"掠夺\",\"高级水系魔法\"]",
     "spell": "战吼/亡语 key（prayer/draw/wisp/elfHeal/heal/witch/dragoness/charm/necro/reaper/resurrect/skeletonSearch/curse/boneDragon）",
     "spellParam": "spell 的数值参数（如 heal 的治疗量）",
@@ -203,11 +203,11 @@
     {
       "name": "十字军",
       "race": "城堡",
-      "cost": 4,
-      "atk": 3,
+      "cost": 5,
+      "atk": 4,
       "arm": 0,
-      "hp": 6,
-      "rating": 11,
+      "hp": 11,
+      "rating": 17,
       "traits": [
         "连击"
       ],
@@ -434,8 +434,8 @@
       "cost": 6,
       "atk": 3,
       "arm": 0,
-      "hp": 9,
-      "rating": 16,
+      "hp": 12,
+      "rating": 19,
       "traits": [
         "骑兵",
         "法术护盾2"
@@ -476,7 +476,8 @@
       "art": {
         "icon": "🦉",
         "hue": 0
-      }
+      },
+      "legend": true
     },
     {
       "name": "鹰身女妖G",
@@ -493,7 +494,8 @@
       "art": {
         "icon": "🦉",
         "hue": 120
-      }
+      },
+      "legend": true
     },
     {
       "name": "鹰身女妖B",
@@ -510,7 +512,8 @@
       "art": {
         "icon": "🦉",
         "hue": 220
-      }
+      },
+      "legend": true
     },
     {
       "name": "钻石人",
@@ -537,7 +540,7 @@
       "hp": 14,
       "rating": 21,
       "traits": [
-        "毒Lv3"
+        "毒Lv2"
       ],
       "art": {
         "icon": "🦂",
@@ -644,7 +647,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 9,
+      "rating": 10,
       "traits": [
         "再生2"
       ],
@@ -715,6 +718,42 @@
       "art": {
         "icon": "🏴",
         "hue": 210
+      }
+    },
+    {
+      "name": "尸体发火",
+      "race": "墓园",
+      "cost": 2,
+      "atk": 2,
+      "arm": 0,
+      "hp": 7,
+      "legend": true,
+      "rating": 13,
+      "traits": [
+        "尸火"
+      ],
+      "spell": "foeDraw",
+      "art": {
+        "icon": "🧟",
+        "hue": 120
+      }
+    },
+    {
+      "name": "骷髅王李奥锐刻",
+      "race": "墓园",
+      "cost": 6,
+      "atk": 4,
+      "arm": 0,
+      "hp": 13,
+      "legend": true,
+      "rating": 19,
+      "traits": [],
+      "spell": "leoric",
+      "spellMana0": 0,
+      "spellManaMax": 3,
+      "art": {
+        "icon": "👑",
+        "hue": 260
       }
     },
     {
@@ -843,12 +882,13 @@
       "name": "圣殿骑士",
       "race": "城堡",
       "cost": 6,
-      "atk": 5,
+      "atk": 4,
       "arm": 1,
       "hp": 9,
-      "rating": 18,
+      "rating": 19,
       "traits": [
-        "法术护盾1"
+        "法术护盾1",
+        "骑兵"
       ],
       "art": {
         "icon": "🤴",
@@ -987,6 +1027,26 @@
       "art": {
         "icon": "👼",
         "hue": 48
+      }
+    },
+    {
+      "name": "大天使秦瑞雨",
+      "race": "城堡",
+      "cost": 12,
+      "atk": 12,
+      "arm": 1,
+      "hp": 24,
+      "legend": true,
+      "rating": 46,
+      "traits": [
+        "飞行",
+        "鼓舞1",
+        "觉醒2"
+      ],
+      "spell": "resurrect",
+      "art": {
+        "icon": "😇",
+        "hue": 50
       }
     },
     {
@@ -1129,7 +1189,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 8,
-      "rating": 15,
+      "rating": 16,
       "traits": [
         "再生2"
       ],
@@ -1146,10 +1206,10 @@
       "name": "远古树人",
       "race": "壁垒",
       "cost": 6,
-      "atk": 4,
+      "atk": 3,
       "arm": 1,
-      "hp": 8,
-      "rating": 16,
+      "hp": 11,
+      "rating": 19,
       "traits": [
         "再生2"
       ],
@@ -1165,7 +1225,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 12,
-      "rating": 21,
+      "rating": 22,
       "traits": [
         "再生2",
         "法术护盾2"
@@ -1400,7 +1460,8 @@
       "art": {
         "icon": "👸",
         "hue": 310
-      }
+      },
+      "legend": true
     },
     {
       "name": "地狱三头犬",
@@ -1834,7 +1895,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 6,
-      "rating": 10,
+      "rating": 11,
       "traits": [
         "再生2"
       ],
@@ -1990,7 +2051,7 @@
       "atk": 4,
       "arm": 0,
       "hp": 6,
-      "rating": 15,
+      "rating": 17,
       "traits": [
         "飞行"
       ],
@@ -2005,7 +2066,8 @@
         }
       ],
       "spellMana0": 0,
-      "spellManaMax": 2
+      "spellManaMax": 2,
+      "spell": "genieCry"
     },
     {
       "name": "神怪",
@@ -2014,7 +2076,7 @@
       "atk": 5,
       "arm": 0,
       "hp": 7,
-      "rating": 17,
+      "rating": 19,
       "traits": [
         "飞行"
       ],
@@ -2029,7 +2091,8 @@
         }
       ],
       "spellMana0": 1,
-      "spellManaMax": 3
+      "spellManaMax": 3,
+      "spell": "genieCry"
     },
     {
       "name": "蛇女",
@@ -2127,7 +2190,7 @@
     {
       "name": "邪眼",
       "race": "地下城",
-      "cost": 4,
+      "cost": 3,
       "atk": 3,
       "arm": 0,
       "hp": 4,
@@ -2143,7 +2206,7 @@
     {
       "name": "毒眼",
       "race": "地下城",
-      "cost": 5,
+      "cost": 4,
       "atk": 3,
       "arm": 0,
       "hp": 5,
@@ -2163,8 +2226,8 @@
       "cost": 4,
       "atk": 2,
       "arm": 0,
-      "hp": 5,
-      "rating": 10,
+      "hp": 9,
+      "rating": 14,
       "traits": [
         "远程"
       ],
@@ -2179,10 +2242,11 @@
       "cost": 5,
       "atk": 3,
       "arm": 0,
-      "hp": 6,
-      "rating": 12,
+      "hp": 10,
+      "rating": 18,
       "traits": [
-        "远程"
+        "远程",
+        "石化凝视"
       ],
       "art": {
         "icon": "👸",
@@ -2193,29 +2257,31 @@
       "name": "牛头人",
       "race": "地下城",
       "cost": 5,
-      "atk": 5,
+      "atk": 7,
       "arm": 0,
-      "hp": 6,
-      "rating": 11,
+      "hp": 8,
+      "rating": 15,
       "traits": [],
       "art": {
         "icon": "🐂",
         "hue": 255
-      }
+      },
+      "morale0": 3
     },
     {
       "name": "牛头王",
       "race": "地下城",
       "cost": 6,
-      "atk": 6,
+      "atk": 8,
       "arm": 0,
-      "hp": 7,
-      "rating": 13,
+      "hp": 9,
+      "rating": 17,
       "traits": [],
       "art": {
         "icon": "🐃",
         "hue": 265
-      }
+      },
+      "morale0": 5
     },
     {
       "name": "红龙",
@@ -2365,7 +2431,7 @@
       "atk": 3,
       "arm": 0,
       "hp": 5,
-      "rating": 9,
+      "rating": 10,
       "traits": [
         "再生2"
       ],
@@ -2830,7 +2896,7 @@
       "atk": 6,
       "arm": 0,
       "hp": 10,
-      "rating": 22,
+      "rating": 23,
       "traits": [
         "飞行",
         "再生2",
@@ -3011,7 +3077,7 @@
       "name": "奥术智慧",
       "type": "spell",
       "race": "中立",
-      "cost": 3,
+      "cost": 4,
       "school": "水",
       "spellEffect": "arcaneDraw",
       "target": "none",
@@ -3333,7 +3399,7 @@
       "name": "混乱",
       "type": "spell",
       "race": "中立",
-      "cost": 3,
+      "cost": 2,
       "school": "火",
       "spellEffect": "confuse",
       "target": "enemyUnit",

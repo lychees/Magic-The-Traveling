@@ -66,9 +66,9 @@ function validate(data) {
 }
 
 function inject(data) {
-  let html = fs.readFileSync(INDEX_HTML, 'utf8');
-  const blockRe = /<script type="application\/json" id="cards-json">[\s\S]*?<\/script>/;
   const payload = JSON.stringify(data, null, 2);
+  const blockRe = /<script type="application\/json" id="cards-json">[\s\S]*?<\/script>/;
+  let html = fs.readFileSync(INDEX_HTML, 'utf8');
   if (blockRe.test(html)) {
     html = html.replace(blockRe, '<script type="application/json" id="cards-json">\n' + payload + '\n</script>');
   } else {
