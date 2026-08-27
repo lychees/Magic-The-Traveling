@@ -715,6 +715,14 @@
     padding: 6px 14px; font-size: 13px; cursor: pointer;
   }
   #holo-close:hover { background: #3a3a58; }
+  #holo-live {
+    position: absolute; right: 14px; top: 52px; width: 224px; z-index: 10;
+    background: rgba(20,22,30,0.62); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 14px; padding: 10px 12px; backdrop-filter: blur(10px);
+    font-size: 11px; line-height: 1.6; color: #a8a8c2;
+    max-height: calc(100vh - 80px); overflow-y: auto;
+  }
+  #holo-live b { color: #e8d8a0; }
 
 </style>
 </head>
@@ -5083,9 +5091,9 @@
       "race": "工厂",
       "cost": 3,
       "atk": 2,
-      "arm": 2,
-      "hp": 5,
-      "rating": 13,
+      "arm": 1,
+      "hp": 6,
+      "rating": 11,
       "traits": [],
       "art": {
         "icon": "🦔",
@@ -7220,6 +7228,30 @@ function canTarget(attacker, defender) {
   return true;
 }
 
+// 执行一次反击：士气判定 → 复仇累积 → 伤害结算（含石化凝视）。
+// isDefense=true 为守备表示的同时结算反击（不耗反击机会；即使守备方被打死也结算）
+function executeCounter(target, attacker, attackerSide, shaken, depth, isDefense) {
+  if (moraleFail(target)) {
+    log('【' + target.name + '】士气低落，未能反击' + (isDefense ? '' : '（反击机会保留）'));
+    moraleFx(target, 'down');
+    return;
+  }
+  const vg = traitLv(target, '复仇'); // 复仇X：每次反击前攻击 +X（永久累积）
+  if (vg > 0) { target.baseAtk += vg; target.atk += vg; log('【' + target.name + '】复仇：攻击 +' + vg + '（当前 ' + target.atk + '）'); }
+  if (!isDefense) target.counterLeft--;
+  const back = attackDamage(target, attacker);
+  if (back <= 0) {
+    log('【' + target.name + '】' + (isDefense ? '（守备）' : '') + '反击【' + attacker.name + '】，伤害被护甲完全抵挡' + (isDefense ? '' : '（本阶段反击机会已用）'));
+    return;
+  }
+  sfx('counter');
+  dealAttackDamage(target, otherSide(attackerSide), attacker, back, shaken, depth + 1, isDefense ? 'defcounter' : 'counter');
+  if (target.traits.includes('石化凝视') && Math.random() < 0.5) { // 石化凝视：反击后 1/2 概率石化攻击者
+    attacker.petrified = 2;
+    log('【' + target.name + '】的石化凝视：【' + attacker.name + '】被石化 2 回合（无法行动/反击，护甲 +3）');
+  }
+}
+
 function applyPoison(src, dst) {
   const lv = traitLv(src, '毒Lv');
   if (lv > 0 && lv > dst.poison) {
@@ -7339,43 +7371,9 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
     if (target.defense && !target.blind && !(target.petrified > 0) && awake(target) && !attacker.traits.includes('远程')) { // 失明/石化/未觉醒的守备单位也无法反击
       // 守备表示：攻击守备单位的同时必然受到反击——无视攻击方的免反击特性（骑兵/不受反击），但无法反击远程单位，
       // 无限次、与对手攻击同时结算（即使被打死反击也生效），不消耗反击机会；负士气可能导致反击失败
-      if (moraleFail(target)) {
-        log('【' + target.name + '】士气低落，未能反击');
-        moraleFx(target, 'down');
-      } else {
-      const vg = traitLv(target, '复仇'); // 复仇X：每次反击前攻击 +X（永久累积）
-      if (vg > 0) { target.baseAtk += vg; target.atk += vg; log('【' + target.name + '】复仇：攻击 +' + vg + '（当前 ' + target.atk + '）'); }
-      const back = attackDamage(target, attacker);
-      if (back <= 0) log('【' + target.name + '】（守备）反击【' + attacker.name + '】，伤害被护甲完全抵挡');
-      else {
-        sfx('counter');
-        dealAttackDamage(target, otherSide(attackerSide), attacker, back, shaken, depth + 1, 'defcounter');
-        if (target.traits.includes('石化凝视') && Math.random() < 0.5) { // 石化凝视：反击后 1/2 概率石化攻击者
-          attacker.petrified = 2;
-          log('【' + target.name + '】的石化凝视：【' + attacker.name + '】被石化 2 回合（无法行动/反击，护甲 +3）');
-        }
-      }
-      }
+      executeCounter(target, attacker, attackerSide, shaken, depth, true);
     } else if (target.curHp > 0 && target.counterLeft > 0 && canCounter(target, attacker, attackerSide)) {
-      if (moraleFail(target)) {
-        log('【' + target.name + '】士气低落，未能反击（反击机会保留）');
-        moraleFx(target, 'down');
-      } else {
-      const vg2 = traitLv(target, '复仇'); // 复仇X：每次反击前攻击 +X（永久累积）
-      if (vg2 > 0) { target.baseAtk += vg2; target.atk += vg2; log('【' + target.name + '】复仇：攻击 +' + vg2 + '（当前 ' + target.atk + '）'); }
-      target.counterLeft--;
-      const back = attackDamage(target, attacker);
-      if (back <= 0) {
-        log('【' + target.name + '】反击【' + attacker.name + '】，伤害被护甲完全抵挡（本阶段反击机会已用）');
-      } else {
-        sfx('counter');
-        dealAttackDamage(target, otherSide(attackerSide), attacker, back, shaken, depth + 1, 'counter');
-        if (target.traits.includes('石化凝视') && Math.random() < 0.5) { // 石化凝视：反击后 1/2 概率石化攻击者
-          attacker.petrified = 2;
-          log('【' + target.name + '】的石化凝视：【' + attacker.name + '】被石化 2 回合（无法行动/反击，护甲 +3）');
-        }
-      }
-      }
+      executeCounter(target, attacker, attackerSide, shaken, depth, false);
     }
   }
   // 尸火：被近战普通攻击时，随机对伤害来源造成 0-2 点闪电/火焰/冰冻伤害（存活才触发）
@@ -9742,7 +9740,7 @@ document.addEventListener('dblclick', e => {
     def = findDef(el.dataset.name);
   }
   if (def) {
-    if (window.__holo) { window.__holo.open(def.name); return; } // 统一使用 3D 检视
+    if (window.__holo) { window.__holo.open(def.name, mn || null); return; } // 统一使用 3D 检视
     showCardDetail(def, mn); // 3D 不可用时回退 2D 详情
   }
 });
@@ -10177,6 +10175,7 @@ globalThis.__api = {
   <button id="holo-c-back-viewer" style="display:none">返回检视</button>
     </div>
   <div id="holo-hint">drag card to rotate (inertial)</div>
+  <div id="holo-live" style="display:none"></div>
   <button id="holo-close">✕ 关闭</button>
 </div>
 <script type="importmap">
@@ -11408,8 +11407,65 @@ refreshTextures();
 
 
 // ---- 与游戏页整合：开放/关闭接口 ----
+// 右侧信息栏：战场检视 → 士气/临时 buff/状态；组卡检视 → 战斗力计算过程
+function holoLiveHtml(m, def) {
+  const L = ['<b>战场状态</b>'];
+  const num = (v, dflt) => (typeof v === 'number' ? v : dflt);
+  const baseAtk = num(m.baseAtk, m.atk), baseMaxHp = num(m.baseMaxHp, m.maxHp), baseArm = num(m.baseArm, m.arm);
+  const fmt = (cur, base, label) => {
+    const d = cur - base;
+    return '<div>' + label + ' ' + cur + (d !== 0 ? '（基础 ' + base + '，' + (d > 0 ? '+' : '') + d + '）' : '') + '</div>';
+  };
+  L.push(fmt(num(m.atk, 0), baseAtk, '攻'));
+  const armNow = (typeof effArmor === 'function') ? effArmor(m) : num(m.arm, 0);
+  L.push(fmt(armNow, baseArm, '甲'));
+  L.push(fmt(num(m.maxHp, 0), baseMaxHp, '血上限'));
+  L.push('<div>当前生命 ' + Math.max(0, num(m.curHp, 0)) + '</div>');
+  const stance = m.faceDown ? '翻面表示' + (m.defense ? ' · 守备' : '') : (m.defense ? '守备表示' : '攻击表示');
+  L.push('<div>表示：' + stance + (m.grounded ? ' · 落地' : '') + '</div>');
+  L.push('<div>剩余反击机会：' + num(m.counterLeft, 0) + '</div>');
+  const mo = num(m.morale, 0);
+  L.push('<div>士气 ' + (mo > 0 ? '+' : '') + mo + (mo > 0 ? '：每点 10% 概率额外行动一次' : mo < 0 ? '：每点 10% 概率无法行动/反击失败' : '（中性）') + '</div>');
+  if (m.spellManaMax > 0) L.push('<div>法术：' + m.spellMana + '/' + m.spellManaMax + '</div>');
+  if (m.poison > 0) L.push('<div>中毒 Lv' + m.poison + '：每轮部署阶段开始 -' + m.poison + ' 血</div>');
+  if ((m.blind || 0) > 0) L.push('<div>失明 ' + m.blind + ' 回合：无法攻击/反击/施法/切换形态</div>');
+  if ((m.petrified || 0) > 0) L.push('<div>石化 ' + m.petrified + ' 回合：无法行动/反击，护甲 +3</div>');
+  if (m.boonOfLife) L.push('<div>生还的宝礼：在场时我方每次从墓地召唤卡牌摸一张牌</div>');
+  const aw = def && (def.traits || []).find(t => t.startsWith('觉醒'));
+  if (aw) L.push('<div>觉醒 ' + (m._awaken || 0) + '/' + aw.slice(2) + '</div>');
+  const buffs = [];
+  if (num(m.atk, 0) - baseAtk !== 0) buffs.push('攻 ' + (num(m.atk, 0) - baseAtk > 0 ? '+' : '') + (num(m.atk, 0) - baseAtk));
+  if (num(m.maxHp, 0) - baseMaxHp !== 0) buffs.push('血上限 ' + (num(m.maxHp, 0) - baseMaxHp > 0 ? '+' : '') + (num(m.maxHp, 0) - baseMaxHp));
+  if (num(m.arm, 0) - baseArm !== 0) buffs.push('甲 ' + (num(m.arm, 0) - baseArm > 0 ? '+' : '') + (num(m.arm, 0) - baseArm));
+  const defTraits = def ? def.traits : [];
+  (m.traits || []).forEach(t => { if (defTraits.indexOf(t) < 0) buffs.push('获得词条「' + t + '」'); });
+  if (buffs.length) L.push('<div>临时 buff：' + buffs.join('，') + '</div>');
+  return L.join('');
+}
+// 战斗力明细：复用游戏本体的 ratingBreakdownHtml（同一全局作用域）；不可用时本地兜底
+function holoRatingHtml(def) {
+  if (!def || def.rating == null) return '';
+  if (typeof ratingBreakdownHtml === 'function') return ratingBreakdownHtml(def);
+  const LABEL = (typeof UNIT_SPELL_LABEL !== 'undefined') ? UNIT_SPELL_LABEL : {};
+  const w = t => t === '拒马' ? 0.5
+    : (t === '飞行' || t === '远程' || t === '石像形态') ? 3
+    : t.startsWith('法术护盾') ? (parseInt(t.slice(4), 10) || 1)
+    : t.startsWith('再生') ? (parseInt(t.slice(2), 10) || 1)
+    : t.startsWith('觉醒') ? 0 : 2;
+  const parts = [];
+  if (def.type === 'spell') parts.push('法术 2');
+  else {
+    parts.push('血 ' + def.hp, '攻 ' + def.atk);
+    if (def.arm) parts.push('甲 ' + def.arm + '×3');
+    (def.traits || []).forEach(t => parts.push(t + ' ' + w(t)));
+    if (def.spell) parts.push('卡牌特效 2');
+    if (def.actSpell) parts.push((LABEL[def.actSpell] || '单位法术') + ' 2');
+    (def.actSpells || []).forEach(sp => parts.push((LABEL[sp.key] || sp.key) + ' 2'));
+  }
+  return '<b>战斗力 ' + def.rating + '</b>' + parts.map(p => '<div>+ ' + p + '</div>').join('');
+}
 window.__holo = {
-  open(cardName) {
+  open(cardName, liveMinion) {
     document.getElementById('holo-viewer').classList.add('show');
     if (cardName) {
       const i = CARDS.findIndex(d => d.name === cardName);
@@ -11420,10 +11476,15 @@ window.__holo = {
         refreshTextures();
       }
     }
+    const liveEl = document.getElementById('holo-live');
+    const def = CARDS[state.cardIdx];
+    liveEl.innerHTML = liveMinion ? holoLiveHtml(liveMinion, def) : holoRatingHtml(def);
+    liveEl.style.display = liveEl.innerHTML ? '' : 'none';
     if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
   },
   close() {
     holoRunning = false;
+    document.getElementById('holo-live').style.display = 'none';
     document.getElementById('holo-viewer').classList.remove('show');
   },
 };

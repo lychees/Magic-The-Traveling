@@ -80,6 +80,30 @@ function inject(data) {
   fs.writeFileSync(INDEX_HTML, html);
 }
 
+// 战斗力评分统一公式 = 生命 + 攻击 + 护甲×3 + 词条/法术分值
+// （飞行/远程/石像形态 3，法术护盾X/再生X = X 分，拒马 0.5，觉醒 0，其它每项 2；法术卡计 1 个法术）
+function recomputeRatings(data) {
+  const w = t => t === '拒马' ? 0.5
+    : (t === '飞行' || t === '远程' || t === '石像形态') ? 3
+    : t.startsWith('法术护盾') ? (parseInt(t.slice(4), 10) || 1)
+    : t.startsWith('再生') ? (parseInt(t.slice(2), 10) || 1)
+    : t.startsWith('觉醒') ? 0 : 2;
+  let changed = 0;
+  data.cards.forEach(c => {
+    const base = (c.hp || 0) + (c.atk || 0) + (c.arm || 0) * 3;
+    let kw = 0;
+    (c.traits || []).forEach(t => { kw += w(t); });
+    if (c.spell) kw += 2;
+    if (c.actSpell) kw += 2;
+    (c.actSpells || []).forEach(() => { kw += 2; });
+    if (c.type === 'spell') kw += 2;
+    const r = base + kw;
+    if (c.rating !== r) { c.rating = r; changed++; }
+  });
+  fs.writeFileSync(CARDS_JSON, JSON.stringify(data, null, 2) + '\n');
+  console.log('recompute: ' + data.cards.length + ' 张卡评分已按公式重算，' + changed + ' 张有变化');
+}
+
 function main() {
   let data;
   try {
@@ -95,8 +119,10 @@ function main() {
     errors.forEach(e => console.error('  - ' + e));
     process.exit(1);
   }
+  if (process.argv.includes('--recompute')) recomputeRatings(data);
   inject(data);
-  console.log('OK: cards.json 校验通过（' + data.cards.length + ' 张卡），已注入 index.html');
+  console.log('OK: cards.json 校验通过（' + data.cards.length + ' 张卡），已注入 index.html' +
+    (process.argv.includes('--recompute') ? '（含评分重算）' : ''));
 }
 
 main();

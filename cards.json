@@ -4179,9 +4179,9 @@
       "race": "工厂",
       "cost": 3,
       "atk": 2,
-      "arm": 2,
-      "hp": 5,
-      "rating": 13,
+      "arm": 1,
+      "hp": 6,
+      "rating": 11,
       "traits": [],
       "art": {
         "icon": "🦔",
