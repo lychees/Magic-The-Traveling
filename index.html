@@ -12119,12 +12119,13 @@ function makePageMesh(doubleSided) {
 
 function clearGroup(g) { while (g.children.length) g.remove(g.children[0]); }
 
-// 静止状态：右顶页=当前页卡面，左顶页=上一页卡背（pageIdx=0 时为空露出封面）
+// 静止状态：右顶页=当前页卡面，左顶页=已翻页的空白背面（活页不透明，不显示卡背）
 // 层叠：封面顶 -0.02 < 页堆顶(-0.02+h) < 页(+0.004) < 卡袋(+0.012)
+function stackH(n) { return Math.min(0.18, Math.max(0.015, n * 0.03)); }
 function renderBinderIdle() {
   clearGroup(album.topR); clearGroup(album.topL);
-  const hR = Math.min(0.18, Math.max(0.015, (album.pageCount - album.pageIdx - 1) * 0.03));
-  const hL = Math.min(0.18, Math.max(0.015, album.pageIdx * 0.03));
+  const hR = stackH(album.pageCount - album.pageIdx - 1);
+  const hL = stackH(album.pageIdx);
   album.stackR.scale.y = hR; album.stackR.position.y = -0.02 + hR / 2;
   album.stackL.scale.y = hL; album.stackL.position.y = -0.02 + hL / 2;
   const yR = -0.02 + hR + 0.004, yL = -0.02 + hL + 0.004;
@@ -12135,8 +12136,7 @@ function renderBinderIdle() {
   if (album.pageIdx > 0) {
     const pl = makePageMesh(false);
     pl.position.set(-0.15 - BINDER.pageW / 2, yL, 0);
-    album.topL.add(pl);
-    fillPockets(album.topL, album.pageIdx - 1, false, -1, yL + 0.012);
+    album.topL.add(pl); // 空白背面页
   }
   album.pivotY = Math.max(yR, yL) + 0.03; // 翻页轴高度
 }
@@ -12183,17 +12183,28 @@ function startFlip(dir) {
   if (next < 0 || next >= album.pageCount || album.flipT >= 0) return;
   const content = dir > 0 ? album.pageIdx : next; // 动页承载的页码
   clearGroup(album.flipGroup);
-  const pf = makePageMesh(true); // 双面羊皮纸
+  const pf = makePageMesh(true); // 双面羊皮纸（背面空白，不透明）
   pf.position.set(0.15 + BINDER.pageW / 2, 0, 0);
   album.flipGroup.add(pf);
   fillPockets(album.flipGroup, content, true, 1, 0.015);   // 正面卡面
-  fillPockets(album.flipGroup, content, false, 1, -0.015, true); // 背面卡背（随翻转转至左侧朝上）
   album.flipGroup.rotation.z = dir > 0 ? 0 : Math.PI;
   album.flipGroup.position.y = album.pivotY;
   album.flipGroup.visible = true;
   album.flipDir = dir;
   album.flipT = 0;
-  if (dir > 0) album.topR.visible = false; else album.topL.visible = false;
+  if (dir > 0) {
+    // 掀起当前页，下方预先露出下一页（页堆同步减薄一页）
+    const hR = stackH(album.pageCount - album.pageIdx - 2);
+    album.stackR.scale.y = hR; album.stackR.position.y = -0.02 + hR / 2;
+    const yR = -0.02 + hR + 0.004;
+    clearGroup(album.topR);
+    const pr = makePageMesh(false);
+    pr.position.set(0.15 + BINDER.pageW / 2, yR, 0);
+    album.topR.add(pr);
+    fillPockets(album.topR, album.pageIdx + 1, true, 1, yR + 0.012);
+  } else {
+    album.topL.visible = false; // 动页空白背面取代左页
+  }
 }
 
 function finishFlip() {
