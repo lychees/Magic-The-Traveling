@@ -12071,88 +12071,145 @@ function albumCardsOf(race, pageIdx) {
   return cards.slice(pageIdx * 9, pageIdx * 9 + 9);
 }
 
+// ---- 活页夹：中缝书脊、双页展开（万智牌集卡册式） ----
+const BINDER = { pageW: 5.9, pageD: 6.6, coverW: 13.0, coverD: 7.3, cardW: 1.7, cardH: 2.38,
+  colX: [1.25, 3.1, 4.95], rowZ: [-2.05, 0, 2.05] };
+
+function parchmentMat(doubleSided) {
+  if (!texCache['__parch']) texCache['__parch'] = makeParchmentTex(); // 注意：makeParchmentTex 返回的已是 THREE 纹理
+  return new THREE.MeshLambertMaterial({ map: texCache['__parch'], side: doubleSided ? THREE.DoubleSide : THREE.FrontSide });
+}
+function cardBackMat() {
+  if (!texCache['__back']) texCache['__back'] = makeTex(drawCardBack());
+  return new THREE.MeshLambertMaterial({ map: texCache['__back'] });
+}
+
+// 一页的 3×3 卡袋内容。front=true 正面卡面（可点检视），false 卡背（翻面页背面）
+// faceDown=true 仅用于翻页动页的背面（局部朝下，翻转后朝上）；静止页一律朝上
+function fillPockets(parent, pageIdx, front, xSign, y, faceDown) {
+  const cards = albumCardsOf(album.race, pageIdx);
+  cards.forEach((def, k) => {
+    const col = k % 3, row = Math.floor(k / 3);
+    let mesh;
+    if (front) {
+      const ci = CARDS.findIndex(c => c.name === def.name);
+      const artKey = def.name + '|art';
+      if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
+      const n = collection[def.name] || 0;
+      mesh = new THREE.Mesh(new THREE.PlaneGeometry(BINDER.cardW, BINDER.cardH),
+        new THREE.MeshLambertMaterial({ color: n > 0 ? 0xffffff : 0x8a8a8a, transparent: true, opacity: n > 0 ? 1 : 0.55, map: texCache[artKey] }));
+      mesh.userData = { ci };
+    } else {
+      mesh = new THREE.Mesh(new THREE.PlaneGeometry(BINDER.cardW, BINDER.cardH), cardBackMat());
+    }
+    mesh.rotation.x = faceDown ? Math.PI / 2 : -Math.PI / 2;
+    mesh.position.set(xSign * (0.15 + BINDER.colX[col]), y, BINDER.rowZ[row]);
+    parent.add(mesh);
+  });
+}
+
+function makePageMesh(doubleSided) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(BINDER.pageW, BINDER.pageD), parchmentMat(doubleSided));
+  m.rotation.x = -Math.PI / 2;
+  return m;
+}
+
+function clearGroup(g) { while (g.children.length) g.remove(g.children[0]); }
+
+// 静止状态：右顶页=当前页卡面，左顶页=上一页卡背（pageIdx=0 时为空露出封面）
+// 层叠：封面顶 -0.02 < 页堆顶(-0.02+h) < 页(+0.004) < 卡袋(+0.012)
+function renderBinderIdle() {
+  clearGroup(album.topR); clearGroup(album.topL);
+  const hR = Math.min(0.18, Math.max(0.015, (album.pageCount - album.pageIdx - 1) * 0.03));
+  const hL = Math.min(0.18, Math.max(0.015, album.pageIdx * 0.03));
+  album.stackR.scale.y = hR; album.stackR.position.y = -0.02 + hR / 2;
+  album.stackL.scale.y = hL; album.stackL.position.y = -0.02 + hL / 2;
+  const yR = -0.02 + hR + 0.004, yL = -0.02 + hL + 0.004;
+  const pr = makePageMesh(false);
+  pr.position.set(0.15 + BINDER.pageW / 2, yR, 0);
+  album.topR.add(pr);
+  fillPockets(album.topR, album.pageIdx, true, 1, yR + 0.012);
+  if (album.pageIdx > 0) {
+    const pl = makePageMesh(false);
+    pl.position.set(-0.15 - BINDER.pageW / 2, yL, 0);
+    album.topL.add(pl);
+    fillPockets(album.topL, album.pageIdx - 1, false, -1, yL + 0.012);
+  }
+  album.pivotY = Math.max(yR, yL) + 0.03; // 翻页轴高度
+}
+
 function buildBinder(race) {
   if (album.binderGroup) scene.remove(album.binderGroup);
   const g = new THREE.Group();
   scene.add(g);
   album.binderGroup = g;
-  // 活页夹整体向镜头倾斜（书页朝镜头可读）
-  g.rotation.x = 0.6;
-  g.position.y = -0.4;
+  g.rotation.x = 0.5;
+  g.position.y = -0.2;
   album.race = race;
   album.pageIdx = 0;
   album.pageCount = Math.ceil(CARD_DEFS.filter(d => d.race === race).length / 9);
-  const body = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.24, 5.6),
+  album.flipT = -1;
+  const cover = new THREE.Mesh(new THREE.BoxGeometry(BINDER.coverW, 0.24, BINDER.coverD),
     new THREE.MeshLambertMaterial({ color: 0x2a1c12 }));
-  body.position.set(0, -1.35, 0);
-  g.add(body);
+  cover.position.y = -0.14;
+  g.add(cover);
   for (let i = 0; i < 3; i++) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.035, 8, 20),
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.04, 8, 20),
       new THREE.MeshLambertMaterial({ color: 0xc8c0b0 }));
-    ring.position.set(-3.6, -1.15, -1.9 + i * 1.9);
+    ring.position.set(0, 0.06, -2.2 + i * 2.2);
     ring.rotation.y = Math.PI / 2;
     g.add(ring);
   }
-  const pageGroup = new THREE.Group();
-  pageGroup.position.set(-3.55, -1.2, 0);
-  g.add(pageGroup);
-  album.pageGroup = pageGroup;
-  album.pageCards = [];
-  renderBinderPage();
+  album.stackL = new THREE.Mesh(new THREE.BoxGeometry(BINDER.pageW, 1, BINDER.pageD),
+    new THREE.MeshLambertMaterial({ color: 0xcbbd96 }));
+  album.stackL.position.set(-0.15 - BINDER.pageW / 2, -0.06, 0);
+  g.add(album.stackL);
+  album.stackR = album.stackL.clone();
+  album.stackR.position.x = 0.15 + BINDER.pageW / 2;
+  g.add(album.stackR);
+  album.topR = new THREE.Group(); g.add(album.topR);
+  album.topL = new THREE.Group(); g.add(album.topL);
+  album.flipGroup = new THREE.Group();
+  album.flipGroup.visible = false;
+  g.add(album.flipGroup);
+  renderBinderIdle();
 }
 
-function renderBinderPage() {
-  const g = album.pageGroup;
-  album.pageCards.forEach(c => g.remove(c.mesh));
-  album.pageCards = [];
-  const cards = albumCardsOf(album.race, album.pageIdx);
-  const parch = new THREE.MeshLambertMaterial({ map: makeParchmentTex() });
-  const page = new THREE.Mesh(new THREE.PlaneGeometry(7.1, 4.9), parch);
-  page.position.set(3.55, 0.05, 0);
-  page.rotation.x = -Math.PI / 2 + 0.08;
-  g.add(page);
-  cards.forEach((def, k) => {
-    const col = k % 3, row = Math.floor(k / 3);
-    const ci = CARDS.findIndex(c => c.name === def.name);
-    const artKey = def.name + '|art';
-    if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
-    const n = collection[def.name] || 0;
-    const pocket = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 2.75),
-      new THREE.MeshLambertMaterial({ color: n > 0 ? 0xffffff : 0x8a8a8a, transparent: true, opacity: n > 0 ? 1 : 0.55, map: texCache[artKey] }));
-    pocket.position.set(1.3 + col * 2.25, 0.07, -1.65 + row * 1.65);
-    pocket.rotation.x = -Math.PI / 2 + 0.08;
-    pocket.userData = { ci };
-    g.add(pocket);
-    album.pageCards.push({ mesh: pocket, def, idx: ci });
-  });
-}
-
-function flipBinderPage(dir) {
+function startFlip(dir) {
   const next = album.pageIdx + dir;
   if (next < 0 || next >= album.pageCount || album.flipT >= 0) return;
-  album.flipT = 0;
+  const content = dir > 0 ? album.pageIdx : next; // 动页承载的页码
+  clearGroup(album.flipGroup);
+  const pf = makePageMesh(true); // 双面羊皮纸
+  pf.position.set(0.15 + BINDER.pageW / 2, 0, 0);
+  album.flipGroup.add(pf);
+  fillPockets(album.flipGroup, content, true, 1, 0.015);   // 正面卡面
+  fillPockets(album.flipGroup, content, false, 1, -0.015, true); // 背面卡背（随翻转转至左侧朝上）
+  album.flipGroup.rotation.z = dir > 0 ? 0 : Math.PI;
+  album.flipGroup.position.y = album.pivotY;
+  album.flipGroup.visible = true;
   album.flipDir = dir;
+  album.flipT = 0;
+  if (dir > 0) album.topR.visible = false; else album.topL.visible = false;
+}
+
+function finishFlip() {
+  album.pageIdx += album.flipDir;
+  album.flipT = -1;
+  album.flipGroup.visible = false;
+  album.topR.visible = true;
+  album.topL.visible = true;
+  renderBinderIdle();
 }
 
 function albumTick(t, dt) {
-  if (!album) return;
-  if (album.flipT >= 0) {
-    album.flipT += dt / 0.55;
-    const k = Math.min(1, album.flipT);
-    const ang = album.flipDir > 0 ? -Math.PI * k : Math.PI * k;
-    album.pageGroup.rotation.y = ang;
-    if (k >= 0.5 && !album._flipped) {
-      album._flipped = true;
-      album.pageIdx += album.flipDir;
-      renderBinderPage();
-      album.pageGroup.rotation.y = album.flipDir > 0 ? Math.PI : -Math.PI;
-    }
-    if (k >= 1) {
-      album.flipT = -1;
-      album._flipped = false;
-      album.pageGroup.rotation.y = 0;
-    }
-  }
+  if (!album || album.flipT < 0) return;
+  album.flipT += dt / 0.7;
+  const k = Math.min(1, album.flipT);
+  const s = k * k * (3 - 2 * k);
+  album.flipGroup.rotation.z = album.flipDir > 0 ? Math.PI * s : Math.PI * (1 - s);
+  album.flipGroup.position.y = album.pivotY + Math.sin(Math.PI * s) * 0.35; // 翻页弧线
+  if (k >= 1) finishFlip();
 }
 
 canvas.addEventListener('pointerup', e => {
@@ -12165,31 +12222,31 @@ canvas.addEventListener('pointerup', e => {
     if (hits.length > 0) {
       buildBinder(hits[0].object.userData.race);
       setMode('album-binder');
-      document.getElementById('holo-hint').textContent = 'click cards to inspect · ◀ ▶ flip · drag up/down to scroll';
     }
     return;
   }
   if (mode === 'album-binder') {
-    if (e.clientX < innerWidth * 0.33) { flipBinderPage(-1); return; }
-    if (e.clientX > innerWidth * 0.67) { flipBinderPage(1); return; }
-    const hits = raycaster.intersectObjects(album.pageCards.map(c => c.mesh));
+    if (album.flipT >= 0) return;
+    const hits = raycaster.intersectObjects(album.topR.children.filter(o => o.userData.ci !== undefined));
     if (hits.length > 0) {
       const ci = hits[0].object.userData.ci;
-      if (ci >= 0) {
-        state.cardIdx = ci;
-        buildCardOptions('');
-        cardSel.value = String(ci);
-        refreshTextures();
-        state.returnMode = 'album-binder'; // 检视返回活页夹
-        setMode('viewer');
-      }
+      state.cardIdx = ci;
+      buildCardOptions('');
+      cardSel.value = String(ci);
+      refreshTextures();
+      userRx = 0; userRy = 0; // 干净进入检视
+      state.returnMode = 'album-binder';
+      setMode('viewer');
+      return;
     }
+    if (e.clientX < innerWidth * 0.38) { startFlip(-1); return; }
+    if (e.clientX > innerWidth * 0.62) { startFlip(1); return; }
   }
 });
 canvas.addEventListener('pointermove', e => {
   if (mode === 'album-binder' && dragging && !dragCard) {
-    const dy = (e.movementY || 0) * 0.006;
-    album.pageGroup.position.y = Math.max(-1.2, Math.min(1.2, album.pageGroup.position.y + dy));
+    album.binderGroup.rotation.x = Math.max(0.15, Math.min(1.05, album.binderGroup.rotation.x + (e.movementY || 0) * 0.004));
+    album.binderGroup.rotation.y = Math.max(-0.4, Math.min(0.4, album.binderGroup.rotation.y + (e.movementX || 0) * 0.003));
   }
 });
 
@@ -12200,9 +12257,11 @@ setMode = function (m) {
     if (album.shelfGroup) album.shelfGroup.visible = m === 'album-shelf';
     if (album.binderGroup) album.binderGroup.visible = m === 'album-binder';
   }
-  if (m === 'album-shelf' || m === 'album-binder') document.getElementById('holo-live').style.display = 'none';
-  if (m === 'album-shelf') document.getElementById('holo-hint').textContent = 'click a book to open it · drag to look around';
-  if (m === 'album-binder') document.getElementById('holo-hint').textContent = 'click cards to inspect · ◀ ▶ flip · drag up/down to scroll';
+  const inAlbum = m === 'album-shelf' || m === 'album-binder';
+  document.getElementById('holo-panel').style.display = inAlbum ? 'none' : '';
+  if (inAlbum) document.getElementById('holo-live').style.display = 'none';
+  if (m === 'album-shelf') document.getElementById('holo-hint').textContent = 'click a book to open it';
+  if (m === 'album-binder') document.getElementById('holo-hint').textContent = 'click cards to inspect · ◀ ▶ flip · drag to tilt';
   updateClaimButton();
 };
 function albumRaceComplete(race) {
@@ -12334,7 +12393,6 @@ window.__holo = {
     document.getElementById('holo-viewer').classList.add('show');
     if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
     setMode('album-shelf');
-    document.getElementById('holo-hint').textContent = 'click a book to open it · drag to look around';
   },
   openPack(defs, label, variant, race) {
     clearFanObjects();
