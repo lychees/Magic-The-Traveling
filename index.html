@@ -831,6 +831,12 @@
     padding: 6px 14px; font-size: 13px; cursor: pointer;
   }
   #holo-next:hover { background: #3a5a3a; }
+  #holo-claim3d {
+    position: absolute; right: 14px; top: 52px; z-index: 11;
+    background: #4a3a14; color: #ffd86a; border: 1px solid #a8842a; border-radius: 8px;
+    padding: 6px 14px; font-size: 13px; cursor: pointer; font-weight: bold;
+  }
+  #holo-claim3d:hover { background: #5a4a1c; }
   #holo-live {
     position: absolute; right: 14px; top: 52px; width: 224px; z-index: 10;
     background: rgba(20,22,30,0.62); border: 1px solid rgba(255,255,255,0.09);
@@ -1005,10 +1011,7 @@
 </div>
 
 <!-- 集卡册浮层 -->
-<div id="album">
-  <div class="panel">
-    <div id="album-body"></div>
-    <button class="btn" id="album-close">关闭</button>
+</div>
   </div>
 </div>
 
@@ -9437,120 +9440,7 @@ function renderBuilder() {
 
 // ---------- 集卡册浮层 ----------
 let albumRace = null;
-function openAlbum() {
-  albumView = 'shelf';
-  albumSpread = 0;
-  if (albumRace == null) albumRace = RACES[0];
-  renderAlbum();
-  document.getElementById('album').classList.add('show');
-}
-function closeAlbum() {
-  document.getElementById('album').classList.remove('show');
-}
-// 集卡册：每个阵营一本独立的拟物集卡册（书架 → 书页 → 封底），翻页效果加强
-let albumView = 'shelf'; // shelf | pages | back
-let albumSpread = 0;
-function albumSpreadsOf(race) {
-  const cards = CARD_DEFS.filter(d => d.race === race).sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name));
-  const out = [];
-  for (let i = 0; i < cards.length; i += 9) out.push({ race, cards: cards.slice(i, i + 16) });
-  return out;
-}
-function albumMiniHtml(d) {
-  const n = collection[d.name] || 0;
-  const url = faceUrlOf(d);
-  return '<div class="album-mini' + (n === 0 ? ' locked' : '') + '" data-name="' + d.name + '" title="双击打开 3D 检视">' +
-    (url
-      ? '<img class="am-face" src="' + url + '" alt="' + d.name + '">'
-      : '<div class="am-name">' + (d.legend ? '★' : '') + d.name + '</div>' +
-        '<div class="am-art" style="background:' + artBg(d) + '">' + (d.art ? d.art.icon : '❔') + '</div>') +
-    '<div class="album-own">' + (n > 0 ? '拥有 ×' + n : '未收集') + '</div></div>';
-}
-function renderAlbum() {
-  const body = document.getElementById('album-body');
-  if (albumView === 'shelf') {
-    body.innerHTML =
-      '<div class="album-shelf">' +
-      RACES.map(race => {
-        const total = CARD_DEFS.filter(d => d.race === race).length;
-        const owned = CARD_DEFS.filter(d => d.race === race && (collection[d.name] || 0) > 0).length;
-        const done = total > 0 && owned === total;
-        return '<div class="shelf-book' + (done ? ' done' : '') + '" data-action="album-open-book" data-val="' + race + '"' +
-          ' style="background:linear-gradient(160deg,' + raceShade(race, 30) + ',' + raceShade(race, 16) + ' 60%,' + raceShade(race, 8) + ')" title="' + race + '集卡册">' +
-          '<div class="sb-race">' + race + '</div>' +
-          '<div class="sb-prog">' + owned + ' / ' + total + '</div>' +
-          (claimedAlbums[race] ? '<div class="sb-claim">★</div>' : '') +
-        '</div>';
-      }).join('') + '</div>';
-    return;
-  }
-  if (albumView === 'back') {
-    body.innerHTML =
-      '<div class="album-cover album-backcover">' +
-        '<div class="ac-emblem">🂠</div>' +
-        '<div class="ac-title">背 面</div>' +
-        '<button class="btn" data-action="album-back-shelf">回书架</button>' +
-      '</div>';
-    return;
-  }
-  // pages：当前阵营的活页夹（三环 + 九宫格卡袋页）
-  const spreads = albumSpreadsOf(albumRace);
-  const sp = spreads[Math.min(albumSpread, spreads.length - 1)];
-  const owned = CARD_DEFS.filter(d => d.race === albumRace && (collection[d.name] || 0) > 0).length;
-  const total = CARD_DEFS.filter(d => d.race === albumRace).length;
-  const complete = total > 0 && owned === total;
-  const claimed = !!claimedAlbums[albumRace];
-  body.innerHTML =
-    '<div class="album-bookhead">' +
-      '<button class="btn" data-action="album-back-shelf">◀ 回书架</button>' +
-      '<span class="ab-title">' + albumRace + '集卡册 · ' + owned + ' / ' + total + ' 张' + (claimed ? '（已领取传说奖励）' : '') + '</span>' +
-      '<span class="gp-side">第 ' + (albumSpread + 1) + ' / ' + spreads.length + ' 页</span>' +
-    '</div>' +
-    '<div class="binder">' +
-      '<div class="binder-rings"><i></i><i></i><i></i></div>' +
-      '<div class="binder-page">' +
-        sp.cards.map(d => '<div class="pocket">' + albumMiniHtml(d) + '</div>').join('') +
-      '</div>' +
-    '</div>' +
-    '<div class="album-foot">' +
-      '<button class="btn" data-action="album-prev"' + (albumSpread === 0 ? ' disabled' : '') + '>◀ 上一页</button>' +
-      '<button class="btn" data-action="album-next">' + (albumSpread >= spreads.length - 1 ? '封底 ▶' : '下一页 ▶') + '</button>' +
-    '</div>' +
-    (complete && !claimed
-      ? '<div class="album-claimrow"><button class="btn" data-action="album-claim">🎁 集齐了！领取随机传说卡</button></div>'
-      : '');
-}
-function albumFlip(dir) {
-  const spreads = albumSpreadsOf(albumRace);
-  const next = albumSpread + dir;
-  if (dir > 0 && next >= spreads.length) { albumView = 'back'; renderAlbum(); return; }
-  if (next < 0 || next >= spreads.length) return;
-  albumSpread = next;
-  albumView = 'pages';
-  renderAlbum();
-  const el = document.querySelector('.album-spread');
-  if (el) {
-    el.classList.remove('flip-next', 'flip-prev');
-    void el.offsetWidth;
-    el.classList.add(dir > 0 ? 'flip-next' : 'flip-prev');
-  }
-}
 
-// 集齐奖励：随机一张传说卡入库，并用 3D 检视展示
-function claimAlbumReward() {
-  const pool = CARD_DEFS.filter(d => d.legend);
-  if (pool.length === 0 || claimedAlbums[albumRace]) return;
-  const legend = pool[Math.floor(Math.random() * pool.length)];
-  claimedAlbums[albumRace] = true;
-  saveAlbums();
-  collection[legend.name] = (collection[legend.name] || 0) + 1;
-  saveEconomy();
-  log('【集卡册】集齐【' + albumRace + '】全部卡牌，获得传说奖励【' + legend.name + '】！');
-  sfx('pack');
-  renderAlbum();
-  updateGoldUi();
-  if (window.__holo) window.__holo.open(legend.name);
-}
 
 // ---------- 牌库 / 墓地查看浮层 ----------
 function openViewer(side, kind) {
@@ -9796,23 +9686,6 @@ document.addEventListener('click', e => {
     renderBuilder();
     return;
   }
-  if (action === 'album-open-book') { albumRace = el.dataset.val; albumView = 'pages'; albumSpread = 0; renderAlbum(); return; }
-  if (action === 'album-back-shelf') { albumView = 'shelf'; renderAlbum(); return; }
-  if (action === 'album-open') { albumView = 'pages'; albumSpread = 0; renderAlbum(); return; }
-  if (action === 'album-prev') {
-    if (albumView === 'back') { albumView = 'pages'; albumSpread = albumSpreads().length - 1; renderAlbum(); return; }
-    albumFlip(-1);
-    return;
-  }
-  if (action === 'album-next') { albumFlip(1); return; }
-  if (action === 'album-close-book') { albumView = 'cover'; renderAlbum(); return; }
-  if (action === 'album-race') {
-    albumView = 'pages';
-    albumSpread = Math.max(0, albumSpreads().findIndex(sp => sp.race === el.dataset.val));
-    renderAlbum();
-    return;
-  }
-  if (action === 'album-claim') { claimAlbumReward(); return; }
   if (action === 'pack-reveal') { revealPack(parseInt(el.dataset.idx, 10)); return; }
   if (action === 'preset-deck') {
     applyPresetDeck(PRESET_DECKS[parseInt(el.dataset.idx, 10)]);
@@ -10156,7 +10029,7 @@ document.addEventListener('dblclick', e => {
 
 // Esc 关闭浮层
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (window.__holo) window.__holo.close(); closeDetail(); closeViewer(); closeAlbum(); }
+  if (e.key === 'Escape') { if (window.__holo) window.__holo.close(); closeDetail(); closeViewer(); }
 });
 
 // ---------- 拖拽（仅部署阶段：己方随从布阵 + 手牌拖拽落位出牌） ----------
@@ -10402,7 +10275,7 @@ document.getElementById('dev-gold').addEventListener('click', () => {
   log('开发者模式：金币 +1000（当前 ' + gold + '）');
 });
 updateDevUi();
-document.getElementById('album-close').addEventListener('click', closeAlbum);
+
 document.getElementById('viewer').addEventListener('click', e => {
   if (e.target === document.getElementById('viewer')) closeViewer(); // 点击遮罩关闭
 });
@@ -10609,6 +10482,7 @@ globalThis.__api = {
   <div id="holo-hint">drag card to rotate (inertial)</div>
   <div id="holo-live" style="display:none"></div>
   <button id="holo-next" style="display:none">下一包</button>
+  <button id="holo-claim3d" style="display:none">★ 领取传说奖励</button>
   <button id="holo-close">✕ 关闭</button>
 </div>
 <script type="importmap">
@@ -12306,6 +12180,7 @@ canvas.addEventListener('pointerup', e => {
         buildCardOptions('');
         cardSel.value = String(ci);
         refreshTextures();
+        state.returnMode = 'album-binder'; // 检视返回活页夹
         setMode('viewer');
       }
     }
@@ -12325,7 +12200,19 @@ setMode = function (m) {
     if (album.shelfGroup) album.shelfGroup.visible = m === 'album-shelf';
     if (album.binderGroup) album.binderGroup.visible = m === 'album-binder';
   }
+  if (m === 'album-shelf' || m === 'album-binder') document.getElementById('holo-live').style.display = 'none';
+  if (m === 'album-shelf') document.getElementById('holo-hint').textContent = 'click a book to open it · drag to look around';
+  if (m === 'album-binder') document.getElementById('holo-hint').textContent = 'click cards to inspect · ◀ ▶ flip · drag up/down to scroll';
+  updateClaimButton();
 };
+function albumRaceComplete(race) {
+  return CARD_DEFS.filter(d => d.race === race).every(d => (collection[d.name] || 0) > 0);
+}
+function updateClaimButton() {
+  const el = document.getElementById('holo-claim3d');
+  const show = mode === 'album-binder' && album && album.race && !claimedAlbums[album.race] && albumRaceComplete(album.race);
+  el.style.display = show ? '' : 'none';
+}
 
 // ==================== URL 参数（与控件同一条代码路径） ====================
 (function applyUrl() {
@@ -12496,6 +12383,35 @@ window.__holo = {
     if (window.__packClosed) { const f = window.__packClosed; window.__packClosed = null; f(); }
   },
 };
+// 集卡册集齐奖励：随机一张传说卡入库，3D 展示（Esc 返回活页夹）
+function claimAlbumReward3D(race) {
+  if (!race || claimedAlbums[race] || !albumRaceComplete(race)) return;
+  const pool = CARD_DEFS.filter(d => d.legend);
+  if (pool.length === 0) return;
+  const legend = pool[Math.floor(Math.random() * pool.length)];
+  claimedAlbums[race] = true;
+  saveAlbums();
+  collection[legend.name] = (collection[legend.name] || 0) + 1;
+  saveEconomy();
+  log('【集卡册】集齐【' + race + '】全部卡牌，获得传说奖励【' + legend.name + '】！');
+  sfx('pack');
+  updateClaimButton();
+  if (album && album.books) { // 书脊星标刷新
+    const book = album.books.find(b => b.userData.race === race);
+    if (book) { book.material.map = makeSpineTex(race); book.material.needsUpdate = true; }
+  }
+  if (typeof updateGoldUi === 'function') updateGoldUi();
+  const ci = CARDS.findIndex(c => c.name === legend.name);
+  if (ci >= 0) {
+    state.cardIdx = ci;
+    buildCardOptions('');
+    cardSel.value = String(ci);
+    refreshTextures();
+    state.returnMode = 'album-binder';
+    setMode('viewer');
+  }
+}
+document.getElementById('holo-claim3d').addEventListener('click', () => claimAlbumReward3D(album && album.race));
 document.getElementById('holo-next').addEventListener('click', () => {
   if (window.__packNext) { window.__packNext(); return; }
   if (state.boxBatches && state.boxBatches.length > 0) {
