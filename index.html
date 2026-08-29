@@ -12046,7 +12046,8 @@ function buildShelf() {
   const back = new THREE.Mesh(new THREE.BoxGeometry(16, 8, 0.3), wood);
   back.position.set(0, 0.4, -1.2);
   shelfGroup.add(back);
-  [-1.4, -3.6].forEach(y => {
+  const BOARD_Y = [0.2, -3.0]; // 两层隔板（间距 3.2，最高的书也不穿模）
+  BOARD_Y.forEach(y => {
     const board = new THREE.Mesh(new THREE.BoxGeometry(16, 0.25, 2.4), wood);
     board.position.set(0, y, 0);
     shelfGroup.add(board);
@@ -12055,10 +12056,12 @@ function buildShelf() {
   RACES.forEach((race, i) => {
     const row = i < 7 ? 0 : 1;
     const col = row === 0 ? i : i - 7;
+    const h = 2.5 + (i % 3) * 0.15;
     const book = new THREE.Mesh(
-      new THREE.BoxGeometry(0.92, 2.5 + (i % 3) * 0.18, 1.7),
+      new THREE.BoxGeometry(0.92, h, 1.7),
       new THREE.MeshLambertMaterial({ map: makeSpineTex(race) }));
-    book.position.set(-5.2 + col * 1.72, (row === 0 ? -0.02 : -2.22), 0.1);
+    const boardTop = BOARD_Y[row] + 0.125; // 书底精确落在隔板顶面
+    book.position.set(-5.2 + col * 1.72, boardTop + h / 2, 0.1);
     book.userData = { race };
     shelfGroup.add(book);
     books.push(book);
