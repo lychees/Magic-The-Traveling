@@ -6242,10 +6242,11 @@ function tone(freq, dur, opts) {
   o.start(t); o.stop(t + dur + 0.05);
 }
 
-// 滤波噪声闷响（攻击命中等）
-function noiseBurst(cutoff, dur, vol) {
+// 滤波噪声闷响（攻击命中等）；opts: {type 滤波类型, slideTo 截止频率扫频终点, delay 延迟}
+function noiseBurst(cutoff, dur, vol, opts) {
   const ctx = ensureAudio();
   if (!ctx) return;
+  opts = opts || {};
   const len = Math.floor(ctx.sampleRate * dur);
   const buf = ctx.createBuffer(1, len, ctx.sampleRate);
   const d = buf.getChannelData(0);
@@ -6253,10 +6254,13 @@ function noiseBurst(cutoff, dur, vol) {
   const src = ctx.createBufferSource();
   src.buffer = buf;
   const f = ctx.createBiquadFilter();
-  f.type = 'lowpass'; f.frequency.value = cutoff;
+  f.type = opts.type || 'lowpass';
+  const t = ctx.currentTime + (opts.delay || 0);
+  f.frequency.setValueAtTime(cutoff, t);
+  if (opts.slideTo) f.frequency.exponentialRampToValueAtTime(opts.slideTo, t + dur);
   const g = ctx.createGain(); g.gain.value = vol;
   src.connect(f); f.connect(g); g.connect(ctx.destination);
-  src.start();
+  src.start(t);
 }
 
 // 所有发声入口：静音 / 未初始化（尚无用户交互）/ 无 AudioContext 时静默返回
@@ -6281,6 +6285,22 @@ function sfx(name) {
     case 'epic': tone(65, .5, { type: 'sawtooth', slideTo: 130, vol: .12 }); noiseBurst(300, .3, .25); [523, 784, 1047].forEach((f, i) => tone(f, .3, { type: 'triangle', delay: .18 + i * .1, vol: .07 })); break;
     // 士气高涨（额外行动）：明亮上扬的号角式琶音
     case 'moraleUp': [392, 523, 659, 784, 1047].forEach((f, i) => tone(f, .12, { type: 'triangle', delay: i * .05, vol: .09 })); break;
+    // 撕卡包：带通噪声下扫 + 三次短裂响（纸张撕裂）
+    case 'tear': noiseBurst(3200, .16, .22, { type: 'bandpass', slideTo: 700 }); [0, .05, .1].forEach(d => noiseBurst(2600, .04, .16, { delay: d })); break;
+    // 撕卡盒：低频闷响 + 更粗粝的长撕裂
+    case 'boxOpen': noiseBurst(420, .18, .3); noiseBurst(2400, .3, .18, { type: 'bandpass', slideTo: 500 }); [0, .07, .15].forEach(d => noiseBurst(1800, .05, .14, { delay: d })); break;
+    // 卡片扇形展开：带通噪声上扫（挥动）
+    case 'whoosh': noiseBurst(600, .26, .18, { type: 'bandpass', slideTo: 2800 }); break;
+    // 卡片散落：一串随机音高的短促碰撞
+    case 'scatter': [0, .05, .11, .16, .22].forEach(d => noiseBurst(1500 + Math.random() * 1400, .05, .13, { delay: d })); break;
+    // 集卡册翻页：纸张挥动上扫 + 延迟落地轻拍
+    case 'pageTurn': noiseBurst(900, .2, .16, { type: 'bandpass', slideTo: 3200 }); noiseBurst(500, .07, .14, { delay: .45 }); break;
+    // 打开集卡册：低鸣 + 皮革厚纸摩擦
+    case 'albumOpen': tone(95, .3, { type: 'sawtooth', slideTo: 65, vol: .05 }); noiseBurst(700, .28, .13); break;
+    // 领取传说奖励：华丽上行琶音 + 高频闪光
+    case 'claim': [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .24, { type: 'triangle', delay: i * .09, vol: .09 })); tone(2093, .5, { type: 'sine', delay: .5, vol: .04 }); noiseBurst(6000, .4, .05, { type: 'highpass' }); break;
+    // 卡盒全部开完平铺：轻快三连上行
+    case 'gridDone': [660, 880, 1175].forEach((f, i) => tone(f, .14, { type: 'triangle', delay: i * .08, vol: .08 })); break;
     // 士气低落（无法行动/反击失败）：低沉不协和的下坠音
     case 'moraleDown': tone(220, .3, { type: 'sawtooth', slideTo: 110, vol: .08 }); tone(233, .3, { type: 'sawtooth', slideTo: 116, vol: .06, delay: .05 }); break;
   }
@@ -11733,6 +11753,7 @@ function openMiniPack(pick) {
   const i = miniPacks.findIndex(x => x.mesh === pick.mesh || x.batchIdx === pick.batchIdx);
   if (i < 0) return;
   const pack = miniPacks.splice(i, 1)[0];
+  sfx('tear');
   fanGroup.remove(pack.mesh);
   state.boxRemaining = miniPacks.length;
   const batch = pack.batch;
@@ -11771,6 +11792,7 @@ function openMiniPack(pick) {
       c.mesh.scale.setScalar(0.75);
     });
     document.getElementById('holo-hint').textContent = '卡盒已全部开启（共 ' + revealedCards.length + ' 张）· 双击检视，可拖动';
+    sfx('gridDone');
   } else {
     document.getElementById('holo-hint').textContent = 'click a pack to open it（剩 ' + miniPacks.length + ' 包）';
   }
@@ -11819,6 +11841,7 @@ function packTick(t, dt) {
     if (modeT > 0.5 && tearHalves && !tearHalves[0].visible) {
       body.visible = false;
       tearHalves.forEach(h => { h.visible = true; h.position.x = 0; });
+      sfx(state.packVariant === 'box' ? 'boxOpen' : 'tear'); // 撕开瞬间发声
     }
     if (modeT > 0.5 && tearHalves) {
       const k2 = Math.min(1, (modeT - 0.5) / 0.7);
@@ -11836,8 +11859,8 @@ function packTick(t, dt) {
     }
     if (modeT > 1.1) {
       if (tearHalves) tearHalves.forEach(h => { h.visible = false; });
-      if (state.boxBatches && state.boxBatches.length > 0) { spawnMiniPacks(); setMode('boxfan'); }
-      else { spawnFan(); setMode('fan'); }
+      if (state.boxBatches && state.boxBatches.length > 0) { spawnMiniPacks(); setMode('boxfan'); sfx('scatter'); }
+      else { spawnFan(); setMode('fan'); sfx('whoosh'); }
       if (window.__packCommit) { const f = window.__packCommit; window.__packCommit = null; f(); }
     }
   } else if (mode === 'boxfan') {
@@ -12193,6 +12216,7 @@ function startFlip(dir) {
   fillPockets(album.flipGroup, leaf * 2, 'R', 0.015); // 正面页
   if (leaf * 2 + 1 < album.pageCount) fillPockets(album.flipGroup, leaf * 2 + 1, 'flipBack', -0.015); // 背面页（奇数页时无）
   album.flipGroup.rotation.z = dir > 0 ? 0 : Math.PI;
+  sfx('pageTurn');
   album.flipGroup.position.y = album.pivotY;
   album.flipGroup.visible = true;
   album.flipDir = dir;
@@ -12243,6 +12267,7 @@ canvas.addEventListener('pointerup', e => {
     const hits = raycaster.intersectObjects(album.books);
     if (hits.length > 0) {
       buildBinder(hits[0].object.userData.race);
+      sfx('albumOpen');
       setMode('album-binder');
     }
     return;
@@ -12415,6 +12440,7 @@ window.__holo = {
     document.getElementById('holo-viewer').classList.add('show');
     if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
     setMode('album-shelf');
+    sfx('albumOpen');
   },
   openPack(defs, label, variant, race) {
     clearFanObjects();
@@ -12474,7 +12500,7 @@ function claimAlbumReward3D(race) {
   collection[legend.name] = (collection[legend.name] || 0) + 1;
   saveEconomy();
   log('【集卡册】集齐【' + race + '】全部卡牌，获得传说奖励【' + legend.name + '】！');
-  sfx('pack');
+  sfx('claim');
   updateClaimButton();
   if (album && album.books) { // 书脊星标刷新
     const book = album.books.find(b => b.userData.race === race);
