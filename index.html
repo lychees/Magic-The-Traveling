@@ -12184,7 +12184,7 @@ function buildBinder(race) {
 
 function startFlip(dir) {
   const next = album.leafIdx + dir;
-  if (next < 0 || next >= album.leafCount || album.flipT >= 0) return;
+  if (next < 0 || next > album.leafCount || album.flipT >= 0) return; // leafIdx ∈ [0, leafCount]：全部翻完后右侧为封底
   const leaf = dir > 0 ? album.leafIdx : next; // 动页承载的活叶
   clearGroup(album.flipGroup);
   const pf = makePageMesh(true); // 双面羊皮纸
