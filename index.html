@@ -385,6 +385,10 @@
   .db-card .c-traits { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; min-height: 16px; }
   .db-card .c-spell { font-size: 10px; color: #a8c8e8; text-align: center; flex: 1; margin-top: 2px; line-height: 1.35; }
   .db-card .c-stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
+  .db-card { position: relative; }
+  .db-face { position: absolute; inset: 0; background-size: cover; background-position: center; border-radius: inherit; }
+  .db-card .picked-badge, .db-card .rating-badge { z-index: 2; }
+  .db-card .db-own { position: absolute; bottom: 2px; left: 0; right: 0; z-index: 2; }
 
   #midbar { display: flex; gap: 14px; margin: 8px 0; align-items: stretch; }
   #end-turn {
@@ -432,6 +436,112 @@
   #card-pick.show { display: flex; }
   #card-pick .panel { background: #1e1e2e; border: 2px solid #d8b96a; border-radius: 12px; padding: 20px 26px; max-width: 520px; max-height: 70vh; overflow-y: auto; }
   #card-pick h3 { color: #d8b96a; font-size: 15px; margin-bottom: 10px; }
+  #album { display: none; position: fixed; inset: 0; background: #000a; align-items: center; justify-content: center; z-index: 33; }
+  #album.show { display: flex; }
+  #album .panel { background: #1e1e2e; border: 2px solid #d8b96a; border-radius: 12px; padding: 18px 22px; max-width: 760px; max-height: 78vh; overflow-y: auto; }
+  #album h3 { color: #d8b96a; font-size: 15px; margin-bottom: 8px; }
+  .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; margin-top: 6px; }
+  .album-mini { position: relative; border: 1px solid #3a3a55; border-radius: 8px; padding: 5px 4px 4px; text-align: center; }
+  .album-mini .am-face { width: 100%; display: block; border-radius: 6px; box-shadow: 0 2px 8px #000a; }
+  .album-mini.locked .am-face { filter: grayscale(0.85) brightness(0.6); }
+  .album-mini .am-cost {
+    position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
+    background: #2a4a9a; border: 2px solid #9ab8f0; color: #fff; font-size: 11px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center; z-index: 1;
+  }
+  .album-mini .am-name { font-size: 11px; color: #f0ead8; margin: 2px 0 4px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .album-mini .am-art { width: 44px; height: 44px; margin: 0 auto 4px; border-radius: 8px; font-size: 30px; display: flex; align-items: center; justify-content: center; }
+  .album-mini .am-stats { font-size: 10px; color: #b8b8c8; margin-bottom: 2px; }
+  #album .panel { width: 1060px; max-width: 96vw; height: 660px; max-height: 92vh; overflow: hidden; padding: 14px 18px; }
+  .album-cover {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    background: linear-gradient(160deg, #2a2440, #16122a 60%, #0c0a18);
+    border-radius: 10px; border: 2px solid #d8b96a; box-shadow: inset 0 0 60px #000a, 0 8px 40px #000c;
+  }
+  .album-cover .ac-emblem { font-size: 110px; opacity: 0.85; }
+  .album-cover .ac-title { font-size: 42px; color: #e8d8a0; letter-spacing: 18px; font-weight: bold; }
+  .album-cover .ac-sub { font-size: 14px; color: #8a8aa0; letter-spacing: 4px; }
+  .album-cover .btn { font-size: 18px; padding: 10px 34px; }
+  .album-backcover { background: linear-gradient(200deg, #1a1630, #0c0a18); }
+  .album-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .album-spread {
+    display: flex; height: calc(100% - 100px); min-height: 0;
+    background: linear-gradient(90deg, #d8c9a0, #cbb894 50%, #c8b890 50%, #d0c098);
+    border-radius: 8px; border: 1px solid #a89060;
+    box-shadow: 0 4px 24px #000a, inset 0 0 30px #fff3;
+  }
+  .album-spread .album-page {
+    flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    padding: 14px; align-content: start; overflow-y: auto;
+  }
+  .album-spread .album-spine {
+    width: 14px; flex: none;
+    background: linear-gradient(90deg, #0000, #0006 50%, #fff3 52%, #0000);
+  }
+  .album-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .album-claimrow { text-align: center; margin-top: 6px; }
+
+
+  .binder {
+    display: flex; height: calc(100% - 100px); min-height: 0;
+    background: linear-gradient(160deg, #33241a, #241810 55%, #1a100a);
+    border-radius: 10px; border: 1px solid #6a4a2a;
+    box-shadow: 0 6px 30px #000c, inset 0 0 40px #0008;
+    padding: 10px 12px 10px 6px;
+  }
+  .binder-rings {
+    width: 26px; flex: none; display: flex; flex-direction: column;
+    align-items: center; justify-content: space-evenly;
+  }
+  .binder-rings i {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #e8e0c8, #8a8070 60%, #4a4438);
+    border: 1px solid #2a2620; box-shadow: 0 1px 3px #000a;
+  }
+  .binder-page {
+    flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    padding: 12px; align-content: start; overflow-y: auto;
+    background: linear-gradient(135deg, #d8c9a0, #cbb894 55%, #c4b48c);
+    border-radius: 6px; box-shadow: inset 0 0 20px #0004;
+  }
+  .pocket {
+    background: rgba(255,255,255,0.06); border: 1px solid #8a7a5a; border-radius: 8px;
+    box-shadow: inset 0 0 10px #0007, 0 1px 2px #fff4;
+    padding: 4px; position: relative;
+  }
+  .album-shelf {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px;
+    padding: 14px; height: 100%; overflow-y: auto; align-content: start;
+  }
+  .shelf-book {
+    height: 180px; border-radius: 6px 12px 12px 6px; border: 1px solid #d8b96a;
+    box-shadow: 4px 4px 14px #000a, inset 0 0 24px #0006;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    cursor: pointer; transition: transform 0.15s;
+  }
+  .shelf-book:hover { transform: translateY(-6px) rotate(-1deg); }
+  .shelf-book.done { border-color: #7ac87a; }
+  .shelf-book .sb-race { font-size: 22px; font-weight: bold; color: #f0ead8; letter-spacing: 6px; writing-mode: vertical-rl; text-orientation: upright; }
+  .shelf-book .sb-prog { font-size: 12px; color: #c8c8d8; }
+  .shelf-book .sb-claim { font-size: 18px; color: #ffd86a; }
+  .album-bookhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .album-bookhead .ab-title { font-size: 14px; color: #e8d8a0; font-weight: bold; }
+  .album-spread.flip-next { animation: flipN 0.55s cubic-bezier(0.2, 0.6, 0.3, 1); transform-origin: left center; }
+  .album-spread.flip-prev { animation: flipP 0.55s cubic-bezier(0.2, 0.6, 0.3, 1); transform-origin: right center; }
+  @keyframes flipN {
+    0% { transform: perspective(2200px) rotateY(-78deg); opacity: 0.1; box-shadow: 30px 0 40px #000c; }
+    60% { opacity: 1; }
+    100% { transform: perspective(2200px) rotateY(0deg); opacity: 1; box-shadow: none; }
+  }
+  @keyframes flipP {
+    0% { transform: perspective(2200px) rotateY(78deg); opacity: 0.1; box-shadow: -30px 0 40px #000c; }
+    60% { opacity: 1; }
+    100% { transform: perspective(2200px) rotateY(0deg); opacity: 1; box-shadow: none; }
+  }
+  .album-mini.locked { opacity: 0.35; filter: grayscale(0.85); }
+  .album-mini .c-name { font-size: 11px; color: #d8d8e0; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .album-mini .art { margin: 2px auto; }
+  .album-own { font-size: 10px; color: #8a8a9a; }
   .gp-side { font-size: 12px; color: #8a8a9a; margin: 8px 0 4px; }
   .gp-entry {
     display: block; width: 100%; text-align: left; margin: 3px 0;
@@ -745,6 +855,9 @@
         <button class="btn" id="buy-fpack">阵营卡包（150🪙）</button>
         <button class="btn" id="buy-fbox">阵营卡盒（600🪙）</button>
       </span>
+      <button class="btn" id="open-album">集卡册</button>
+      <button class="btn" id="dev-toggle" title="开发者模式：开启后显示刷钱按钮">开发者模式</button>
+      <button class="btn" id="dev-gold" style="display:none" title="开发者刷钱：+1000 金币">+1000🪙</button>
       <button class="btn mode-btn active" id="mode-ai">人机对战</button>
       <button class="btn mode-btn" id="mode-pvp">双人对战</button>
       <button class="btn mode-btn" id="mode-net">联机对战</button>
@@ -888,6 +1001,14 @@
 <div id="card-pick">
   <div class="panel">
     <div id="card-pick-body"></div>
+  </div>
+</div>
+
+<!-- 集卡册浮层 -->
+<div id="album">
+  <div class="panel">
+    <div id="album-body"></div>
+    <button class="btn" id="album-close">关闭</button>
   </div>
 </div>
 
@@ -5483,16 +5604,21 @@ const storage = (function () {
 
 let collection = {}; // {卡名: 拥有数量}
 let gold = 0;
+let claimedAlbums = {}; // {阵营: true} 集卡册传说奖励已领取标记
 
 function saveEconomy() {
   try { storage.setItem('mtcg-collection', JSON.stringify(collection)); } catch (e) {}
   try { storage.setItem('mtcg-gold', String(gold)); } catch (e) {}
+}
+function saveAlbums() {
+  try { storage.setItem('mtcg-albums', JSON.stringify(claimedAlbums)); } catch (e) {}
 }
 
 function loadEconomy() {
   let rawGold = null;
   try {
     collection = JSON.parse(storage.getItem('mtcg-collection') || '{}') || {};
+    claimedAlbums = JSON.parse(storage.getItem('mtcg-albums') || '{}') || {};
     rawGold = storage.getItem('mtcg-gold');
   } catch (e) { collection = {}; }
   gold = parseInt(rawGold, 10);
@@ -5942,7 +6068,7 @@ function buyFactionPack(race) {
     window.__packCommit = null;
   };
   window.__packClosed = () => { renderBuilder(); window.__packClosed = null; };
-  window.__holo.openPack(defs, race + '卡包');
+  window.__holo.openPack(defs, race + '卡包', 'pack', race);
   updateGoldUi();
   return true;
 }
@@ -5953,32 +6079,35 @@ function buyFactionBox(race) {
   const pool = CARD_DEFS.filter(d => d.race === race);
   if (pool.length === 0) return false;
   gold -= FACTION_BOX_PRICE;
+  // 保底：每包至少 1 张评分 ≥10；第一包至少 1 张评分 ≥15（卡盒与卡包的内容差异）
+  const rollFive = () => {
+    const defs = [];
+    for (let i = 0; i < PACK_SIZE; i++) defs.push(pool[Math.floor(Math.random() * pool.length)]); // 卡盒每包 5 张
+    return defs;
+  };
+  const guarantee = (defs, minR) => {
+    let guard = 0;
+    while (!defs.some(d => (d.rating || 0) >= minR) && guard++ < 20) {
+      defs[Math.floor(Math.random() * defs.length)] = pool[Math.floor(Math.random() * pool.length)];
+    }
+    return defs;
+  };
   const queue = [];
   for (let k = 0; k < FACTION_BOX_PACKS; k++) {
-    const defs = [];
-    for (let i = 0; i < PACK_SIZE; i++) defs.push(pool[Math.floor(Math.random() * pool.length)]);
-    queue.push(defs);
+    queue.push(guarantee(rollFive(), k === 0 ? 15 : 10));
   }
   saveEconomy();
   sfx('pack');
-  const openNext = () => {
-    const defs = queue.shift();
-    if (!defs) { window.__packNext = null; return; }
-    window.__packCommit = () => {
-      grantCards(defs);
-      log('【' + race + '卡盒】第 ' + (FACTION_BOX_PACKS - queue.length) + ' 包入库：' + defs.map(d => d.name).join('、'));
-      window.__packCommit = null;
-    };
-    if (queue.length > 0) {
-      window.__packNext = openNext;
-      window.__packClosed = null;
-    } else {
-      window.__packNext = null;
-      window.__packClosed = () => { renderBuilder(); window.__packClosed = null; };
-    }
-    window.__holo.openPack(defs, race + '卡盒 · 第 ' + (FACTION_BOX_PACKS - queue.length) + '/' + FACTION_BOX_PACKS + ' 包');
+  // 卡盒：先开盒出 5 个卡包，逐个撕开（每包入库由批次钩子结算）
+  window.__packCommit = () => {
+    const defs = window.__packBatchDefs || queue[0] || [];
+    grantCards(defs);
+    log('【' + race + '卡盒】入库：' + defs.map(d => d.name).join('、'));
+    window.__packCommit = null;
   };
-  openNext();
+  window.__packNext = null;
+  window.__packClosed = () => { renderBuilder(); window.__packClosed = null; };
+  window.__holo.openBox(queue.slice(), race);
   updateGoldUi();
   return true;
 }
@@ -5999,7 +6128,7 @@ function buyPack3D() {
     renderBuilder(); // 收藏已变化，刷新组牌界面
     window.__packClosed = null;
   };
-  window.__holo.openPack(packCards);
+  window.__holo.openPack(packCards, '扩充卡包', 'pack');
   updateGoldUi();
   return true;
 }
@@ -8984,6 +9113,42 @@ function selectedDeck() {
   return deckFrom(curSel);
 }
 
+// 卡面缓存：复用 3D 检视的卡面生成器（window.__drawCardFace 由 holo 模块暴露）
+const faceCache = {};
+function faceUrlOf(def) {
+  if (def.name in faceCache) return faceCache[def.name];
+  let url = '';
+  if (window.__drawCardFace) {
+    try { url = window.__drawCardFace(def, CARD_DEFS.indexOf(def)).toDataURL('image/jpeg', 0.85); } catch (e) { url = ''; }
+  }
+  if (url) faceCache[def.name] = url; // 失败不缓存，等模块就绪后重试
+  return url;
+}
+
+// 阵营色渐变（沿用 3D 卡牌配色：深色纵向渐变）
+function raceShade(race, l) {
+  const hex = RACE_DOT[RACES.indexOf(race)] || '#888888';
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  const li = (mx + mn) / 2;
+  let h = 0, sat = 0;
+  if (mx !== mn) {
+    const d = mx - mn;
+    sat = li > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    if (mx === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return 'hsl(' + Math.round(h) + ',' + Math.round(sat * 100) + '%,' + l + '%)';
+}
+function dbCardBg(def) {
+  const schC = def.type === 'spell' ? (SCHOOL_INFO[def.school] || {}).color : null;
+  if (schC) return 'background:linear-gradient(160deg,' + schC + '44,#1e1e2e 55%)';
+  return 'background:linear-gradient(180deg,' + raceShade(def.race, 26) + ',' + raceShade(def.race, 14) + ' 55%, #0c0c12)';
+}
+
 function dbCardHtml(def) {
   const n = curSel[def.name] || 0;
   const max = maxCopiesOf(def);
@@ -8991,7 +9156,7 @@ function dbCardHtml(def) {
   if (def.type === 'spell') {
     const sch = SCHOOL_INFO[def.school] || { label: '?', color: '#888' };
     return '<div class="db-card spell-card ' + raceClass(def) + (n >= max ? ' maxed' : '') + '" data-action="add-card" data-name="' + def.name + '"' +
-      ' style="border-color:' + sch.color + ';box-shadow:0 0 10px ' + sch.color + '66;background:linear-gradient(160deg,' + sch.color + '33,#1e1e2e 55%)">' +
+      ' style="border-color:' + sch.color + ';box-shadow:0 0 10px ' + sch.color + '66;' + dbCardBg(def) + '">' +
       '<div class="c-cost">' + def.cost + '</div>' +
       '<div class="picked-badge">已选 ' + n + '/' + max + '</div>' +
       '<div class="rating-badge" title="强度评分">' + def.rating + '</div>' +
@@ -9006,14 +9171,15 @@ function dbCardHtml(def) {
   const spellText = def.spell ? SPELL_TEXT[def.spell]
     : (def.actSpell ? '法术·' + UNIT_SPELL_TEXT[def.actSpell] : '');
   const spell = spellText ? '<div class="c-spell">' + spellText + '</div>' : '<div class="c-spell"></div>';
-  return '<div class="db-card ' + raceClass(def) + (n >= max ? ' maxed' : '') + '" data-action="add-card" data-name="' + def.name + '">' +
+  return '<div class="db-card ' + raceClass(def) + (n >= max ? ' maxed' : '') + '" data-action="add-card" data-name="' + def.name + '"' +
+    ' style="' + dbCardBg(def) + '">' +
     '<div class="c-cost">' + def.cost + '</div>' +
     '<div class="picked-badge">已选 ' + n + '/' + max + '</div>' +
     '<div class="rating-badge" title="强度评分">' + def.rating + '</div>' +
     '<div class="c-name">' + (def.legend ? '★' : '') + def.name + '</div>' +
     '<div class="c-own" style="text-align:center;font-size:10px;color:#8a8a9a;">拥有 ×' + ownedOf(def.name) + '</div>' +
     artHtml(def) +
-    '<div class="c-traits">' + traitsHtml(def.traits) + '</div>' +
+    '<div class="c-traits">' + traitsHtml(def.traits || []) + '</div>' +
     spell +
     cardStatsHtml(def) +
   '</div>';
@@ -9269,6 +9435,123 @@ function renderBuilder() {
   }
 }
 
+// ---------- 集卡册浮层 ----------
+let albumRace = null;
+function openAlbum() {
+  albumView = 'shelf';
+  albumSpread = 0;
+  if (albumRace == null) albumRace = RACES[0];
+  renderAlbum();
+  document.getElementById('album').classList.add('show');
+}
+function closeAlbum() {
+  document.getElementById('album').classList.remove('show');
+}
+// 集卡册：每个阵营一本独立的拟物集卡册（书架 → 书页 → 封底），翻页效果加强
+let albumView = 'shelf'; // shelf | pages | back
+let albumSpread = 0;
+function albumSpreadsOf(race) {
+  const cards = CARD_DEFS.filter(d => d.race === race).sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name));
+  const out = [];
+  for (let i = 0; i < cards.length; i += 9) out.push({ race, cards: cards.slice(i, i + 16) });
+  return out;
+}
+function albumMiniHtml(d) {
+  const n = collection[d.name] || 0;
+  const url = faceUrlOf(d);
+  return '<div class="album-mini' + (n === 0 ? ' locked' : '') + '" data-name="' + d.name + '" title="双击打开 3D 检视">' +
+    (url
+      ? '<img class="am-face" src="' + url + '" alt="' + d.name + '">'
+      : '<div class="am-name">' + (d.legend ? '★' : '') + d.name + '</div>' +
+        '<div class="am-art" style="background:' + artBg(d) + '">' + (d.art ? d.art.icon : '❔') + '</div>') +
+    '<div class="album-own">' + (n > 0 ? '拥有 ×' + n : '未收集') + '</div></div>';
+}
+function renderAlbum() {
+  const body = document.getElementById('album-body');
+  if (albumView === 'shelf') {
+    body.innerHTML =
+      '<div class="album-shelf">' +
+      RACES.map(race => {
+        const total = CARD_DEFS.filter(d => d.race === race).length;
+        const owned = CARD_DEFS.filter(d => d.race === race && (collection[d.name] || 0) > 0).length;
+        const done = total > 0 && owned === total;
+        return '<div class="shelf-book' + (done ? ' done' : '') + '" data-action="album-open-book" data-val="' + race + '"' +
+          ' style="background:linear-gradient(160deg,' + raceShade(race, 30) + ',' + raceShade(race, 16) + ' 60%,' + raceShade(race, 8) + ')" title="' + race + '集卡册">' +
+          '<div class="sb-race">' + race + '</div>' +
+          '<div class="sb-prog">' + owned + ' / ' + total + '</div>' +
+          (claimedAlbums[race] ? '<div class="sb-claim">★</div>' : '') +
+        '</div>';
+      }).join('') + '</div>';
+    return;
+  }
+  if (albumView === 'back') {
+    body.innerHTML =
+      '<div class="album-cover album-backcover">' +
+        '<div class="ac-emblem">🂠</div>' +
+        '<div class="ac-title">背 面</div>' +
+        '<button class="btn" data-action="album-back-shelf">回书架</button>' +
+      '</div>';
+    return;
+  }
+  // pages：当前阵营的活页夹（三环 + 九宫格卡袋页）
+  const spreads = albumSpreadsOf(albumRace);
+  const sp = spreads[Math.min(albumSpread, spreads.length - 1)];
+  const owned = CARD_DEFS.filter(d => d.race === albumRace && (collection[d.name] || 0) > 0).length;
+  const total = CARD_DEFS.filter(d => d.race === albumRace).length;
+  const complete = total > 0 && owned === total;
+  const claimed = !!claimedAlbums[albumRace];
+  body.innerHTML =
+    '<div class="album-bookhead">' +
+      '<button class="btn" data-action="album-back-shelf">◀ 回书架</button>' +
+      '<span class="ab-title">' + albumRace + '集卡册 · ' + owned + ' / ' + total + ' 张' + (claimed ? '（已领取传说奖励）' : '') + '</span>' +
+      '<span class="gp-side">第 ' + (albumSpread + 1) + ' / ' + spreads.length + ' 页</span>' +
+    '</div>' +
+    '<div class="binder">' +
+      '<div class="binder-rings"><i></i><i></i><i></i></div>' +
+      '<div class="binder-page">' +
+        sp.cards.map(d => '<div class="pocket">' + albumMiniHtml(d) + '</div>').join('') +
+      '</div>' +
+    '</div>' +
+    '<div class="album-foot">' +
+      '<button class="btn" data-action="album-prev"' + (albumSpread === 0 ? ' disabled' : '') + '>◀ 上一页</button>' +
+      '<button class="btn" data-action="album-next">' + (albumSpread >= spreads.length - 1 ? '封底 ▶' : '下一页 ▶') + '</button>' +
+    '</div>' +
+    (complete && !claimed
+      ? '<div class="album-claimrow"><button class="btn" data-action="album-claim">🎁 集齐了！领取随机传说卡</button></div>'
+      : '');
+}
+function albumFlip(dir) {
+  const spreads = albumSpreadsOf(albumRace);
+  const next = albumSpread + dir;
+  if (dir > 0 && next >= spreads.length) { albumView = 'back'; renderAlbum(); return; }
+  if (next < 0 || next >= spreads.length) return;
+  albumSpread = next;
+  albumView = 'pages';
+  renderAlbum();
+  const el = document.querySelector('.album-spread');
+  if (el) {
+    el.classList.remove('flip-next', 'flip-prev');
+    void el.offsetWidth;
+    el.classList.add(dir > 0 ? 'flip-next' : 'flip-prev');
+  }
+}
+
+// 集齐奖励：随机一张传说卡入库，并用 3D 检视展示
+function claimAlbumReward() {
+  const pool = CARD_DEFS.filter(d => d.legend);
+  if (pool.length === 0 || claimedAlbums[albumRace]) return;
+  const legend = pool[Math.floor(Math.random() * pool.length)];
+  claimedAlbums[albumRace] = true;
+  saveAlbums();
+  collection[legend.name] = (collection[legend.name] || 0) + 1;
+  saveEconomy();
+  log('【集卡册】集齐【' + albumRace + '】全部卡牌，获得传说奖励【' + legend.name + '】！');
+  sfx('pack');
+  renderAlbum();
+  updateGoldUi();
+  if (window.__holo) window.__holo.open(legend.name);
+}
+
 // ---------- 牌库 / 墓地查看浮层 ----------
 function openViewer(side, kind) {
   const p = state[side];
@@ -9513,6 +9796,23 @@ document.addEventListener('click', e => {
     renderBuilder();
     return;
   }
+  if (action === 'album-open-book') { albumRace = el.dataset.val; albumView = 'pages'; albumSpread = 0; renderAlbum(); return; }
+  if (action === 'album-back-shelf') { albumView = 'shelf'; renderAlbum(); return; }
+  if (action === 'album-open') { albumView = 'pages'; albumSpread = 0; renderAlbum(); return; }
+  if (action === 'album-prev') {
+    if (albumView === 'back') { albumView = 'pages'; albumSpread = albumSpreads().length - 1; renderAlbum(); return; }
+    albumFlip(-1);
+    return;
+  }
+  if (action === 'album-next') { albumFlip(1); return; }
+  if (action === 'album-close-book') { albumView = 'cover'; renderAlbum(); return; }
+  if (action === 'album-race') {
+    albumView = 'pages';
+    albumSpread = Math.max(0, albumSpreads().findIndex(sp => sp.race === el.dataset.val));
+    renderAlbum();
+    return;
+  }
+  if (action === 'album-claim') { claimAlbumReward(); return; }
   if (action === 'pack-reveal') { revealPack(parseInt(el.dataset.idx, 10)); return; }
   if (action === 'preset-deck') {
     applyPresetDeck(PRESET_DECKS[parseInt(el.dataset.idx, 10)]);
@@ -9856,7 +10156,7 @@ document.addEventListener('dblclick', e => {
 
 // Esc 关闭浮层
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (window.__holo) window.__holo.close(); closeDetail(); closeViewer(); }
+  if (e.key === 'Escape') { if (window.__holo) window.__holo.close(); closeDetail(); closeViewer(); closeAlbum(); }
 });
 
 // ---------- 拖拽（仅部署阶段：己方随从布阵 + 手牌拖拽落位出牌） ----------
@@ -10082,6 +10382,27 @@ document.getElementById('pass-continue').addEventListener('click', confirmPass);
 document.getElementById('mode-ai').addEventListener('click', () => setBuilderMode('ai'));
 document.getElementById('mode-pvp').addEventListener('click', () => setBuilderMode('pvp'));
 document.getElementById('viewer-close').addEventListener('click', closeViewer);
+document.getElementById('open-album').addEventListener('click', () => { if (window.__holo) window.__holo.openAlbum(); else openAlbum(); });
+
+// 开发者模式：localStorage 持久化开关；开启后显示刷钱按钮
+let devMode = storage.getItem('mtcg-dev') === '1';
+function updateDevUi() {
+  document.getElementById('dev-gold').style.display = devMode ? '' : 'none';
+  document.getElementById('dev-toggle').classList.toggle('active', devMode);
+}
+document.getElementById('dev-toggle').addEventListener('click', () => {
+  devMode = !devMode;
+  try { storage.setItem('mtcg-dev', devMode ? '1' : '0'); } catch (e) {}
+  updateDevUi();
+});
+document.getElementById('dev-gold').addEventListener('click', () => {
+  gold += 1000;
+  saveEconomy();
+  updateGoldUi();
+  log('开发者模式：金币 +1000（当前 ' + gold + '）');
+});
+updateDevUi();
+document.getElementById('album-close').addEventListener('click', closeAlbum);
 document.getElementById('viewer').addEventListener('click', e => {
   if (e.target === document.getElementById('viewer')) closeViewer(); // 点击遮罩关闭
 });
@@ -11202,12 +11523,13 @@ function poseAt(t, dt) {
     vx *= 0.94; vy *= 0.94;
     return [userRx, userRy];
   }
-  // 利萨茹自动摆动
+  // 自动模式：绕 Y 轴 360° 连续旋转（转速 ~0.35 rad/s），X 轴轻微摆动
   const arx = 10 * D2R * Math.sin(0.47 * autoT);
-  const ary = 28 * D2R * Math.sin(0.31 * autoT);
+  const ary = 0.35 * autoT;
   if (!state.auto) return [userRx, userRy];
   const k = Math.min(1, Math.max(0, (since - 2.5) / 1.2));
   const s = k * k * (3 - 2 * k);
+  // 从用户姿态平滑接入持续旋转（ary 单调递增，混合后自然接管）
   return [userRx + (arx - userRx) * s, userRy + (ary - userRy) * s];
 }
 
@@ -11225,6 +11547,7 @@ function renderFrame(t, dt) {
   lightAt(t);
   if (mode !== 'viewer') {
     packTick(t, dt);
+    if (mode === 'album-binder') albumTick(t, dt);
     renderer.render(scene, camera);
     return;
   }
@@ -11271,17 +11594,20 @@ scene.add(dirLight);
 let mode = 'viewer'; // viewer | pack | opening | fan
 let modeT = 0;
 function setMode(m) {
-  document.getElementById('holo-next').style.display = (m === 'fan' && window.__packNext) ? '' : 'none';
+  document.getElementById('holo-next').style.display =
+    (m === 'fan' && (window.__packNext || (state.boxBatches && state.boxBatches.length > 0))) ? '' : 'none';
+  document.getElementById('holo-next').textContent = window.__packNext ? '下一包' : '返回卡盒';
   mode = m; modeT = 0;
   mesh.visible = m === 'viewer';
   packGroup.visible = m === 'pack' || m === 'opening';
-  fanGroup.visible = m === 'fan';
+  fanGroup.visible = m === 'fan' || m === 'boxfan';
   document.getElementById('holo-c-pack').style.display = m === 'viewer' ? '' : 'none';
   document.getElementById('holo-c-back-viewer').style.display = m === 'viewer' ? 'none' : '';
   document.getElementById('holo-c-png').style.display = m === 'viewer' ? '' : 'none';
   document.getElementById('holo-hint').textContent =
     m === 'viewer' ? 'drag card to rotate (inertial)'
     : m === 'fan' ? 'click a card to inspect it'
+    : m === 'boxfan' ? 'click a pack to open it'
     : 'drag to shake the pack · click it to tear open';
 }
 
@@ -11292,22 +11618,43 @@ function springStep(p, v, target, stiff, damp, dt) {
 }
 
 // ---- 卡包 ----
-function drawPackFace() {
+function drawPackFace(variant, race) {
+  const isBox = variant === 'box';
+  const rc = (!isBox && race && RACE_COLOR[race]) ? RACE_COLOR[race] : null;
   const cv = document.createElement('canvas');
   cv.width = 512; cv.height = 720;
   const ctx = cv.getContext('2d');
   const g = ctx.createLinearGradient(0, 0, 512, 720);
-  g.addColorStop(0, '#2a1a4e');
-  g.addColorStop(0.5, '#141038');
-  g.addColorStop(1, '#080618');
+  if (isBox) {
+    g.addColorStop(0, '#5a3a08');
+    g.addColorStop(0.5, '#2a1a05');
+    g.addColorStop(1, '#100a02');
+  } else if (rc) {
+    g.addColorStop(0, shade(rc, 30));
+    g.addColorStop(0.5, shade(rc, 16));
+    g.addColorStop(1, shade(rc, 6));
+  } else {
+    g.addColorStop(0, '#2a1a4e');
+    g.addColorStop(0.5, '#141038');
+    g.addColorStop(1, '#080618');
+  }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 512, 720);
   starSpecks(ctx, 0, 0, 512, 720, 160, 99);
   const rg = ctx.createRadialGradient(256, 320, 20, 256, 320, 220);
-  rg.addColorStop(0, 'rgba(216,185,106,0.95)');
-  rg.addColorStop(0.4, 'rgba(150,110,220,0.5)');
+  if (isBox) {
+    rg.addColorStop(0, 'rgba(255,230,140,1)');
+    rg.addColorStop(0.4, 'rgba(230,170,60,0.55)');
+  } else if (rc) {
+    rg.addColorStop(0, shade(rc, 70).replace('hsl', 'hsla').replace(')', ',0.95)'));
+    rg.addColorStop(0.4, shade(rc, 45).replace('hsl', 'hsla').replace(')', ',0.5)'));
+  } else {
+    rg.addColorStop(0, 'rgba(216,185,106,0.95)');
+    rg.addColorStop(0.4, 'rgba(150,110,220,0.5)');
+  }
   rg.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = rg;
+  if (isBox) { ctx.font = '90px serif'; ctx.fillText('👑', 256, 200); }
   ctx.fillRect(0, 0, 512, 720);
   ctx.textAlign = 'center';
   ctx.fillStyle = '#e8d8a0';
@@ -11315,11 +11662,11 @@ function drawPackFace() {
   ctx.fillText('MAGIC', 256, 300);
   ctx.fillText('THE TRAVELING', 256, 352);
   ctx.font = '30px "Microsoft YaHei", sans-serif';
-  ctx.fillStyle = '#b8b0e0';
-  ctx.fillText('扩 充 卡 包', 256, 420);
+  ctx.fillStyle = isBox ? '#ffe8a0' : '#b8b0e0';
+  ctx.fillText(isBox ? '阵 营 卡 盒' : (race ? race + ' 卡 包' : '扩 充 卡 包'), 256, 420);
   ctx.font = '22px sans-serif';
   ctx.fillStyle = '#6a6a8a';
-  ctx.fillText('5 张 / 包', 256, 640);
+  ctx.fillText(isBox ? '5 张 × 5 包' : '5 张 / 包', 256, 640);
   ctx.fillStyle = '#0a0b0d';
   for (let x = 0; x < 512; x += 24) {
     ctx.beginPath();
@@ -11332,25 +11679,93 @@ function drawPackFace() {
 const packGroup = new THREE.Group();
 scene.add(packGroup);
 packGroup.visible = false;
-const packTex = makeTex(drawPackFace());
+// 卡盒专属宽扁包装（横向 720×480，金底皇冠大盒）
+function drawBoxFace(race) {
+  const cv = document.createElement('canvas');
+  cv.width = 720; cv.height = 480;
+  const ctx = cv.getContext('2d');
+  const rc = (race && RACE_COLOR[race]) ? RACE_COLOR[race] : '#c09a40';
+  const g = ctx.createLinearGradient(0, 0, 720, 480);
+  g.addColorStop(0, shade(rc, 32));
+  g.addColorStop(0.5, shade(rc, 18));
+  g.addColorStop(1, shade(rc, 7));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 720, 480);
+  starSpecks(ctx, 0, 0, 720, 480, 120, 77);
+  const rg = ctx.createRadialGradient(360, 210, 20, 360, 210, 260);
+  rg.addColorStop(0, 'rgba(255,230,140,1)');
+  rg.addColorStop(0.45, 'rgba(230,170,60,0.5)');
+  rg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(0, 0, 720, 480);
+  ctx.textAlign = 'center';
+  ctx.font = '72px serif';
+  ctx.fillText('👑', 360, 150);
+  ctx.fillStyle = '#ffe8a0';
+  ctx.font = 'bold 40px "Segoe UI", sans-serif';
+  ctx.fillText('MAGIC · THE · TRAVELING', 360, 250);
+  ctx.font = 'bold 44px "Microsoft YaHei", sans-serif';
+  ctx.fillText((race ? race : '阵 营') + ' 卡 盒', 360, 320);
+  ctx.font = '24px sans-serif';
+  ctx.fillStyle = '#c0a060';
+  ctx.fillText('5 张 × 5 包 · 大盒装', 360, 400);
+  ctx.fillStyle = '#0a0b0d';
+  for (let x = 0; x < 720; x += 30) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0); ctx.lineTo(x + 15, 18); ctx.lineTo(x + 30, 0);
+    ctx.fill();
+  }
+  return cv;
+}
+const PACK_TEXTURES = { pack: makeTex(drawPackFace('pack')), box: makeTex(drawBoxFace()) };
+function makePackTexture(variant, race) {
+  if (!race) return PACK_TEXTURES[variant] || PACK_TEXTURES.pack;
+  const key = variant + '|' + race;
+  if (!PACK_TEXTURES[key]) PACK_TEXTURES[key] = makeTex(variant === 'box' ? drawBoxFace(race) : drawPackFace(variant, race));
+  return PACK_TEXTURES[key];
+}
+let packTex = PACK_TEXTURES.pack;
 const packMat = new THREE.MeshLambertMaterial({ map: packTex });
+const slimGroup = new THREE.Group();
+packGroup.add(slimGroup);
+const boxGroup = new THREE.Group();
+boxGroup.visible = false;
+packGroup.add(boxGroup);
 const packBody = new THREE.Mesh(new RoundedBoxGeometry(4.2, 6.2, 0.9, 3, 0.12), packMat);
-packGroup.add(packBody);
-const halfL = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 6.2),
+slimGroup.add(packBody);
+// 卡盒实体盒：宽扁大盒（6.8 × 4.6 × 2.2）
+const boxBody = new THREE.Mesh(new THREE.BoxGeometry(6.8, 4.6, 2.2), packMat.clone());
+boxGroup.add(boxBody);
+const boxHalfL = new THREE.Mesh(new THREE.BoxGeometry(3.4, 4.6, 0.12),
+  new THREE.MeshLambertMaterial({ map: PACK_TEXTURES.box.clone(), side: THREE.DoubleSide, transparent: true }));
+boxHalfL.material.map.repeat.set(0.5, 1);
+boxHalfL.material.map.needsUpdate = true;
+const boxHalfR = new THREE.Mesh(new THREE.BoxGeometry(3.4, 4.6, 0.12),
+  new THREE.MeshLambertMaterial({ map: PACK_TEXTURES.box.clone(), side: THREE.DoubleSide, transparent: true }));
+boxHalfR.material.map.repeat.set(0.5, 1);
+boxHalfR.material.map.offset.set(0.5, 0);
+boxHalfR.material.map.needsUpdate = true;
+boxHalfL.position.set(-1.7, 0, 1.11);
+boxHalfR.position.set(1.7, 0, 1.11);
+boxHalfL.userData.z0 = boxHalfR.userData.z0 = 1.11;
+boxHalfL.visible = boxHalfR.visible = false;
+boxGroup.add(boxHalfL, boxHalfR);
+const halfL = new THREE.Mesh(new THREE.BoxGeometry(2.1, 6.2, 0.12),
   new THREE.MeshLambertMaterial({ map: packTex.clone(), side: THREE.DoubleSide, transparent: true }));
 halfL.material.map.repeat.set(0.5, 1);
 halfL.material.map.needsUpdate = true;
-const halfR = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 6.2),
+const halfR = new THREE.Mesh(new THREE.BoxGeometry(2.1, 6.2, 0.12),
   new THREE.MeshLambertMaterial({ map: packTex.clone(), side: THREE.DoubleSide, transparent: true }));
 halfR.material.map.repeat.set(0.5, 1);
 halfR.material.map.offset.set(0.5, 0);
 halfR.material.map.needsUpdate = true;
 halfL.position.set(-1.05, 0, 0.46);
 halfR.position.set(1.05, 0, 0.46);
+halfL.userData.z0 = halfR.userData.z0 = 0.46;
 halfL.visible = halfR.visible = false;
-packGroup.add(halfL, halfR);
+slimGroup.add(halfL, halfR);
 
-const packPhys = { rx: 0, ry: 0, vx: 0, vy: 0, scale: 1, vs: 0 };
+const packPhys = { rx: 0, ry: 0, vx: 0, vy: 0, scale: 1, vs: 0, urx: 0, ury: 0, vrx: 0, vry: 0 };
 
 // ---- 扇出的 5 张卡 ----
 const fanGroup = new THREE.Group();
@@ -11358,9 +11773,19 @@ scene.add(fanGroup);
 fanGroup.visible = false;
 let fanCards = [];
 
-function spawnFan() {
+// 清理扇区里所有残留对象（开包/开盒互切时的残影）
+function clearFanObjects() {
   fanCards.forEach(c => fanGroup.remove(c.mesh));
   fanCards = [];
+  revealedCards.forEach(c => fanGroup.remove(c.mesh));
+  revealedCards = [];
+  miniPacks.forEach(p => fanGroup.remove(p.mesh));
+  miniPacks = [];
+  state.revealCount = 0;
+}
+
+function spawnFan() {
+  clearFanObjects();
   let idxs;
   if (state.pendingPackCards) {
     idxs = state.pendingPackCards.map(d => CARDS.findIndex(c => c.name === d.name)).filter(i => i >= 0);
@@ -11387,10 +11812,12 @@ function spawnFan() {
     const m = new THREE.Mesh(new THREE.BoxGeometry(2.1, 2.94, 0.03), mats);
     m.userData = { ci };
     fanGroup.add(m);
-    const ang = (k - 2) * 0.38;
+    const mid = (idxs.length - 1) / 2;
+    const step = idxs.length > 5 ? 0.24 : 0.38;
+    const ang = (k - mid) * step;
     fanCards.push({
       mesh: m, def, idx: ci,
-      tx: Math.sin(ang) * 4.6, ty: -Math.abs(k - 2) * 0.22 - 0.4, tz: -Math.abs(k - 2) * 0.5,
+      tx: Math.sin(ang) * 4.6, ty: -Math.abs(k - mid) * 0.22 - 0.4, tz: -Math.abs(k - mid) * 0.5,
       trz: -ang * 0.9, delay: k * 0.22,
       x: 0, y: 0, z: 0, flip: Math.PI, vf: 0,
       vx: 0, vy: 0, vz: 0,
@@ -11402,44 +11829,155 @@ const raycaster = new THREE.Raycaster();
 const pointerNdc = new THREE.Vector2();
 let downX = 0, downY = 0;
 
+// 卡盒撕开后：5 个小卡包排开（boxfan 模式）
+let miniPacks = [];
+function spawnMiniPacks() {
+  miniPacks.forEach(p => fanGroup.remove(p.mesh));
+  miniPacks = [];
+  fanGroup.visible = true;
+  const n = state.boxBatches.length;
+  state.boxBatches.forEach((batch, k) => {
+    const tex = makePackTexture('pack', state.packRace);
+    const m = new THREE.Mesh(
+      new RoundedBoxGeometry(1.9, 2.8, 0.4, 2, 0.06),
+      new THREE.MeshLambertMaterial({ map: tex }));
+    m.userData = { batchIdx: k };
+    fanGroup.add(m);
+    const mid = (n - 1) / 2;
+    const ang = (k - mid) * 0.3;
+    miniPacks.push({
+      mesh: m, batch, batchIdx: k,
+      tx: Math.sin(ang) * 3.6, ty: 2.0 - Math.abs(k - mid) * 0.12, tz: 0.8,
+      x: 0, y: 0, z: 0, flip: 0, vx: 0, vy: 0, vz: 0, delay: k * 0.15,
+    });
+  });
+}
+
+let revealedCards = [];
+// 原地开一个小卡包：从包的位置散出 8 张卡翻到底部行列，其它卡包保留可继续开
+function openMiniPack(pick) {
+  const i = miniPacks.findIndex(x => x.mesh === pick.mesh || x.batchIdx === pick.batchIdx);
+  if (i < 0) return;
+  const pack = miniPacks.splice(i, 1)[0];
+  fanGroup.remove(pack.mesh);
+  state.boxRemaining = miniPacks.length;
+  const batch = pack.batch;
+  // 立刻入库该包
+  window.__packBatchDefs = batch;
+  if (window.__packCommit) { const f = window.__packCommit; window.__packCommit = null; f(); }
+  // 散落布局：全部卡散在一处（随机偏移/旋转），后开的卡 z 更高盖住先开的
+  const mid = (batch.length - 1) / 2;
+  batch.forEach((def, k) => {
+    const ci = CARDS.findIndex(c => c.name === def.name);
+    const artKey = def.name + '|art';
+    if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.96, 0.02),
+      new THREE.MeshLambertMaterial({ map: texCache[artKey] }));
+    m.userData = { ci };
+    fanGroup.add(m);
+    state.revealCount = (state.revealCount || 0) + 1;
+    revealedCards.push({
+      mesh: m, def, idx: ci,
+      tx: (k - mid) * 0.7 + (Math.random() - 0.5) * 0.9,
+      ty: -0.4 + (Math.random() - 0.5) * 1.8,
+      tz: 0.5 + state.revealCount * 0.004,
+      trz: (Math.random() - 0.5) * 0.55,
+      x: pack.x, y: pack.y, z: 0, flip: Math.PI, vf: 0,
+      vx: 0, vy: 0, vz: 0, delay: k * 0.08,
+    });
+  });
+  if (miniPacks.length === 0) {
+    // 全部开完：散落改为平铺网格展示（5 列，整体缩小居中保证显示得下）
+    revealedCards.forEach((c, i) => {
+      const col = i % 5, row = Math.floor(i / 5);
+      c.tx = (col - 2) * 1.25;
+      c.ty = 3.5 - row * 1.76;
+      c.tz = 0.5;
+      c.trz = 0;
+      c.mesh.scale.setScalar(0.75);
+    });
+    document.getElementById('holo-hint').textContent = '卡盒已全部开启（共 ' + revealedCards.length + ' 张）· 双击检视，可拖动';
+  } else {
+    document.getElementById('holo-hint').textContent = 'click a pack to open it（剩 ' + miniPacks.length + ' 包）';
+  }
+}
+
+function boxfanTick(dt) {
+  modeT += dt;
+  revealedCards.forEach(c => {
+    const local = Math.max(0, modeT - c.delay);
+    [c.x, c.vx] = springStep(c.x, c.vx, c.tx, 40, 8, dt);
+    [c.y, c.vy] = springStep(c.y, c.vy, c.ty, 40, 8, dt);
+    [c.z, c.vz] = springStep(c.z, c.vz, c.tz, 40, 8, dt);
+    const flipTarget = c._faceUp ? 0 : (local > 0.3 ? 0 : Math.PI);
+    [c.flip, c.vf] = springStep(c.flip, c.vf, flipTarget, 34, 7, dt);
+    c.mesh.position.set(c.x, c.y, c.z);
+    if (!c._faceUp && c.flip <= flipTarget + 0.05) c._faceUp = true; // 翻到位即标记，永不回翻
+    c.mesh.rotation.set(0, c.flip, (c.trz || 0) * Math.min(1, Math.max(0, modeT - c.delay)));
+  });
+  miniPacks.forEach(p => {
+    const local = Math.max(0, modeT - p.delay);
+    [p.x, p.vx] = springStep(p.x, p.vx, p.tx, 40, 8, dt);
+    [p.y, p.vy] = springStep(p.y, p.vy, p.ty, 40, 8, dt);
+    [p.z, p.vz] = springStep(p.z, p.vz, p.tz, 40, 8, dt);
+    p.mesh.position.set(p.x, p.y, p.z);
+    p.mesh.rotation.set(0.15 * Math.min(1, local), 0, -0.15 * (p.batchIdx - (miniPacks.length - 1) / 2) * Math.min(1, local * 1.4));
+  });
+}
+
 function packTick(t, dt) {
   modeT += dt;
   if (mode === 'pack') {
-    const bx = 0.06 * Math.sin(0.5 * t / 1000), by = 0.12 * Math.sin(0.33 * t / 1000);
-    [packPhys.rx, packPhys.vx] = springStep(packPhys.rx, packPhys.vx, bx, 26, 6, dt);
-    [packPhys.ry, packPhys.vy] = springStep(packPhys.ry, packPhys.vy, by, 26, 6, dt);
+    // 惯性：松手后速度衰减，角度保持（可 360° 自由旋转）
+    if (!dragging) {
+      packPhys.ury += packPhys.vry; packPhys.urx += packPhys.vrx;
+      packPhys.vry *= 0.94; packPhys.vrx *= 0.94;
+    }
+    const wobx = 0.06 * Math.sin(0.5 * t / 1000), woby = 0.10 * Math.sin(0.33 * t / 1000);
     [packPhys.scale, packPhys.vs] = springStep(packPhys.scale, packPhys.vs, 1, 30, 8, dt);
-    packGroup.rotation.set(packPhys.rx, packPhys.ry, 0);
+    packGroup.rotation.set(packPhys.urx + wobx, packPhys.ury + woby, 0);
     packGroup.scale.setScalar(Math.max(0.01, packPhys.scale));
   } else if (mode === 'opening') {
     const k = Math.min(1, modeT / 0.5);
     packGroup.rotation.z = Math.sin(modeT * 60) * 0.06 * (1 - k);
     packGroup.scale.setScalar(1 + 0.15 * k);
-    if (modeT > 0.5 && !halfL.visible) {
-      packBody.visible = false;
-      halfL.visible = halfR.visible = true;
+    const body = state.packVariant === 'box' ? boxBody : packBody;
+    if (modeT > 0.5 && tearHalves && !tearHalves[0].visible) {
+      body.visible = false;
+      tearHalves.forEach(h => { h.visible = true; h.position.x = 0; });
     }
-    if (modeT > 0.5) {
+    if (modeT > 0.5 && tearHalves) {
       const k2 = Math.min(1, (modeT - 0.5) / 0.7);
-      halfL.rotation.y = -k2 * 1.6;
-      halfR.rotation.y = k2 * 1.6;
-      halfL.position.x = -1.05 - k2 * 3.2;
-      halfR.position.x = 1.05 + k2 * 3.2;
-      halfL.position.z = 0.46 - k2 * 1.2;
-      halfR.position.z = 0.46 - k2 * 1.2;
-      halfL.material.opacity = 1 - k2;
-      halfR.material.opacity = 1 - k2;
+      // 撕开动画：两半从闭合中缝向外撕开，带弧线翻开飞出
+      tearHalves.forEach((h, i) => {
+        const sign = i === 0 ? -1 : 1;
+        const w = h.geometry.parameters.width;
+        h.rotation.y = sign * k2 * 1.5;
+        h.rotation.z = sign * k2 * 0.4;
+        h.position.x = sign * (w / 2) * k2 + sign * k2 * 2.2;
+        h.position.y = Math.sin(k2 * Math.PI) * 0.7;
+        h.position.z = h.userData.z0 + 0.15 - k2 * 1.3;
+        h.material.opacity = 1 - k2;
+      });
     }
-    if (modeT > 1.1) { spawnFan(); setMode('fan'); if (window.__packCommit) { const f = window.__packCommit; window.__packCommit = null; f(); } }
+    if (modeT > 1.1) {
+      if (tearHalves) tearHalves.forEach(h => { h.visible = false; });
+      if (state.boxBatches && state.boxBatches.length > 0) { spawnMiniPacks(); setMode('boxfan'); }
+      else { spawnFan(); setMode('fan'); }
+      if (window.__packCommit) { const f = window.__packCommit; window.__packCommit = null; f(); }
+    }
+  } else if (mode === 'boxfan') {
+    boxfanTick(dt);
   } else if (mode === 'fan') {
     fanCards.forEach(c => {
       const local = Math.max(0, modeT - c.delay);
       [c.x, c.vx] = springStep(c.x, c.vx, c.tx, 40, 8, dt);
       [c.y, c.vy] = springStep(c.y, c.vy, c.ty, 40, 8, dt);
       [c.z, c.vz] = springStep(c.z, c.vz, c.tz, 40, 8, dt);
-      const flipTarget = local > 0.4 ? 0 : Math.PI;
+      const flipTarget = c._faceUp ? 0 : (local > 0.4 ? 0 : Math.PI);
       [c.flip, c.vf] = springStep(c.flip, c.vf, flipTarget, 34, 7, dt);
       c.mesh.position.set(c.x, c.y, c.z);
+      if (!c._faceUp && c.flip <= flipTarget + 0.05) c._faceUp = true; // 翻到位即标记，永不回翻
       c.mesh.rotation.set(0, c.flip, c.trz * Math.min(1, local * 1.6));
     });
   }
@@ -11449,47 +11987,345 @@ function packTick(t, dt) {
 canvas.addEventListener('pointermove', e => {
   if (!dragging) return;
   if (mode === 'pack') {
-    packPhys.vy += (e.movementX || 0) * 0.0035;
-    packPhys.vx += (e.movementY || 0) * 0.0035;
+    const dx = (e.movementX || 0) * 0.006, dy = (e.movementY || 0) * 0.006;
+    packPhys.ury += dx; packPhys.urx += dy;
+    packPhys.vry = dx; packPhys.vrx = dy;
   }
 });
-canvas.addEventListener('pointerdown', e => { downX = e.clientX; downY = e.clientY; });
+let dragCard = null; // 拖动中的卡片 {c, ox, oy, z}
+let lastCardClick = { t: 0, mesh: null };
+canvas.addEventListener('pointerdown', e => {
+  downX = e.clientX; downY = e.clientY;
+  if (mode !== 'fan' && mode !== 'boxfan') return;
+  pointerNdc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(pointerNdc, camera);
+  const hits = raycaster.intersectObjects(fanCards.concat(revealedCards).map(c => c.mesh));
+  if (hits.length > 0) {
+    const mesh = hits[0].object;
+    const c = fanCards.concat(revealedCards).find(x => x.mesh === mesh);
+    if (c) {
+      const o = raycaster.ray.origin, d = raycaster.ray.direction;
+      const t = (mesh.position.z - o.z) / d.z;
+      const px = o.x + d.x * t, py = o.y + d.y * t;
+      dragCard = { c: c, ox: mesh.position.x - px, oy: mesh.position.y - py, z: mesh.position.z };
+    }
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (dragCard) {
+    pointerNdc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+    raycaster.setFromCamera(pointerNdc, camera);
+    const o = raycaster.ray.origin, d = raycaster.ray.direction;
+    const t = (dragCard.z - o.z) / d.z;
+    dragCard.c.tx = o.x + d.x * t + dragCard.ox;
+    dragCard.c.ty = o.y + d.y * t + dragCard.oy;
+  }
+});
 canvas.addEventListener('pointerup', e => {
-  if (mode !== 'fan' && mode !== 'pack') return;
+  if (mode !== 'fan' && mode !== 'pack' && mode !== 'boxfan') return;
   if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return; // 拖拽不算点选
   pointerNdc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   raycaster.setFromCamera(pointerNdc, camera);
   if (mode === 'pack') {
-    if (raycaster.intersectObject(packBody).length > 0) setMode('opening');
+    if (raycaster.intersectObject(state.packVariant === 'box' ? boxBody : packBody).length > 0) setMode('opening');
     return;
   }
-  const hits = raycaster.intersectObjects(fanCards.map(c => c.mesh));
-  if (hits.length > 0) {
-    state.cardIdx = hits[0].object.userData.ci;
-    buildCardOptions('');
-    cardSel.value = String(state.cardIdx);
-    refreshTextures();
-    setMode('viewer');
+  if (dragCard) {
+    const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+    const c = dragCard.c;
+    dragCard = null;
+    if (moved <= 6) {
+      // 双击（同一张卡 350ms 内第二次点击）→ 3D 检视并记录返回页
+      const now = performance.now();
+      if (lastCardClick.mesh === c.mesh && now - lastCardClick.t < 350) {
+        lastCardClick = { t: 0, mesh: null };
+        state.returnMode = mode; // 'fan' 或 'boxfan'，Esc 时返回
+        state.cardIdx = c.idx;
+        buildCardOptions('');
+        cardSel.value = String(c.idx);
+        refreshTextures();
+        setMode('viewer');
+      } else {
+        lastCardClick = { t: now, mesh: c.mesh };
+      }
+    }
+    return;
+  }
+  if (mode === 'boxfan') {
+    const bhits = raycaster.intersectObjects(miniPacks.map(p => p.mesh));
+    if (bhits.length > 0) {
+      const pick = bhits[0].object.userData;
+      openMiniPack(pick);
+    }
+    return;
   }
 });
 
+function setPackTexture(variant, race) {
+  packTex = makePackTexture(variant, race);
+  const isBox = variant === 'box';
+  packBody.material.map = packTex;
+  packBody.material.needsUpdate = true;
+  boxBody.material.map = packTex;
+  boxBody.material.needsUpdate = true;
+  [halfL, halfR, boxHalfL, boxHalfR].forEach((h, i) => {
+    h.material.map = packTex.clone();
+    h.material.map.repeat.set(0.5, 1);
+    if (i % 2 === 1) h.material.map.offset.set(0.5, 0);
+    h.material.map.needsUpdate = true;
+    h.material.needsUpdate = true;
+  });
+}
+
+let tearHalves = null; // 当前包装的撕口两半（开包动画用）
+function applyPackShape(variant) {
+  const isBox = variant === 'box';
+  slimGroup.visible = !isBox;
+  boxGroup.visible = isBox;
+  tearHalves = isBox ? [boxHalfL, boxHalfR] : [halfL, halfR];
+}
+
 function resetPackState() {
   packPhys.rx = 0; packPhys.ry = 0; packPhys.vx = 0; packPhys.vy = 0; packPhys.scale = 0.01; packPhys.vs = 8;
-  packBody.visible = true;
-  halfL.visible = halfR.visible = false;
-  halfL.rotation.set(0, 0, 0); halfR.rotation.set(0, 0, 0);
-  halfL.position.set(-1.05, 0, 0.46); halfR.position.set(1.05, 0, 0.46);
-  halfL.material.opacity = halfR.material.opacity = 1;
+  packPhys.urx = 0; packPhys.ury = 0; packPhys.vrx = 0; packPhys.vry = 0;
+  packBody.visible = boxBody.visible = true;
+  [packBody, boxBody].forEach(b => {
+    b.rotation.set(0, 0, 0);
+    b.position.set(0, 0, 0);
+    b.material.opacity = 1;
+    b.material.transparent = false;
+  });
+  [[halfL, -1.05, 0.46], [halfR, 1.05, 0.46], [boxHalfL, -1.7, 1.11], [boxHalfR, 1.7, 1.11]].forEach(([h, x, z]) => {
+    h.visible = false;
+    h.rotation.set(0, 0, 0);
+    h.position.set(x, 0, z);
+    h.material.opacity = 1;
+  });
   packGroup.rotation.set(0, 0, 0);
 }
 // 游戏内购卡包入口：defs 为已 roll 的 5 张（开完后由游戏侧入库）
 state.pendingPackCards = null;
 document.getElementById('holo-c-pack').addEventListener('click', () => {
   state.pendingPackCards = null;
+  setPackTexture('pack');
   resetPackState();
   setMode('pack');
 });
 document.getElementById('holo-c-back-viewer').addEventListener('click', () => setMode('viewer'));
+
+
+// ==================== 3D 集卡册（书架 + 三环活页夹 + 九宫格卡袋） ====================
+let album = null; // { mode, shelfGroup, binderGroup, books, race, pageIdx, pageCount, flipT }
+
+function makeSpineTex(race) {
+  const cv = document.createElement('canvas');
+  cv.width = 128; cv.height = 384;
+  const ctx = cv.getContext('2d');
+  const rc = RACE_COLOR[race] || '#888888';
+  const g = ctx.createLinearGradient(0, 0, 0, 384);
+  g.addColorStop(0, shade(rc, 32));
+  g.addColorStop(0.6, shade(rc, 18));
+  g.addColorStop(1, shade(rc, 8));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 384);
+  ctx.strokeStyle = '#d8b96a';
+  ctx.lineWidth = 5;
+  ctx.strokeRect(4, 4, 120, 376);
+  const total = CARD_DEFS.filter(d => d.race === race).length;
+  const owned = CARD_DEFS.filter(d => d.race === race && (collection[d.name] || 0) > 0).length;
+  ctx.fillStyle = '#f0ead8';
+  ctx.font = 'bold 30px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.save();
+  ctx.translate(64, 190);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(race, 0, 10);
+  ctx.restore();
+  ctx.font = '22px sans-serif';
+  ctx.fillText(owned + ' / ' + total, 64, 330);
+  if (claimedAlbums[race]) { ctx.fillStyle = '#ffd86a'; ctx.font = 'bold 30px serif'; ctx.fillText('★', 64, 60); }
+  return makeTex(cv);
+}
+
+function makeParchmentTex() {
+  const cv = document.createElement('canvas');
+  cv.width = 512; cv.height = 360;
+  const ctx = cv.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 512, 360);
+  g.addColorStop(0, '#d8c9a0');
+  g.addColorStop(0.55, '#cbb894');
+  g.addColorStop(1, '#c4b48c');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 512, 360);
+  for (let i = 0; i < 900; i++) {
+    ctx.fillStyle = 'rgba(120,100,60,' + (Math.random() * 0.08) + ')';
+    ctx.fillRect(Math.random() * 512, Math.random() * 360, 1.5, 1.5);
+  }
+  return makeTex(cv);
+}
+
+function buildShelf() {
+  if (album && album.shelfGroup) return;
+  const shelfGroup = new THREE.Group();
+  scene.add(shelfGroup);
+  const wood = new THREE.MeshLambertMaterial({ color: 0x5a3a22 });
+  const back = new THREE.Mesh(new THREE.BoxGeometry(16, 8, 0.3), wood);
+  back.position.set(0, 0.4, -1.2);
+  shelfGroup.add(back);
+  [-1.4, -3.6].forEach(y => {
+    const board = new THREE.Mesh(new THREE.BoxGeometry(16, 0.25, 2.4), wood);
+    board.position.set(0, y, 0);
+    shelfGroup.add(board);
+  });
+  const books = [];
+  RACES.forEach((race, i) => {
+    const row = i < 7 ? 0 : 1;
+    const col = row === 0 ? i : i - 7;
+    const book = new THREE.Mesh(
+      new THREE.BoxGeometry(0.92, 2.5 + (i % 3) * 0.18, 1.7),
+      new THREE.MeshLambertMaterial({ map: makeSpineTex(race) }));
+    book.position.set(-5.2 + col * 1.72, (row === 0 ? -0.02 : -2.22), 0.1);
+    book.userData = { race };
+    shelfGroup.add(book);
+    books.push(book);
+  });
+  album = { mode: 'shelf', shelfGroup, binderGroup: null, books, race: null, pageIdx: 0, pageCount: 0, flipT: -1 };
+}
+
+function albumCardsOf(race, pageIdx) {
+  const cards = CARD_DEFS.filter(d => d.race === race).sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name));
+  return cards.slice(pageIdx * 9, pageIdx * 9 + 9);
+}
+
+function buildBinder(race) {
+  if (album.binderGroup) scene.remove(album.binderGroup);
+  const g = new THREE.Group();
+  scene.add(g);
+  album.binderGroup = g;
+  // 活页夹整体向镜头倾斜（书页朝镜头可读）
+  g.rotation.x = 0.6;
+  g.position.y = -0.4;
+  album.race = race;
+  album.pageIdx = 0;
+  album.pageCount = Math.ceil(CARD_DEFS.filter(d => d.race === race).length / 9);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.24, 5.6),
+    new THREE.MeshLambertMaterial({ color: 0x2a1c12 }));
+  body.position.set(0, -1.35, 0);
+  g.add(body);
+  for (let i = 0; i < 3; i++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.035, 8, 20),
+      new THREE.MeshLambertMaterial({ color: 0xc8c0b0 }));
+    ring.position.set(-3.6, -1.15, -1.9 + i * 1.9);
+    ring.rotation.y = Math.PI / 2;
+    g.add(ring);
+  }
+  const pageGroup = new THREE.Group();
+  pageGroup.position.set(-3.55, -1.2, 0);
+  g.add(pageGroup);
+  album.pageGroup = pageGroup;
+  album.pageCards = [];
+  renderBinderPage();
+}
+
+function renderBinderPage() {
+  const g = album.pageGroup;
+  album.pageCards.forEach(c => g.remove(c.mesh));
+  album.pageCards = [];
+  const cards = albumCardsOf(album.race, album.pageIdx);
+  const parch = new THREE.MeshLambertMaterial({ map: makeParchmentTex() });
+  const page = new THREE.Mesh(new THREE.PlaneGeometry(7.1, 4.9), parch);
+  page.position.set(3.55, 0.05, 0);
+  page.rotation.x = -Math.PI / 2 + 0.08;
+  g.add(page);
+  cards.forEach((def, k) => {
+    const col = k % 3, row = Math.floor(k / 3);
+    const ci = CARDS.findIndex(c => c.name === def.name);
+    const artKey = def.name + '|art';
+    if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
+    const n = collection[def.name] || 0;
+    const pocket = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 2.75),
+      new THREE.MeshLambertMaterial({ color: n > 0 ? 0xffffff : 0x8a8a8a, transparent: true, opacity: n > 0 ? 1 : 0.55, map: texCache[artKey] }));
+    pocket.position.set(1.3 + col * 2.25, 0.07, -1.65 + row * 1.65);
+    pocket.rotation.x = -Math.PI / 2 + 0.08;
+    pocket.userData = { ci };
+    g.add(pocket);
+    album.pageCards.push({ mesh: pocket, def, idx: ci });
+  });
+}
+
+function flipBinderPage(dir) {
+  const next = album.pageIdx + dir;
+  if (next < 0 || next >= album.pageCount || album.flipT >= 0) return;
+  album.flipT = 0;
+  album.flipDir = dir;
+}
+
+function albumTick(t, dt) {
+  if (!album) return;
+  if (album.flipT >= 0) {
+    album.flipT += dt / 0.55;
+    const k = Math.min(1, album.flipT);
+    const ang = album.flipDir > 0 ? -Math.PI * k : Math.PI * k;
+    album.pageGroup.rotation.y = ang;
+    if (k >= 0.5 && !album._flipped) {
+      album._flipped = true;
+      album.pageIdx += album.flipDir;
+      renderBinderPage();
+      album.pageGroup.rotation.y = album.flipDir > 0 ? Math.PI : -Math.PI;
+    }
+    if (k >= 1) {
+      album.flipT = -1;
+      album._flipped = false;
+      album.pageGroup.rotation.y = 0;
+    }
+  }
+}
+
+canvas.addEventListener('pointerup', e => {
+  if (mode !== 'album-shelf' && mode !== 'album-binder') return;
+  if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return;
+  pointerNdc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(pointerNdc, camera);
+  if (mode === 'album-shelf') {
+    const hits = raycaster.intersectObjects(album.books);
+    if (hits.length > 0) {
+      buildBinder(hits[0].object.userData.race);
+      setMode('album-binder');
+      document.getElementById('holo-hint').textContent = 'click cards to inspect · ◀ ▶ flip · drag up/down to scroll';
+    }
+    return;
+  }
+  if (mode === 'album-binder') {
+    if (e.clientX < innerWidth * 0.33) { flipBinderPage(-1); return; }
+    if (e.clientX > innerWidth * 0.67) { flipBinderPage(1); return; }
+    const hits = raycaster.intersectObjects(album.pageCards.map(c => c.mesh));
+    if (hits.length > 0) {
+      const ci = hits[0].object.userData.ci;
+      if (ci >= 0) {
+        state.cardIdx = ci;
+        buildCardOptions('');
+        cardSel.value = String(ci);
+        refreshTextures();
+        setMode('viewer');
+      }
+    }
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (mode === 'album-binder' && dragging && !dragCard) {
+    const dy = (e.movementY || 0) * 0.006;
+    album.pageGroup.position.y = Math.max(-1.2, Math.min(1.2, album.pageGroup.position.y + dy));
+  }
+});
+
+const _setMode = setMode;
+setMode = function (m) {
+  _setMode(m);
+  if (album) {
+    if (album.shelfGroup) album.shelfGroup.visible = m === 'album-shelf';
+    if (album.binderGroup) album.binderGroup.visible = m === 'album-binder';
+  }
+};
 
 // ==================== URL 参数（与控件同一条代码路径） ====================
 (function applyUrl() {
@@ -11590,15 +12426,47 @@ function holoRatingHtml(def) {
   return '<b>战斗力 ' + def.rating + '</b>' + parts.map(p => '<div>+ ' + p + '</div>').join('');
 }
 window.__holo = {
-  openPack(defs, label) {
-    state.pendingPackCards = defs || null;
+  openBox(batches, race) {
+    state.boxBatches = batches.slice();
+    state.boxRemaining = batches.length;
+    clearFanObjects();
+    state.revealRow = 0;
+    state.packRace = race || null;
+    state.packVariant = 'box';
+    setPackTexture('box', race || null);
+    applyPackShape('box');
     document.getElementById('holo-viewer').classList.add('show');
     if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
     resetPackState();
     setMode('pack');
-    if (label) document.getElementById('holo-hint').textContent = label + ' · click it to tear open';
+    document.getElementById('holo-hint').textContent = (race ? race + '卡盒' : '卡盒') + ' · click it to tear open';
+  },
+  openAlbum() {
+    buildShelf();
+    album.shelfGroup.visible = true;
+    document.getElementById('holo-viewer').classList.add('show');
+    if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
+    setMode('album-shelf');
+    document.getElementById('holo-hint').textContent = 'click a book to open it · drag to look around';
+  },
+  openPack(defs, label, variant, race) {
+    clearFanObjects();
+    state.boxBatches = null; // 开盒后残留清空：防止开包误走 boxfan
+    state.pendingPackCards = defs || null;
+    state.packRace = race || null;
+    state.packVariant = variant === 'box' ? 'box' : 'pack';
+    setPackTexture(variant === 'box' ? 'box' : 'pack', state.packRace || null);
+    applyPackShape(variant === 'box' ? 'box' : 'pack');
+    document.getElementById('holo-viewer').classList.add('show');
+    if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
+    resetPackState();
+    setMode('pack');
+    document.getElementById('holo-hint').textContent = (label || '') + ' · click it to tear open';
   },
   open(cardName, liveMinion) {
+    state.returnMode = null; // 外部进入：清除返回栈，关闭时直接退出
+    state.boxBatches = null;
+    setMode('viewer'); // 强制回到检视模式（之前可能停在开包/开盒页）
     document.getElementById('holo-viewer').classList.add('show');
     if (cardName) {
       const i = CARDS.findIndex(d => d.name === cardName);
@@ -11616,6 +12484,12 @@ window.__holo = {
     if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
   },
   close() {
+    if (state.returnMode) { // 检视后返回上级页面（卡包/卡盒页），可继续检视其它卡
+      const rm = state.returnMode;
+      state.returnMode = null;
+      setMode(rm);
+      return;
+    }
     holoRunning = false;
     document.getElementById('holo-live').style.display = 'none';
     document.getElementById('holo-viewer').classList.remove('show');
@@ -11623,9 +12497,15 @@ window.__holo = {
   },
 };
 document.getElementById('holo-next').addEventListener('click', () => {
-  if (window.__packNext) window.__packNext();
+  if (window.__packNext) { window.__packNext(); return; }
+  if (state.boxBatches && state.boxBatches.length > 0) {
+    setMode('boxfan');
+    document.getElementById('holo-hint').textContent = 'click a pack to open it（剩 ' + state.boxBatches.length + ' 包）';
+  }
 });
+window.__drawCardFace = (def, idx) => drawCardFace(def, idx);
 document.getElementById('holo-close').addEventListener('click', () => window.__holo.close());
+if (typeof renderBuilder === 'function') renderBuilder();
 if (location.hash === '#holo' || new URLSearchParams(location.search).get('view') === 'holo') window.__holo.open();
 </script>
 
