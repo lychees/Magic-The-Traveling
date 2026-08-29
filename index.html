@@ -11989,7 +11989,7 @@ document.getElementById('holo-c-back-viewer').addEventListener('click', () => se
 
 
 // ==================== 3D 集卡册（书架 + 三环活页夹 + 九宫格卡袋） ====================
-let album = null; // { mode, shelfGroup, binderGroup, books, race, pageIdx, pageCount, flipT }
+let album = null; // { mode, shelfGroup, binderGroup, books, race, leafIdx, pageCount, leafCount, flipT }
 
 function makeSpineTex(race) {
   const cv = document.createElement('canvas');
@@ -12082,31 +12082,28 @@ function parchmentMat(doubleSided) {
   if (!texCache['__parch']) texCache['__parch'] = makeParchmentTex(); // 注意：makeParchmentTex 返回的已是 THREE 纹理
   return new THREE.MeshLambertMaterial({ map: texCache['__parch'], side: doubleSided ? THREE.DoubleSide : THREE.FrontSide });
 }
-function cardBackMat() {
-  if (!texCache['__back']) texCache['__back'] = makeTex(drawCardBack());
-  return new THREE.MeshLambertMaterial({ map: texCache['__back'] });
-}
 
-// 一页的 3×3 卡袋内容。front=true 正面卡面（可点检视），false 卡背（翻面页背面）
-// faceDown=true 仅用于翻页动页的背面（局部朝下，翻转后朝上）；静止页一律朝上
-function fillPockets(parent, pageIdx, front, xSign, y, faceDown) {
+// 一页的 3×3 卡袋内容（均为卡面，可点检视）。
+// side='R' 右页/动页正面（局部 +x 朝上）；side='L' 静止左页（-x 朝上）；
+// side='flipBack' 动页背面（局部朝下并预转 180°，翻到左侧后文字方向正确）
+function fillPockets(parent, pageIdx, side, y) {
   const cards = albumCardsOf(album.race, pageIdx);
   cards.forEach((def, k) => {
     const col = k % 3, row = Math.floor(k / 3);
-    let mesh;
-    if (front) {
-      const ci = CARDS.findIndex(c => c.name === def.name);
-      const artKey = def.name + '|art';
-      if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
-      const n = collection[def.name] || 0;
-      mesh = new THREE.Mesh(new THREE.PlaneGeometry(BINDER.cardW, BINDER.cardH),
-        new THREE.MeshLambertMaterial({ color: n > 0 ? 0xffffff : 0x8a8a8a, transparent: true, opacity: n > 0 ? 1 : 0.55, map: texCache[artKey] }));
-      mesh.userData = { ci };
+    const ci = CARDS.findIndex(c => c.name === def.name);
+    const artKey = def.name + '|art';
+    if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
+    const n = collection[def.name] || 0;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(BINDER.cardW, BINDER.cardH),
+      new THREE.MeshLambertMaterial({ color: n > 0 ? 0xffffff : 0x8a8a8a, transparent: true, opacity: n > 0 ? 1 : 0.55, map: texCache[artKey] }));
+    mesh.userData = { ci };
+    if (side === 'flipBack') {
+      mesh.rotation.set(Math.PI / 2, 0, Math.PI);
+      mesh.position.set(0.15 + BINDER.colX[col], y, BINDER.rowZ[row]);
     } else {
-      mesh = new THREE.Mesh(new THREE.PlaneGeometry(BINDER.cardW, BINDER.cardH), cardBackMat());
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.position.set((side === 'L' ? -1 : 1) * (0.15 + BINDER.colX[col]), y, BINDER.rowZ[row]);
     }
-    mesh.rotation.x = faceDown ? Math.PI / 2 : -Math.PI / 2;
-    mesh.position.set(xSign * (0.15 + BINDER.colX[col]), y, BINDER.rowZ[row]);
     parent.add(mesh);
   });
 }
@@ -12119,24 +12116,30 @@ function makePageMesh(doubleSided) {
 
 function clearGroup(g) { while (g.children.length) g.remove(g.children[0]); }
 
-// 静止状态：右顶页=当前页卡面，左顶页=已翻页的空白背面（活页不透明，不显示卡背）
+// 活叶模型：每张活叶双面都是卡页——正面=第 2k 页，背面=第 2k+1 页（翻到左侧后可见）
+// 静止状态：右顶页=当前活叶正面，左顶页=上一张活叶背面（均为卡面）
 // 层叠：封面顶 -0.02 < 页堆顶(-0.02+h) < 页(+0.004) < 卡袋(+0.012)
 function stackH(n) { return Math.min(0.18, Math.max(0.015, n * 0.03)); }
 function renderBinderIdle() {
   clearGroup(album.topR); clearGroup(album.topL);
-  const hR = stackH(album.pageCount - album.pageIdx - 1);
-  const hL = stackH(album.pageIdx);
+  const hR = stackH(album.leafCount - album.leafIdx - 1);
+  const hL = stackH(album.leafIdx);
   album.stackR.scale.y = hR; album.stackR.position.y = -0.02 + hR / 2;
   album.stackL.scale.y = hL; album.stackL.position.y = -0.02 + hL / 2;
   const yR = -0.02 + hR + 0.004, yL = -0.02 + hL + 0.004;
-  const pr = makePageMesh(false);
-  pr.position.set(0.15 + BINDER.pageW / 2, yR, 0);
-  album.topR.add(pr);
-  fillPockets(album.topR, album.pageIdx, true, 1, yR + 0.012);
-  if (album.pageIdx > 0) {
+  const frontPage = album.leafIdx * 2;
+  if (frontPage < album.pageCount) {
+    const pr = makePageMesh(false);
+    pr.position.set(0.15 + BINDER.pageW / 2, yR, 0);
+    album.topR.add(pr);
+    fillPockets(album.topR, frontPage, 'R', yR + 0.012);
+  }
+  const backPage = album.leafIdx * 2 - 1;
+  if (backPage >= 0 && backPage < album.pageCount) {
     const pl = makePageMesh(false);
     pl.position.set(-0.15 - BINDER.pageW / 2, yL, 0);
-    album.topL.add(pl); // 空白背面页
+    album.topL.add(pl);
+    fillPockets(album.topL, backPage, 'L', yL + 0.012);
   }
   album.pivotY = Math.max(yR, yL) + 0.03; // 翻页轴高度
 }
@@ -12149,8 +12152,9 @@ function buildBinder(race) {
   g.rotation.x = 0.5;
   g.position.y = -0.2;
   album.race = race;
-  album.pageIdx = 0;
+  album.leafIdx = 0;
   album.pageCount = Math.ceil(CARD_DEFS.filter(d => d.race === race).length / 9);
+  album.leafCount = Math.ceil(album.pageCount / 2);
   album.flipT = -1;
   const cover = new THREE.Mesh(new THREE.BoxGeometry(BINDER.coverW, 0.24, BINDER.coverD),
     new THREE.MeshLambertMaterial({ color: 0x2a1c12 }));
@@ -12179,36 +12183,40 @@ function buildBinder(race) {
 }
 
 function startFlip(dir) {
-  const next = album.pageIdx + dir;
-  if (next < 0 || next >= album.pageCount || album.flipT >= 0) return;
-  const content = dir > 0 ? album.pageIdx : next; // 动页承载的页码
+  const next = album.leafIdx + dir;
+  if (next < 0 || next >= album.leafCount || album.flipT >= 0) return;
+  const leaf = dir > 0 ? album.leafIdx : next; // 动页承载的活叶
   clearGroup(album.flipGroup);
-  const pf = makePageMesh(true); // 双面羊皮纸（背面空白，不透明）
+  const pf = makePageMesh(true); // 双面羊皮纸
   pf.position.set(0.15 + BINDER.pageW / 2, 0, 0);
   album.flipGroup.add(pf);
-  fillPockets(album.flipGroup, content, true, 1, 0.015);   // 正面卡面
+  fillPockets(album.flipGroup, leaf * 2, 'R', 0.015); // 正面页
+  if (leaf * 2 + 1 < album.pageCount) fillPockets(album.flipGroup, leaf * 2 + 1, 'flipBack', -0.015); // 背面页（奇数页时无）
   album.flipGroup.rotation.z = dir > 0 ? 0 : Math.PI;
   album.flipGroup.position.y = album.pivotY;
   album.flipGroup.visible = true;
   album.flipDir = dir;
   album.flipT = 0;
   if (dir > 0) {
-    // 掀起当前页，下方预先露出下一页（页堆同步减薄一页）
-    const hR = stackH(album.pageCount - album.pageIdx - 2);
+    // 掀起当前活叶，下方预先露出下一张活叶的正面页（页堆同步减薄一叶）
+    const hR = stackH(album.leafCount - album.leafIdx - 2);
     album.stackR.scale.y = hR; album.stackR.position.y = -0.02 + hR / 2;
     const yR = -0.02 + hR + 0.004;
     clearGroup(album.topR);
-    const pr = makePageMesh(false);
-    pr.position.set(0.15 + BINDER.pageW / 2, yR, 0);
-    album.topR.add(pr);
-    fillPockets(album.topR, album.pageIdx + 1, true, 1, yR + 0.012);
+    const frontPage = (album.leafIdx + 1) * 2;
+    if (frontPage < album.pageCount) {
+      const pr = makePageMesh(false);
+      pr.position.set(0.15 + BINDER.pageW / 2, yR, 0);
+      album.topR.add(pr);
+      fillPockets(album.topR, frontPage, 'R', yR + 0.012);
+    }
   } else {
-    album.topL.visible = false; // 动页空白背面取代左页
+    album.topL.visible = false; // 动页背面页取代左页
   }
 }
 
 function finishFlip() {
-  album.pageIdx += album.flipDir;
+  album.leafIdx += album.flipDir;
   album.flipT = -1;
   album.flipGroup.visible = false;
   album.topR.visible = true;
@@ -12241,7 +12249,7 @@ canvas.addEventListener('pointerup', e => {
   }
   if (mode === 'album-binder') {
     if (album.flipT >= 0) return;
-    const hits = raycaster.intersectObjects(album.topR.children.filter(o => o.userData.ci !== undefined));
+    const hits = raycaster.intersectObjects(album.topR.children.concat(album.topL.children).filter(o => o.userData.ci !== undefined));
     if (hits.length > 0) {
       const ci = hits[0].object.userData.ci;
       state.cardIdx = ci;
