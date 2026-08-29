@@ -715,6 +715,12 @@
     padding: 6px 14px; font-size: 13px; cursor: pointer;
   }
   #holo-close:hover { background: #3a3a58; }
+  #holo-next {
+    position: absolute; right: 14px; bottom: 16px; z-index: 11;
+    background: #2a4a2a; color: #d0e8c0; border: 1px solid #4a7a4a; border-radius: 8px;
+    padding: 6px 14px; font-size: 13px; cursor: pointer;
+  }
+  #holo-next:hover { background: #3a5a3a; }
   #holo-live {
     position: absolute; right: 14px; top: 52px; width: 224px; z-index: 10;
     background: rgba(20,22,30,0.62); border: 1px solid rgba(255,255,255,0.09);
@@ -734,6 +740,11 @@
     <div>
       <span id="gold-display" title="金币余额">🪙 0</span>
       <button class="btn" id="open-pack">开卡包（100🪙）</button>
+      <span id="shop" style="display:inline-flex;gap:4px;align-items:center;" title="阵营商店">
+        <select id="shop-race" class="btn" style="padding:4px 6px;"></select>
+        <button class="btn" id="buy-fpack">阵营卡包（150🪙）</button>
+        <button class="btn" id="buy-fbox">阵营卡盒（600🪙）</button>
+      </span>
       <button class="btn mode-btn active" id="mode-ai">人机对战</button>
       <button class="btn mode-btn" id="mode-pvp">双人对战</button>
       <button class="btn mode-btn" id="mode-net">联机对战</button>
@@ -5450,6 +5461,9 @@ const DECK_MAX = 60;  // 牌组最多 60 张
 const MAX_COPIES = 4; // 每种卡最多 4 张
 const PACK_PRICE = 100; // 卡包价格（金币）
 const PACK_SIZE = 5;    // 每包张数
+const FACTION_PACK_PRICE = 150; // 阵营卡包价格（同阵营 5 张）
+const FACTION_BOX_PRICE = 600;  // 阵营卡盒价格（同阵营 5 包共 25 张，8 折）
+const FACTION_BOX_PACKS = 5;
 
 // ---------- 收藏与金币（localStorage 持久化；无 localStorage 环境用内存兜底，游戏不炸） ----------
 const storage = (function () {
@@ -5893,6 +5907,101 @@ function updateGoldUi() {
     btn.disabled = gold < PACK_PRICE;
     btn.title = gold < PACK_PRICE ? '金币不足（需要 ' + PACK_PRICE + '）' : '开一包 ' + PACK_SIZE + ' 张随机卡';
   }
+  // 阵营商店：填充阵营下拉 + 按金币禁用
+  const fr = document.getElementById('shop-race');
+  if (fr && fr.options.length === 0) RACES.forEach(r => {
+    const o = document.createElement('option');
+    o.value = r; o.textContent = r;
+    fr.appendChild(o);
+  });
+  const fb1 = document.getElementById('buy-fpack'), fb2 = document.getElementById('buy-fbox');
+  if (fb1) fb1.disabled = gold < FACTION_PACK_PRICE;
+  if (fb2) fb2.disabled = gold < FACTION_BOX_PRICE;
+
+}
+// 3D 开卡包：扣金币 roll 5 张 → 3D 卡包撕开 → 扇出 → 自动入库（3D 检视可用时的默认路径）
+// 入库：把卡牌加入收藏并持久化（阵营包/卡盒共用）
+function grantCards(defs) {
+  defs.forEach(d => { collection[d.name] = (collection[d.name] || 0) + 1; });
+  saveEconomy();
+}
+
+// 阵营卡包：150 金币，5 张同阵营随机卡，走 3D 撕包
+function buyFactionPack(race) {
+  if (gold < FACTION_PACK_PRICE || packCards || !window.__holo) return false;
+  const pool = CARD_DEFS.filter(d => d.race === race);
+  if (pool.length === 0) return false;
+  gold -= FACTION_PACK_PRICE;
+  const defs = [];
+  for (let i = 0; i < PACK_SIZE; i++) defs.push(pool[Math.floor(Math.random() * pool.length)]);
+  saveEconomy();
+  sfx('pack');
+  window.__packCommit = () => {
+    grantCards(defs);
+    log('【' + race + '卡包】已收入收藏：' + defs.map(d => d.name).join('、'));
+    window.__packCommit = null;
+  };
+  window.__packClosed = () => { renderBuilder(); window.__packClosed = null; };
+  window.__holo.openPack(defs, race + '卡包');
+  updateGoldUi();
+  return true;
+}
+
+// 阵营卡盒：600 金币（8 折），连续开 5 包同阵营卡包（每包独立入库）
+function buyFactionBox(race) {
+  if (gold < FACTION_BOX_PRICE || packCards || !window.__holo) return false;
+  const pool = CARD_DEFS.filter(d => d.race === race);
+  if (pool.length === 0) return false;
+  gold -= FACTION_BOX_PRICE;
+  const queue = [];
+  for (let k = 0; k < FACTION_BOX_PACKS; k++) {
+    const defs = [];
+    for (let i = 0; i < PACK_SIZE; i++) defs.push(pool[Math.floor(Math.random() * pool.length)]);
+    queue.push(defs);
+  }
+  saveEconomy();
+  sfx('pack');
+  const openNext = () => {
+    const defs = queue.shift();
+    if (!defs) { window.__packNext = null; return; }
+    window.__packCommit = () => {
+      grantCards(defs);
+      log('【' + race + '卡盒】第 ' + (FACTION_BOX_PACKS - queue.length) + ' 包入库：' + defs.map(d => d.name).join('、'));
+      window.__packCommit = null;
+    };
+    if (queue.length > 0) {
+      window.__packNext = openNext;
+      window.__packClosed = null;
+    } else {
+      window.__packNext = null;
+      window.__packClosed = () => { renderBuilder(); window.__packClosed = null; };
+    }
+    window.__holo.openPack(defs, race + '卡盒 · 第 ' + (FACTION_BOX_PACKS - queue.length) + '/' + FACTION_BOX_PACKS + ' 包');
+  };
+  openNext();
+  updateGoldUi();
+  return true;
+}
+
+function buyPack3D() {
+  if (gold < PACK_PRICE || packCards || !window.__holo) return false;
+  gold -= PACK_PRICE;
+  packCards = [];
+  for (let i = 0; i < PACK_SIZE; i++) packCards.push(CARD_DEFS[Math.floor(Math.random() * CARD_DEFS.length)]);
+  packRevealed = packCards.map(() => true); // 3D 流程视为全部翻开，撕包完成即入库
+  saveEconomy();
+  sfx('pack');
+  window.__packCommit = () => {
+    commitPack();
+    window.__packCommit = null;
+  };
+  window.__packClosed = () => {
+    renderBuilder(); // 收藏已变化，刷新组牌界面
+    window.__packClosed = null;
+  };
+  window.__holo.openPack(packCards);
+  updateGoldUi();
+  return true;
 }
 
 function buyPack() {
@@ -10040,7 +10149,9 @@ document.getElementById('start-battle').addEventListener('click', () => {
   if (builderMode === 'pvp') initGame(deckFrom(builderSel), 'pvp', deckFrom(builderSel2));
   else initGame(selectedDeck(), 'ai');
 });
-document.getElementById('open-pack').addEventListener('click', buyPack);
+document.getElementById('open-pack').addEventListener('click', () => { if (!buyPack3D()) buyPack(); });
+document.getElementById('buy-fpack').addEventListener('click', () => buyFactionPack(document.getElementById('shop-race').value));
+document.getElementById('buy-fbox').addEventListener('click', () => buyFactionBox(document.getElementById('shop-race').value));
 document.getElementById('pack-reveal-all').addEventListener('click', revealAll);
 document.getElementById('pack-commit').addEventListener('click', commitPack);
 document.getElementById('pack-done').addEventListener('click', closePack);
@@ -10176,6 +10287,7 @@ globalThis.__api = {
     </div>
   <div id="holo-hint">drag card to rotate (inertial)</div>
   <div id="holo-live" style="display:none"></div>
+  <button id="holo-next" style="display:none">下一包</button>
   <button id="holo-close">✕ 关闭</button>
 </div>
 <script type="importmap">
@@ -11159,6 +11271,7 @@ scene.add(dirLight);
 let mode = 'viewer'; // viewer | pack | opening | fan
 let modeT = 0;
 function setMode(m) {
+  document.getElementById('holo-next').style.display = (m === 'fan' && window.__packNext) ? '' : 'none';
   mode = m; modeT = 0;
   mesh.visible = m === 'viewer';
   packGroup.visible = m === 'pack' || m === 'opening';
@@ -11248,9 +11361,15 @@ let fanCards = [];
 function spawnFan() {
   fanCards.forEach(c => fanGroup.remove(c.mesh));
   fanCards = [];
-  const picks = new Set();
-  while (picks.size < Math.min(5, CARDS.length)) picks.add(Math.floor(Math.random() * CARDS.length));
-  const idxs = [...picks];
+  let idxs;
+  if (state.pendingPackCards) {
+    idxs = state.pendingPackCards.map(d => CARDS.findIndex(c => c.name === d.name)).filter(i => i >= 0);
+    state.pendingPackCards = null; // 一次性消费
+  } else {
+    const picks = new Set();
+    while (picks.size < Math.min(5, CARDS.length)) picks.add(Math.floor(Math.random() * CARDS.length));
+    idxs = [...picks];
+  }
   idxs.forEach((ci, k) => {
     const def = CARDS[ci];
     const artKey = def.name + '|art';
@@ -11311,7 +11430,7 @@ function packTick(t, dt) {
       halfL.material.opacity = 1 - k2;
       halfR.material.opacity = 1 - k2;
     }
-    if (modeT > 1.1) { spawnFan(); setMode('fan'); }
+    if (modeT > 1.1) { spawnFan(); setMode('fan'); if (window.__packCommit) { const f = window.__packCommit; window.__packCommit = null; f(); } }
   } else if (mode === 'fan') {
     fanCards.forEach(c => {
       const local = Math.max(0, modeT - c.delay);
@@ -11354,7 +11473,7 @@ canvas.addEventListener('pointerup', e => {
   }
 });
 
-document.getElementById('holo-c-pack').addEventListener('click', () => {
+function resetPackState() {
   packPhys.rx = 0; packPhys.ry = 0; packPhys.vx = 0; packPhys.vy = 0; packPhys.scale = 0.01; packPhys.vs = 8;
   packBody.visible = true;
   halfL.visible = halfR.visible = false;
@@ -11362,6 +11481,12 @@ document.getElementById('holo-c-pack').addEventListener('click', () => {
   halfL.position.set(-1.05, 0, 0.46); halfR.position.set(1.05, 0, 0.46);
   halfL.material.opacity = halfR.material.opacity = 1;
   packGroup.rotation.set(0, 0, 0);
+}
+// 游戏内购卡包入口：defs 为已 roll 的 5 张（开完后由游戏侧入库）
+state.pendingPackCards = null;
+document.getElementById('holo-c-pack').addEventListener('click', () => {
+  state.pendingPackCards = null;
+  resetPackState();
   setMode('pack');
 });
 document.getElementById('holo-c-back-viewer').addEventListener('click', () => setMode('viewer'));
@@ -11465,6 +11590,14 @@ function holoRatingHtml(def) {
   return '<b>战斗力 ' + def.rating + '</b>' + parts.map(p => '<div>+ ' + p + '</div>').join('');
 }
 window.__holo = {
+  openPack(defs, label) {
+    state.pendingPackCards = defs || null;
+    document.getElementById('holo-viewer').classList.add('show');
+    if (!holoRunning) { holoRunning = true; lastT = performance.now(); requestAnimationFrame(loop); }
+    resetPackState();
+    setMode('pack');
+    if (label) document.getElementById('holo-hint').textContent = label + ' · click it to tear open';
+  },
   open(cardName, liveMinion) {
     document.getElementById('holo-viewer').classList.add('show');
     if (cardName) {
@@ -11486,8 +11619,12 @@ window.__holo = {
     holoRunning = false;
     document.getElementById('holo-live').style.display = 'none';
     document.getElementById('holo-viewer').classList.remove('show');
+    if (window.__packClosed) { const f = window.__packClosed; window.__packClosed = null; f(); }
   },
 };
+document.getElementById('holo-next').addEventListener('click', () => {
+  if (window.__packNext) window.__packNext();
+});
 document.getElementById('holo-close').addEventListener('click', () => window.__holo.close());
 if (location.hash === '#holo' || new URLSearchParams(location.search).get('view') === 'holo') window.__holo.open();
 </script>
