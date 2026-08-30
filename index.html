@@ -10517,6 +10517,40 @@ function genRunMap() {
     return shuffle(pool.slice()).slice(0, n);
   });
 }
+// 节点间连线约束（杀戮尖塔式）：每个节点只连通下一列最近的 1-2 个节点；
+// 单节点列全连出/全汇入；保证下一列每个节点至少一条入边
+function genRunEdges(cols) {
+  const edges = [];
+  for (let i = 0; i < cols.length - 1; i++) {
+    const m = cols[i].length, n = cols[i + 1].length;
+    const colEdges = [];
+    if (m === 1 && n === 1) colEdges.push([0]);
+    else if (m === 1) colEdges.push(Array.from({ length: n }, (_, t) => t));
+    else {
+      for (let k = 0; k < m; k++) {
+        const t = Math.round(k * (n - 1) / (m - 1));
+        const targets = new Set([t]);
+        if (t + 1 < n && Math.random() < 0.6) targets.add(t + 1);
+        if (t > 0 && Math.random() < 0.3) targets.add(t - 1);
+        colEdges.push([...targets].sort((a, b) => a - b));
+      }
+      for (let t = 0; t < n; t++) {
+        if (!colEdges.some(e => e.indexOf(t) >= 0)) {
+          const k = Math.round(t * (m - 1) / (n - 1));
+          colEdges[k].push(t);
+          colEdges[k].sort((a, b) => a - b);
+        }
+      }
+    }
+    edges.push(colEdges);
+  }
+  return edges;
+}
+// 当前列中可从上一列所选节点到达的节点下标
+function rlReachable() {
+  if (RUN.floor === 0) return RUN.map[0].map((_, k) => k);
+  return (RUN.edges[RUN.floor - 1] && RUN.edges[RUN.floor - 1][RUN.path[RUN.floor - 1]]) || [];
+}
 const RUN_NODE_INFO = {
   battle: { icon: '⚔️', name: '战斗' }, elite: { icon: '👹', name: '精英' },
   campfire: { icon: '🔥', name: '篝火' }, shop: { icon: '🛒', name: '商店' },
@@ -10527,7 +10561,7 @@ let RUN = null;
 function saveRun() { try { storage.setItem('mtcg-run', JSON.stringify(RUN)); } catch (e) {} }
 function loadRun() {
   try { RUN = JSON.parse(storage.getItem('mtcg-run') || 'null'); } catch (e) { RUN = null; }
-  if (!RUN || !RUN.active || !RUN.map) RUN = null;
+  if (!RUN || !RUN.active || !RUN.map || !RUN.edges) RUN = null;
 }
 function clearRun() { RUN = null; try { storage.removeItem('mtcg-run'); } catch (e) {} }
 function getMemorials() { try { return JSON.parse(storage.getItem('mtcg-memorials') || '[]') || []; } catch (e) { return []; } }
@@ -10547,7 +10581,8 @@ function runStarterDeck(race) {
 }
 
 function startRun(race) {
-  RUN = { active: true, race: race, deck: runStarterDeck(race), floor: 0, map: genRunMap(), path: [], curNode: null, hp: 25, maxHp: 25, kills: 0, rounds: 0, modifier: null, campResult: null, eventText: null, _panel: 'map' };
+  RUN = { active: true, race: race, deck: runStarterDeck(race), floor: 0, map: genRunMap(), path: [], curNode: null, edges: null, hp: 25, maxHp: 25, kills: 0, rounds: 0, modifier: null, campResult: null, eventText: null, _panel: 'map' };
+  RUN.edges = genRunEdges(RUN.map);
   saveRun();
   openRoguelike('map');
   sfx('phase');
@@ -10570,7 +10605,10 @@ function rlTrackHtml() {
       let cls = 'rl-node', pick = '';
       if (i < RUN.floor) cls += RUN.path[i] === k ? ' done' : ' skip';
       else if (i === RUN.floor) {
-        if (RUN.curNode == null && RUN._panel === 'map') { cls += ' cur'; pick = ' data-rl="pick-node" data-k="' + k + '"'; }
+        if (RUN.curNode == null && RUN._panel === 'map') {
+          if (rlReachable().indexOf(k) >= 0) { cls += ' cur'; pick = ' data-rl="pick-node" data-k="' + k + '"'; }
+          else cls += ' skip';
+        }
         else if (RUN.path[i] === k) cls += ' cur';
       }
       return '<div class="' + cls + '"' + pick + '>' + info.icon + '<span>' + info.name + '</span></div>';
@@ -10746,6 +10784,7 @@ function rlAction(act, ds) {
   if (act === 'pick-node') {
     if (RUN.curNode != null || RUN._panel !== 'map') return;
     const k = parseInt(ds.k, 10);
+    if (rlReachable().indexOf(k) < 0) return; // 未连通的节点不可选
     RUN.curNode = RUN.map[RUN.floor][k];
     RUN.path[RUN.floor] = k;
     saveRun();
