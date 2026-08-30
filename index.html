@@ -10928,7 +10928,8 @@ function applyCardEdits() {
 }
 
 const ED = { origName: null, isCustom: false, isNew: true, filter: 'all', def: null };
-const ED_TRAITS = [...new Set(CARD_ORIG.flatMap(d => d.traits || []))].sort((a, b) => a.localeCompare(b));
+const ED_PARAM_TRAITS = ['法术护盾', '再生', '毒Lv', '护甲穿透', '复仇', '威吓', '鼓舞', '觉醒', '反击', '法力燃烧']; // 可自定义 X 的词条家族
+const ED_TRAITS = [...new Set(CARD_ORIG.flatMap(d => d.traits || []))].filter(t => !ED_PARAM_TRAITS.some(f => t.startsWith(f))).sort((a, b) => a.localeCompare(b));
 const ED_SPELL_KEYS = Object.keys((window.VIEWER_TEXT || {}).spell || {});
 const ED_ACT_KEYS = Object.keys((window.VIEWER_TEXT || {}).unitSpell || {});
 const ED_FX_KEYS = Object.keys((window.VIEWER_TEXT || {}).spellFx || {});
@@ -11018,6 +11019,11 @@ function edFormHtml() {
     if ((d.actSpells || []).length) {
       h += '<label>法术法力<br><small>初始/上限</small></label><span>' + num('ce-spellMana0', d.spellMana0 || 0, 0, 10) + ' / ' + num('ce-spellManaMax', d.spellManaMax || 0, 0, 10) + '</span>';
     }
+    h += '<label>参数词条<br><small>自定 X 数值</small></label><div class="ce-traits">' + ED_PARAM_TRAITS.map(fam => {
+      const cur = (d.traits || []).find(t => t.startsWith(fam));
+      const x = cur ? (parseInt(cur.slice(fam.length), 10) || 1) : 1;
+      return '<label class="ce-trait" title="' + (vt.traits[fam] || '') + '"><input type="checkbox" data-ptrait="' + fam + '"' + (cur ? ' checked' : '') + '> ' + fam + ' <input type="number" data-pnum="' + fam + '" value="' + x + '" min="1" max="9" style="width:44px"></label>';
+    }).join('') + '</div>';
     h += '<label>词条</label><div class="ce-traits">' + ED_TRAITS.map(t =>
       '<label class="ce-trait" title="' + (vt.traits[t] || '') + '"><input type="checkbox" data-trait="' + t + '"' + ((d.traits || []).indexOf(t) >= 0 ? ' checked' : '') + '> ' + t + '</label>').join('') + '</div>';
   } else {
@@ -11068,7 +11074,11 @@ function collectEdForm(strict) {
       def.actSpells = acts;
       def.spellMana0 = nv('ce-spellMana0'); def.spellManaMax = nv('ce-spellManaMax');
     }
-    def.traits = [...document.querySelectorAll('#ce-form input[data-trait]:checked')].map(x => x.dataset.trait);
+    def.traits = ED_PARAM_TRAITS.filter(fam => { const cb = document.querySelector('input[data-ptrait="' + fam + '"]'); return cb && cb.checked; }).map(fam => {
+      const numEl = document.querySelector('input[data-pnum="' + fam + '"]');
+      return fam + Math.max(1, Math.min(9, parseInt(numEl && numEl.value, 10) || 1));
+    });
+    def.traits = def.traits.concat([...document.querySelectorAll('#ce-form input[data-trait]:checked')].map(x => x.dataset.trait));
   } else {
     def.school = g('ce-school').value;
     def.spellEffect = g('ce-fx').value;
