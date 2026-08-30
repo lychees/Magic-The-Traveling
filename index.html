@@ -470,7 +470,9 @@
   #roguelike .rl-track { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
   #roguelike .rl-node { width: 62px; text-align: center; font-size: 19px; opacity: .4; }
   #roguelike .rl-node span { display: block; font-size: 11px; }
-  #roguelike .rl-node.cur { opacity: 1; transform: scale(1.18); }
+  #roguelike .rl-node.cur { opacity: 1; transform: scale(1.18); cursor: pointer; }
+  #roguelike .rl-col { display: flex; flex-direction: column; gap: 4px; }
+  #roguelike .rl-node.skip { opacity: .12; }
   #roguelike .rl-node.done { opacity: .75; filter: grayscale(.5); }
   #roguelike .rl-link { width: 12px; height: 2px; background: #4a4a60; }
   #roguelike .rl-cards { display: flex; gap: 14px; flex-wrap: wrap; margin: 12px 0; }
@@ -10496,7 +10498,25 @@ const RUN_MODIFIERS = {
   calm: { name: '心如止水', desc: '全场所有单位士气锁定为 0' },
   dragon: { name: '巨龙威压', desc: '敌方所有单位攻击力 +1' },
 };
-const RUN_NODES = ['battle', 'battle', 'campfire', 'battle', 'boss', 'battle', 'shop', 'elite', 'event', 'finalBoss'];
+const RUN_MAP_POOLS = [
+  ['battle'],
+  ['battle', 'battle', 'event'],
+  ['campfire', 'battle', 'event', 'shop'],
+  ['battle', 'elite', 'event'],
+  ['campfire', 'shop', 'battle'],
+  ['boss'],
+  ['battle', 'elite', 'event'],
+  ['campfire', 'shop', 'battle'],
+  ['elite', 'battle', 'event'],
+  ['finalBoss'],
+];
+// 生成 10 列分支地图：固定列 1 个节点，其余列 2-3 个可选节点
+function genRunMap() {
+  return RUN_MAP_POOLS.map(pool => {
+    const n = pool.length === 1 ? 1 : Math.min(pool.length, 2 + (Math.random() < 0.5 ? 1 : 0));
+    return shuffle(pool.slice()).slice(0, n);
+  });
+}
 const RUN_NODE_INFO = {
   battle: { icon: '⚔️', name: '战斗' }, elite: { icon: '👹', name: '精英' },
   campfire: { icon: '🔥', name: '篝火' }, shop: { icon: '🛒', name: '商店' },
@@ -10507,7 +10527,7 @@ let RUN = null;
 function saveRun() { try { storage.setItem('mtcg-run', JSON.stringify(RUN)); } catch (e) {} }
 function loadRun() {
   try { RUN = JSON.parse(storage.getItem('mtcg-run') || 'null'); } catch (e) { RUN = null; }
-  if (!RUN || !RUN.active) RUN = null;
+  if (!RUN || !RUN.active || !RUN.map) RUN = null;
 }
 function clearRun() { RUN = null; try { storage.removeItem('mtcg-run'); } catch (e) {} }
 function getMemorials() { try { return JSON.parse(storage.getItem('mtcg-memorials') || '[]') || []; } catch (e) { return []; } }
@@ -10527,7 +10547,7 @@ function runStarterDeck(race) {
 }
 
 function startRun(race) {
-  RUN = { active: true, race: race, deck: runStarterDeck(race), floor: 0, hp: 25, maxHp: 25, kills: 0, rounds: 0, modifier: null, campResult: null, eventText: null };
+  RUN = { active: true, race: race, deck: runStarterDeck(race), floor: 0, map: genRunMap(), path: [], curNode: null, hp: 25, maxHp: 25, kills: 0, rounds: 0, modifier: null, campResult: null, eventText: null, _panel: 'map' };
   saveRun();
   openRoguelike('map');
   sfx('phase');
@@ -10544,10 +10564,18 @@ function openRoguelike(panel) {
 }
 
 function rlTrackHtml() {
-  return RUN_NODES.map((n, i) => {
-    const info = RUN_NODE_INFO[n];
-    const cls = i < RUN.floor ? 'rl-node done' : i === RUN.floor ? 'rl-node cur' : 'rl-node';
-    return '<div class="' + cls + '">' + info.icon + '<span>' + info.name + '</span></div>';
+  return RUN.map.map((col, i) => {
+    const nodes = col.map((t, k) => {
+      const info = RUN_NODE_INFO[t];
+      let cls = 'rl-node', pick = '';
+      if (i < RUN.floor) cls += RUN.path[i] === k ? ' done' : ' skip';
+      else if (i === RUN.floor) {
+        if (RUN.curNode == null && RUN._panel === 'map') { cls += ' cur'; pick = ' data-rl="pick-node" data-k="' + k + '"'; }
+        else if (RUN.path[i] === k) cls += ' cur';
+      }
+      return '<div class="' + cls + '"' + pick + '>' + info.icon + '<span>' + info.name + '</span></div>';
+    }).join('');
+    return '<div class="rl-col">' + nodes + '</div>';
   }).join('<div class="rl-link"></div>');
 }
 
@@ -10582,7 +10610,7 @@ function enemyDeckFor(node) {
 }
 
 function startNodeBattle() {
-  const node = RUN_NODES[RUN.floor];
+  const node = RUN.curNode;
   RUN.modifier = node === 'finalBoss' ? 'dragon' : node === 'boss' ? (Math.random() < 0.5 ? 'skeletons' : 'calm') : null;
   const enemyDefs = enemyDeckFor(node);
   RUN.inBattle = true;
@@ -10599,7 +10627,7 @@ function startNodeBattle() {
 
 // checkGameOver 分流：won 含平局（同归于尽算涉险过关，1 血续命）
 function roguelikeBattleEnd(won) {
-  const node = RUN_NODES[RUN.floor];
+  const node = RUN.curNode;
   RUN.rounds += state.round;
   RUN.kills += state.enemy.graveyard.length;
   if (!won) { runDefeat(); return; }
@@ -10610,6 +10638,7 @@ function roguelikeBattleEnd(won) {
   updateGoldUi();
   sfx('win');
   if (node === 'finalBoss') { runVictory(); return; }
+  RUN.curNode = null;
   RUN.floor++;
   saveRun();
   openRoguelike('draft');
@@ -10639,6 +10668,7 @@ function rlCardImg(def, cls) {
 }
 
 function renderRoguelike(panel) {
+  if (RUN) RUN._panel = panel;
   const body = document.getElementById('rl-body');
   let h = '';
   if (panel === 'raceSelect') {
@@ -10651,12 +10681,13 @@ function renderRoguelike(panel) {
     }
     h += '<div style="margin-top:18px"><button class="btn" data-rl="exit">返回组牌</button></div>';
   } else if (panel === 'map') {
-    const node = RUN_NODES[RUN.floor];
-    const info = RUN_NODE_INFO[node];
-    h += '<div class="rl-status">第 ' + (RUN.floor + 1) + ' / ' + RUN_NODES.length + ' 层 · ' + RUN.race + ' · ❤️ ' + RUN.hp + '/' + RUN.maxHp + ' · 🪙 ' + gold + ' · 牌组 ' + RUN.deck.length + ' 张</div>';
+    const node = RUN.curNode;
+    h += '<div class="rl-status">第 ' + (RUN.floor + 1) + ' / ' + RUN.map.length + ' 层 · ' + RUN.race + ' · ❤️ ' + RUN.hp + '/' + RUN.maxHp + ' · 🪙 ' + gold + ' · 牌组 ' + RUN.deck.length + ' 张</div>';
     h += '<div class="rl-track">' + rlTrackHtml() + '</div>';
     if (RUN.campResult) { h += '<div class="rl-note">' + RUN.campResult + '</div>'; RUN.campResult = null; }
-    if (node === 'campfire') {
+    if (!node) {
+      h += '<div class="rl-title">选择道路</div><div class="rl-note">点击上方高亮节点，选择本层要前往的地方。</div>';
+    } else if (node === 'campfire') {
       h += '<div class="rl-title">篝火</div><div class="rl-note">休整一下：强化一张牌（70% +1攻/+2血，30% 销毁），或稳妥恢复生命。</div>' +
         '<button class="btn" data-rl="camp-buff">强化一张牌</button> <button class="btn" data-rl="camp-heal">恢复 8 生命</button>';
     } else if (node === 'shop') {
@@ -10668,7 +10699,7 @@ function renderRoguelike(panel) {
         '<button class="btn" data-rl="enter-event">触发事件</button>';
     } else {
       const mod = node === 'boss' || node === 'finalBoss' ? '<div class="rl-note">⚠️ Boss 战：将有特殊规则！</div>' : '';
-      h += '<div class="rl-title">' + info.icon + ' ' + info.name + '</div>' + mod +
+      h += '<div class="rl-title">' + RUN_NODE_INFO[node].icon + ' ' + RUN_NODE_INFO[node].name + '</div>' + mod +
         '<button class="btn" data-rl="enter-node">进入战斗</button>';
     }
     h += '<div class="rl-sub">牌组（' + RUN.deck.length + '）</div><div class="rl-deck-list">' + rlDeckHtml() + '</div>';
@@ -10676,7 +10707,7 @@ function renderRoguelike(panel) {
   } else if (panel === 'draft') {
     const picks = draftChoices();
     RUN._draft = picks;
-    h += '<div class="rl-status">第 ' + RUN.floor + ' / ' + RUN_NODES.length + ' 层 · ' + RUN.race + ' · ❤️ ' + RUN.hp + '/' + RUN.maxHp + ' · 🪙 ' + gold + '</div>';
+    h += '<div class="rl-status">第 ' + RUN.floor + ' / ' + RUN.map.length + ' 层 · ' + RUN.race + ' · ❤️ ' + RUN.hp + '/' + RUN.maxHp + ' · 🪙 ' + gold + '</div>';
     h += '<div class="rl-title">战利品：选择一张加入牌组</div><div class="rl-cards">' +
       picks.map((d, i) => '<div data-rl="draft-pick" data-i="' + i + '">' + rlCardImg(d) + '</div>').join('') + '</div>' +
       '<button class="btn" data-rl="draft-skip">跳过</button>';
@@ -10689,7 +10720,7 @@ function renderRoguelike(panel) {
       RUN.deck.map((d, i) => '<button class="btn rl-mini" data-rl="shop-remove-pick" data-i="' + i + '">' + d.cost + '费 ' + d.name + '</button>').join('') + '</div>' +
       '<button class="btn" data-rl="shop-back">返回商店</button>';
   } else if (panel === 'event') {
-    h += '<div class="rl-status">第 ' + RUN.floor + ' / ' + RUN_NODES.length + ' 层 · ' + RUN.race + ' · ❤️ ' + RUN.hp + '/' + RUN.maxHp + ' · 🪙 ' + gold + '</div>';
+    h += '<div class="rl-status">第 ' + RUN.floor + ' / ' + RUN.map.length + ' 层 · ' + RUN.race + ' · ❤️ ' + RUN.hp + '/' + RUN.maxHp + ' · 🪙 ' + gold + '</div>';
     h += '<div class="rl-track">' + rlTrackHtml() + '</div><div class="rl-title">❓ 事件</div><div class="rl-note">' + (RUN.eventText || '') + '</div>' +
       '<button class="btn" data-rl="event-continue">继续前进</button>';
   } else if (panel === 'defeat') {
@@ -10712,6 +10743,16 @@ function rlAction(act, ds) {
   if (act === 'exit') { showBuilder(); return; }
   if (act === 'abandon') { if (confirm('确定放弃本次闯关？进度将清空。')) { clearRun(); showBuilder(); } return; }
   if (!RUN) return;
+  if (act === 'pick-node') {
+    if (RUN.curNode != null || RUN._panel !== 'map') return;
+    const k = parseInt(ds.k, 10);
+    RUN.curNode = RUN.map[RUN.floor][k];
+    RUN.path[RUN.floor] = k;
+    saveRun();
+    if (RUN.curNode === 'battle' || RUN.curNode === 'elite' || RUN.curNode === 'boss' || RUN.curNode === 'finalBoss') { startNodeBattle(); return; }
+    renderRoguelike('map');
+    return;
+  }
   if (act === 'enter-node') { startNodeBattle(); return; }
   if (act === 'enter-event') { resolveEventNode(); renderRoguelike('event'); return; }
   if (act === 'draft-pick') {
@@ -10727,6 +10768,7 @@ function rlAction(act, ds) {
   if (act === 'camp-heal') {
     RUN.hp = Math.min(RUN.maxHp, RUN.hp + 8);
     RUN.campResult = '在篝火旁恢复了 8 点生命（' + RUN.hp + '/' + RUN.maxHp + '）';
+    RUN.curNode = null;
     RUN.floor++;
     saveRun();
     openRoguelike('map');
@@ -10745,6 +10787,7 @@ function rlAction(act, ds) {
       RUN.campResult = '【' + d.name + '】被篝火吞噬了……';
       sfx('death');
     }
+    RUN.curNode = null;
     RUN.floor++;
     saveRun();
     openRoguelike('map');
@@ -10789,7 +10832,7 @@ function rlAction(act, ds) {
     renderRoguelike('map');
     return;
   }
-  if (act === 'shop-leave') { RUN.floor++; saveRun(); openRoguelike('map'); return; }
+  if (act === 'shop-leave') { RUN.curNode = null; RUN.floor++; saveRun(); openRoguelike('map'); return; }
   if (act === 'event-continue') { openRoguelike('map'); return; }
   if (act === 'defeat-continue') { clearRun(); showBuilder(); return; }
   if (act === 'victory-continue') { clearRun(); showBuilder(); return; }
@@ -10814,6 +10857,7 @@ function resolveEventNode() {
     RUN.hp = Math.min(RUN.maxHp, RUN.hp + 10);
     RUN.eventText = '恢复了 10 点生命（' + RUN.hp + '/' + RUN.maxHp + '）';
   }
+  RUN.curNode = null;
   RUN.floor++;
   saveEconomy();
   updateGoldUi();
