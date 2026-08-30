@@ -4146,7 +4146,9 @@
       "arm": 0,
       "hp": 3,
       "rating": 5,
-      "traits": [],
+      "traits": [
+        "机械"
+      ],
       "art": {
         "icon": "🔧",
         "hue": 35
@@ -4160,7 +4162,9 @@
       "arm": 0,
       "hp": 5,
       "rating": 9,
-      "traits": [],
+      "traits": [
+        "机械"
+      ],
       "art": {
         "icon": "⚙️",
         "hue": 40
