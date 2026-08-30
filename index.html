@@ -5537,6 +5537,7 @@
   ]
 }
 </script>
+<script src="tools/rating.js"></script>
 <script>
 'use strict';
 
@@ -7644,9 +7645,7 @@ function moraleFail(m) { // 负士气导致的失败判定（无法行动/无法
 // 士气特效：触发专属音效 + 卡面动画（600ms 后清除并重绘）
 function moraleFx(m, kind) {
   if (!state) return;
-  state.moraleFx = { uid: m.uid, kind: kind ,
-  repair: '修理：消耗 1 法力，使一个机械单位恢复 2 点生命',
-};
+  state.moraleFx = { uid: m.uid, kind: kind };
   sfx(kind === 'up' ? 'moraleUp' : 'moraleDown');
   setTimeout(() => {
     if (!state) return;
@@ -9581,14 +9580,7 @@ function closeViewer() {
 
 // ---------- 卡牌详情浮层（双击打开） ----------
 // 战斗力评分明细：血+攻+甲×3 + 词条/法术分值（飞行/远程 3，再生/法术护盾 1，拒马 0.5，其它每项 2）；法术卡本身计 1 个法术
-function ratingTraitW(t) {
-  if (t === '拒马') return 0.5;
-  if (t === '飞行' || t === '远程' || t === '石像形态') return 3;
-  if (t.startsWith('法术护盾')) return parseInt(t.slice(4), 10) || 1; // 法术护盾X = X 分
-  if (t.startsWith('再生')) return parseInt(t.slice(2), 10) || 1; // 再生X = X 分
-  if (t.startsWith('觉醒')) return 0; // 觉醒是限制词条，不计分
-  return 2;
-}
+function ratingTraitW(t) { return MTCG_RATING.traitW(t); } // 公式唯一数据源：tools/rating.js
 function ratingBreakdownHtml(def) {
   if (!def || def.rating == null) return '';
   const parts = [];
@@ -10348,7 +10340,7 @@ document.getElementById('pass-continue').addEventListener('click', confirmPass);
 document.getElementById('mode-ai').addEventListener('click', () => setBuilderMode('ai'));
 document.getElementById('mode-pvp').addEventListener('click', () => setBuilderMode('pvp'));
 document.getElementById('viewer-close').addEventListener('click', closeViewer);
-document.getElementById('open-album').addEventListener('click', () => { if (window.__holo) window.__holo.openAlbum(); else openAlbum(); });
+document.getElementById('open-album').addEventListener('click', () => { if (window.__holo) window.__holo.openAlbum(); });
 
 // 开发者模式：localStorage 持久化开关；开启后显示刷钱按钮
 let devMode = storage.getItem('mtcg-dev') === '1';
@@ -10936,15 +10928,7 @@ const ED_FX_KEYS = Object.keys((window.VIEWER_TEXT || {}).spellFx || {});
 const ED_SCHOOLS = ['土', '水', '火', '气'];
 const ED_TARGETS = [['none', '无目标'], ['friendlyUnit', '友方单位'], ['enemyUnit', '敌方单位'], ['graveUnit', '墓地单位']];
 
-function edRating(def) {
-  if (def.type === 'spell') return 2;
-  let r = (def.hp || 0) + (def.atk || 0) + (def.arm || 0) * 3;
-  (def.traits || []).forEach(t => { r += ratingTraitW(t); });
-  if (def.spell) r += 2;
-  if (def.actSpell) r += 2;
-  (def.actSpells || []).forEach(() => { r += 2; });
-  return r;
-}
+function edRating(def) { return MTCG_RATING.computeRating(def); } // 公式唯一数据源：tools/rating.js
 
 function edNewDef() {
   return { name: '', type: 'unit', race: RACES[0], cost: 1, atk: 1, arm: 0, hp: 1, traits: [], art: { icon: '✨', hue: 200 } };
@@ -11089,6 +11073,7 @@ function collectEdForm(strict) {
   def.art = { icon: (g('ce-icon').value.trim() || '❔'), hue: Math.max(0, Math.min(360, nv('ce-hue', 200))) };
   if (strict) {
     if (!name) { alert('名称不能为空'); return null; }
+    if (/[<>&"']/.test(name)) { alert('名称不能包含尖括号或引号'); return null; }
     const dup = CARD_DEFS.some(d => d.name === name && d.name !== ED.origName);
     if (dup) { alert('已存在同名卡牌【' + name + '】'); return null; }
   }
@@ -11276,7 +11261,7 @@ updateMuteBtn();
 globalThis.__api = {
   initGame, getState: () => state, playCard, doAttack, startCombat, playSpellCard, legalSpellTargets, resolveSpellEffect,
   effCost, effArmor, canTarget, legalMinionTargets, canHitHero, frontRowOf, canCounter, meleeTargets, exposure, speedOf, unitPower,
-  moveMinion, aiRowFor, unitPower, nextActor, autoAttack, buildRandomDeck, buildAIDeck, selectedDeck,
+  moveMinion, aiRowFor, nextActor, autoAttack, buildRandomDeck, buildAIDeck, selectedDeck,
   flushPendingClick, showCardDetail, recallMinion, castUnitSpell, aiCastSpells, aiSetDefense, startRound, toggleDefense, weightedPick, flipUnit, toggleLand,
   tryAddCard, canStartBattle, selCount, builderSel, builderSel2, deckStats, deckFrom, renderBuilder, PRESET_DECKS, applyPresetDeck, buildRacePreset,
   makeMinion, cleanupDead, findDef, traitLv, attackDamage,
@@ -12154,10 +12139,6 @@ const texCache = {};
 function refreshTextures() {
   const def = CARDS[state.cardIdx];
   if (!def) return;
-  const key = def.name + '|' + state.cov;
-  if (!texCache[key]) {
-    texCache[key] = { art: makeTex(drawCardFace(def, state.cardIdx)), mask: makeTex(drawFoilMask(def, state.cov)) };
-  }
   // 覆膜范围变化不能复用 mask
   const maskKey = def.name + '|mask|' + state.cov;
   if (!texCache[maskKey]) texCache[maskKey] = makeTex(drawFoilMask(def, state.cov));
