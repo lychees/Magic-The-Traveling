@@ -11105,7 +11105,7 @@ function renderCardEditor() {
     '<div id="ce-left">' +
       '<input id="ce-search" placeholder="搜索卡名…">' +
       '<div class="ce-tabs">' + tabs.map(t => '<button class="btn ce-mini' + (ED.filter === t[0] ? ' active' : '') + '" data-ce="filter" data-f="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' +
-      '<div id="ce-list">' + edListHtml() + '</div>' +
+      '<div id="ce-list">' + edListHtml() + '</div><div class="ce-note" style="padding:4px 6px">双击卡牌可 3D 检视</div>' +
     '</div>' +
     '<div id="ce-form">' + edFormHtml() + '</div>';
   edRefreshPreview();
@@ -11148,7 +11148,15 @@ function edSave() {
 }
 
 function edAction(act, ds) {
-  if (act === 'load') { edLoadDef(ds.name); return; }
+  if (act === 'load') {
+    const now = performance.now();
+    if (ED._lastLoad && ED._lastLoad.name === ds.name && now - ED._lastLoad.t < 350) { // 双击同名卡 → 3D 检视
+      ED._lastLoad = null;
+      if (window.__holo) { window.__holo.open(ds.name); return; }
+    } else ED._lastLoad = { name: ds.name, t: now };
+    edLoadDef(ds.name);
+    return;
+  }
   if (act === 'filter') { ED.filter = ds.f; renderCardEditor(); return; }
   if (act === 'new') { ED.isNew = true; ED.origName = null; ED.isCustom = false; ED.def = edNewDef(); renderCardEditor(); return; }
   if (act === 'save') { edSave(); return; }
@@ -11227,6 +11235,13 @@ document.getElementById('ce-body').addEventListener('click', e => {
 document.getElementById('ce-export').addEventListener('click', () => edAction('export', {}));
 document.getElementById('ce-import').addEventListener('click', () => edAction('import', {}));
 document.getElementById('ce-import-apply').addEventListener('click', () => edAction('import-apply', {}));
+// 双击卡牌条目 / 预览图：3D 检视
+document.getElementById('ce-body').addEventListener('dblclick', e => {
+  if (!window.__holo) return;
+  const item = e.target.closest('.ce-item');
+  if (item && item.dataset.name) { window.__holo.open(item.dataset.name); return; }
+  if (e.target.closest('#ce-preview') && ED.origName) window.__holo.open(ED.origName);
+});
 document.getElementById('ce-body').addEventListener('input', e => {
   if (e.target.id === 'ce-search') { document.getElementById('ce-list').innerHTML = edListHtml(); return; }
   if (e.target.id === 'ce-type') { // 切换类型时先收集当前表单，避免已填内容丢失
