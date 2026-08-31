@@ -133,8 +133,11 @@ function rlDeckHtml() {
     .map(n => findDef(n).cost + '费 ' + n + (cnt[n] > 1 ? ' ×' + cnt[n] : '')).join('<br>');
 }
 
+// 阵营卡池（排除纪念卡），抓牌/商店/事件/通关奖励共用
+function factionPool(race) { return CARD_DEFS.filter(d => d.race === race && !d.memorial); }
+
 function draftChoices() {
-  const faction = CARD_DEFS.filter(d => d.race === RUN.race && !d.memorial);
+  const faction = factionPool(RUN.race);
   const neutral = CARD_DEFS.filter(d => d.race === '中立' && !d.memorial);
   const pool = faction.concat(faction, neutral); // 阵营权重 x2
   const picks = [];
@@ -179,7 +182,7 @@ function roguelikeBattleEnd(won) {
   RUN.kills += state.enemy.graveyard.length;
   if (!won) { runDefeat(); return; }
   RUN.hp = Math.max(1, state.player.hp);
-  const reward = node === 'finalBoss' ? 300 : node === 'boss' ? 120 : node === 'elite' ? 60 : 30;
+  const reward = RUN_REWARDS[node] || RUN_REWARDS.battle;
   gold += reward;
   saveEconomy();
   updateGoldUi();
@@ -202,7 +205,7 @@ function runDefeat() {
 }
 
 function runVictory() {
-  const pool = CARD_DEFS.filter(d => d.race === RUN.race && d.cost >= 7 && !d.memorial);
+  const pool = factionPool(RUN.race).filter(d => d.cost >= 7);
   const prize = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
   if (prize) { collection[prize.name] = (collection[prize.name] || 0) + 1; saveEconomy(); }
   RUN._prize = prize;
@@ -239,8 +242,8 @@ function renderRoguelike(panel) {
         '<button class="btn" data-rl="camp-buff">强化一张牌</button> <button class="btn" data-rl="camp-heal">恢复 8 生命</button>';
     } else if (node === 'shop') {
       h += '<div class="rl-title">商店</div><div class="rl-note">可重复购买，离开后继续前进。</div>' +
-        '<button class="btn" data-rl="shop-remove">删一张牌（50🪙）</button> <button class="btn" data-rl="shop-buy">随机阵营卡（100🪙）</button> ' +
-        '<button class="btn" data-rl="shop-heal">恢复 6 生命（40🪙）</button> <button class="btn" data-rl="shop-leave">离开商店</button>';
+        '<button class="btn" data-rl="shop-remove">删一张牌（' + SHOP_PRICES.remove + '🪙）</button> <button class="btn" data-rl="shop-buy">随机阵营卡（' + SHOP_PRICES.buyCard + '🪙）</button> ' +
+        '<button class="btn" data-rl="shop-heal">恢复 6 生命（' + SHOP_PRICES.heal + '🪙）</button> <button class="btn" data-rl="shop-leave">离开商店</button>';
     } else if (node === 'event') {
       h += '<div class="rl-title">❓ 随机事件</div><div class="rl-note">前方迷雾重重，触发一个随机事件。</div>' +
         '<button class="btn" data-rl="enter-event">触发事件</button>';
@@ -263,7 +266,7 @@ function renderRoguelike(panel) {
       RUN.deck.map((d, i) => '<button class="btn rl-mini" data-rl="camp-pick" data-i="' + i + '">' + d.cost + '费 ' + d.name + '</button>').join('') + '</div>' +
       '<button class="btn" data-rl="camp-cancel">算了</button>';
   } else if (panel === 'shop-remove') {
-    h += '<div class="rl-title">选择要移除的牌（50🪙）</div><div class="rl-deck-pick">' +
+    h += '<div class="rl-title">选择要移除的牌（' + SHOP_PRICES.remove + '🪙）</div><div class="rl-deck-pick">' +
       RUN.deck.map((d, i) => '<button class="btn rl-mini" data-rl="shop-remove-pick" data-i="' + i + '">' + d.cost + '费 ' + d.name + '</button>').join('') + '</div>' +
       '<button class="btn" data-rl="shop-back">返回商店</button>';
   } else if (panel === 'event') {
@@ -341,13 +344,13 @@ function rlAction(act, ds) {
     openRoguelike('map');
     return;
   }
-  if (act === 'shop-remove') { if (gold < 50) { alert('金币不足'); return; } renderRoguelike('shop-remove'); return; }
+  if (act === 'shop-remove') { if (gold < SHOP_PRICES.remove) { alert('金币不足'); return; } renderRoguelike('shop-remove'); return; }
   if (act === 'shop-back') { renderRoguelike('map'); return; }
   if (act === 'shop-remove-pick') {
-    if (gold < 50) { alert('金币不足'); return; }
+    if (gold < SHOP_PRICES.remove) { alert('金币不足'); return; }
     const i = parseInt(ds.i, 10);
     const d = RUN.deck.splice(i, 1)[0];
-    gold -= 50;
+    gold -= SHOP_PRICES.remove;
     saveEconomy();
     updateGoldUi();
     RUN.campResult = '移除了【' + (d ? d.name : '?') + '】';
@@ -356,11 +359,11 @@ function rlAction(act, ds) {
     return;
   }
   if (act === 'shop-buy') {
-    if (gold < 100) { alert('金币不足'); return; }
-    const pool = CARD_DEFS.filter(d => d.race === RUN.race && !d.memorial);
+    if (gold < SHOP_PRICES.buyCard) { alert('金币不足'); return; }
+    const pool = factionPool(RUN.race);
     if (!pool.length) return;
     const d = pool[Math.floor(Math.random() * pool.length)];
-    gold -= 100;
+    gold -= SHOP_PRICES.buyCard;
     RUN.deck.push(d);
     saveEconomy();
     updateGoldUi();
@@ -370,8 +373,8 @@ function rlAction(act, ds) {
     return;
   }
   if (act === 'shop-heal') {
-    if (gold < 40) { alert('金币不足'); return; }
-    gold -= 40;
+    if (gold < SHOP_PRICES.heal) { alert('金币不足'); return; }
+    gold -= SHOP_PRICES.heal;
     RUN.hp = Math.min(RUN.maxHp, RUN.hp + 6);
     saveEconomy();
     updateGoldUi();
@@ -397,7 +400,7 @@ function resolveEventNode() {
     gold += 80;
     RUN.eventText = '拾到了 80 金币！';
   } else if (r < 0.7) {
-    const pool = CARD_DEFS.filter(d => d.race === RUN.race && !d.memorial);
+    const pool = factionPool(RUN.race);
     const d = pool[Math.floor(Math.random() * pool.length)];
     RUN.deck.push(d);
     RUN.eventText = '获得卡牌【' + d.name + '】！';

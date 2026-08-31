@@ -116,6 +116,8 @@ const PACK_SIZE = 5;    // 每包张数
 const FACTION_PACK_PRICE = 150; // 阵营卡包价格（同阵营 5 张）
 const FACTION_BOX_PRICE = 600;  // 阵营卡盒价格（同阵营 5 包共 25 张，8 折）
 const FACTION_BOX_PACKS = 5;
+const SHOP_PRICES = { remove: 50, buyCard: 100, heal: 40 }; // 闯关商店
+const RUN_REWARDS = { battle: 30, elite: 60, boss: 120, finalBoss: 300 }; // 闯关节点金币奖励
 
 // ---------- 收藏与金币（localStorage 持久化；无 localStorage 环境用内存兜底，游戏不炸） ----------
 const storage = (function () {

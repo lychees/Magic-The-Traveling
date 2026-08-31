@@ -5549,16 +5549,22 @@ const state = {
 };
 
 const texCache = {};
+// 卡面/蒙版纹理助手（统一 key 规则，替代各处手工拼接）
+function artTexOf(def, ci) {
+  const artKey = def.name + '|art';
+  if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
+  return texCache[artKey];
+}
+function maskTexOf(def, cov) {
+  const maskKey = def.name + '|mask|' + cov;
+  if (!texCache[maskKey]) texCache[maskKey] = makeTex(drawFoilMask(def, cov));
+  return texCache[maskKey];
+}
 function refreshTextures() {
   const def = CARDS[state.cardIdx];
   if (!def) return;
-  // 覆膜范围变化不能复用 mask
-  const maskKey = def.name + '|mask|' + state.cov;
-  if (!texCache[maskKey]) texCache[maskKey] = makeTex(drawFoilMask(def, state.cov));
-  const artKey = def.name + '|art';
-  if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, state.cardIdx));
-  uniforms.uArt.value = texCache[artKey];
-  uniforms.uMask.value = texCache[maskKey];
+  uniforms.uArt.value = artTexOf(def, state.cardIdx);
+  uniforms.uMask.value = maskTexOf(def, state.cov);
 }
 
 const SLIDERS = [
@@ -5936,8 +5942,6 @@ function spawnFan() {
   }
   idxs.forEach((ci, k) => {
     const def = CARDS[ci];
-    const artKey = def.name + '|art';
-    if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
     const backKey = 'cardback-tex';
     if (!texCache[backKey]) texCache[backKey] = uniforms.uBack.value;
     const mats = [
@@ -5945,7 +5949,7 @@ function spawnFan() {
       new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
       new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
       new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
-      new THREE.MeshLambertMaterial({ map: texCache[artKey] }),
+      new THREE.MeshLambertMaterial({ map: artTexOf(def, ci) }),
       new THREE.MeshLambertMaterial({ map: texCache[backKey] }),
     ];
     const m = new THREE.Mesh(new THREE.BoxGeometry(2.1, 2.94, 0.03), mats);
@@ -6009,10 +6013,8 @@ function openMiniPack(pick) {
   const mid = (batch.length - 1) / 2;
   batch.forEach((def, k) => {
     const ci = CARDS.findIndex(c => c.name === def.name);
-    const artKey = def.name + '|art';
-    if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
     const m = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.96, 0.02),
-      new THREE.MeshLambertMaterial({ map: texCache[artKey] }));
+      new THREE.MeshLambertMaterial({ map: artTexOf(def, ci) }));
     m.userData = { ci };
     fanGroup.add(m);
     state.revealCount = (state.revealCount || 0) + 1;
@@ -6043,19 +6045,24 @@ function openMiniPack(pick) {
   }
 }
 
-function boxfanTick(dt) {
-  modeT += dt;
-  revealedCards.forEach(c => {
+// 翻面弹簧步进（开包扇出/卡盒散落共用）：flipDelay=翻面延迟阈值，trzScale=旋转展开速率
+function tickFlipCards(cards, dt, flipDelay, trzScale) {
+  cards.forEach(c => {
     const local = Math.max(0, modeT - c.delay);
     [c.x, c.vx] = springStep(c.x, c.vx, c.tx, 40, 8, dt);
     [c.y, c.vy] = springStep(c.y, c.vy, c.ty, 40, 8, dt);
     [c.z, c.vz] = springStep(c.z, c.vz, c.tz, 40, 8, dt);
-    const flipTarget = c._faceUp ? 0 : (local > 0.3 ? 0 : Math.PI);
+    const flipTarget = c._faceUp ? 0 : (local > flipDelay ? 0 : Math.PI);
     [c.flip, c.vf] = springStep(c.flip, c.vf, flipTarget, 34, 7, dt);
     c.mesh.position.set(c.x, c.y, c.z);
     if (!c._faceUp && c.flip <= flipTarget + 0.05) c._faceUp = true; // 翻到位即标记，永不回翻
-    c.mesh.rotation.set(0, c.flip, (c.trz || 0) * Math.min(1, Math.max(0, modeT - c.delay)));
+    c.mesh.rotation.set(0, c.flip, (c.trz || 0) * Math.min(1, local * trzScale));
   });
+}
+
+function boxfanTick(dt) {
+  modeT += dt;
+  tickFlipCards(revealedCards, dt, 0.3, 1);
   miniPacks.forEach(p => {
     const local = Math.max(0, modeT - p.delay);
     [p.x, p.vx] = springStep(p.x, p.vx, p.tx, 40, 8, dt);
@@ -6111,17 +6118,7 @@ function packTick(t, dt) {
   } else if (mode === 'boxfan') {
     boxfanTick(dt);
   } else if (mode === 'fan') {
-    fanCards.forEach(c => {
-      const local = Math.max(0, modeT - c.delay);
-      [c.x, c.vx] = springStep(c.x, c.vx, c.tx, 40, 8, dt);
-      [c.y, c.vy] = springStep(c.y, c.vy, c.ty, 40, 8, dt);
-      [c.z, c.vz] = springStep(c.z, c.vz, c.tz, 40, 8, dt);
-      const flipTarget = c._faceUp ? 0 : (local > 0.4 ? 0 : Math.PI);
-      [c.flip, c.vf] = springStep(c.flip, c.vf, flipTarget, 34, 7, dt);
-      c.mesh.position.set(c.x, c.y, c.z);
-      if (!c._faceUp && c.flip <= flipTarget + 0.05) c._faceUp = true; // 翻到位即标记，永不回翻
-      c.mesh.rotation.set(0, c.flip, c.trz * Math.min(1, local * 1.6));
-    });
+    tickFlipCards(fanCards, dt, 0.4, 1.6);
   }
 }
 
@@ -6359,11 +6356,10 @@ function fillPockets(parent, pageIdx, side, y) {
   cards.forEach((def, k) => {
     const col = k % 3, row = Math.floor(k / 3);
     const ci = CARDS.findIndex(c => c.name === def.name);
-    const artKey = def.name + '|art';
-    if (!texCache[artKey]) texCache[artKey] = makeTex(drawCardFace(def, ci));
+    const artTex = artTexOf(def, ci);
     const n = collection[def.name] || 0;
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(BINDER.cardW, BINDER.cardH),
-      new THREE.MeshLambertMaterial({ color: n > 0 ? 0xffffff : 0x8a8a8a, transparent: true, opacity: n > 0 ? 1 : 0.55, map: texCache[artKey] }));
+      new THREE.MeshLambertMaterial({ color: n > 0 ? 0xffffff : 0x8a8a8a, transparent: true, opacity: n > 0 ? 1 : 0.55, map: artTex }));
     mesh.userData = { ci };
     if (side === 'flipBack') {
       mesh.rotation.set(Math.PI / 2, 0, Math.PI);
