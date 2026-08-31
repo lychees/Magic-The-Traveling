@@ -1,17 +1,17 @@
 :root {
-  --bg: var(--bg);
-  --panel: var(--panel);
+  --bg: #14141f;
+  --panel: #1e1e2e;
   --panel-2: #101018;
-  --line: var(--line);
-  --line-2: var(--line-2);
-  --text: var(--text);
-  --text-2: var(--text-2);
-  --muted: var(--muted);
-  --muted-2: var(--muted-2);
-  --gold: var(--gold);
-  --gold-bright: var(--gold-bright);
-  --gold-dim: var(--gold-dim);
-  --accent: var(--accent);
+  --line: #2e2e44;
+  --line-2: #3a3a52;
+  --text: #e8e4d8;
+  --text-2: #d8d8e0;
+  --muted: #8a8a9a;
+  --muted-2: #4a4a60;
+  --gold: #d8b96a;
+  --gold-bright: #ffd700;
+  --gold-dim: #8a744a;
+  --accent: #7ab8ff;
   --r-lg: 14px;
   --r-md: 10px;
 }
