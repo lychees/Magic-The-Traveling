@@ -187,6 +187,22 @@
 
 ---
 
+## 项目结构
+
+```
+index.html        游戏本体：HTML 骨架 + 内嵌 cards-json + 全部游戏脚本 + holo 3D 检视模块
+style.css         全部样式
+cards.json        卡牌唯一数据源（cards 数组 + races + _comment 字段说明）
+js/               按域拆分的游戏脚本（plain script，按依赖顺序加载）
+tools/sync-cards.js  校验 cards.json 并注入 index.html 内嵌块；--recompute 重算全部评分
+tools/rating.js   战斗力公式唯一数据源（UMD：游戏页与 sync 工具共用）
+docs/             设计/评审文档：平衡性评审.md、roguelike设计.md、引擎结算.md
+.deploy/          GitHub Pages 仓库克隆（部署目标）
+```
+
+数据流：`cards.json →(sync-cards.js 校验注入)→ index.html 内嵌 #cards-json →(loadCardData)→ CARD_DEFS`。
+改卡只改 cards.json 后跑 `node tools/sync-cards.js`，不要手改 index.html 内嵌块；新机制（新战吼/新法术效果/新特性）还需在引擎结算处、VIEWER_TEXT、ratingTraitW、编辑器词条列表登记。
+
 ## 本地运行 / 部署
 
 纯静态单文件，无需构建：直接双击 `index.html`，或任意静态服务器托管。GitHub Pages 部署为 `main` 分支根目录。
