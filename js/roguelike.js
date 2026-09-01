@@ -250,10 +250,10 @@ function renderRoguelike(panel) {
     } else {
       const mod = node === 'boss' || node === 'finalBoss' ? '<div class="rl-note">⚠️ Boss 战：将有特殊规则！</div>' : '';
       h += '<div class="rl-title">' + RUN_NODE_INFO[node].icon + ' ' + RUN_NODE_INFO[node].name + '</div>' + mod +
-        '<button class="btn" data-rl="enter-node">进入战斗</button>';
+        '<button class="btn btn-primary" data-rl="enter-node">进入战斗</button>';
     }
     h += '<div class="rl-sub">牌组（' + RUN.deck.length + '）</div><div class="rl-deck-list">' + rlDeckHtml() + '</div>';
-    h += '<div style="margin-top:16px"><button class="btn" data-rl="abandon">放弃闯关</button></div>';
+    h += '<div style="margin-top:16px"><button class="btn btn-danger" data-rl="abandon">放弃闯关</button></div>';
   } else if (panel === 'draft') {
     const picks = draftChoices();
     RUN._draft = picks;

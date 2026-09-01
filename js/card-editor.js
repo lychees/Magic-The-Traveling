@@ -124,8 +124,8 @@ function edFormHtml() {
   h += '<div id="ce-preview"></div>';
   h += '<div class="ce-rating">战斗力评分（自动）：<b>' + rating + '</b></div>';
   h += '<div class="ce-ops">';
-  h += '<button class="btn" data-ce="save">' + (ED.isNew ? '创建卡牌' : '保存修改') + '</button>';
-  if (!ED.isNew && ED.isCustom) h += '<button class="btn" data-ce="delete">删除此卡</button>';
+  h += '<button class="btn btn-primary" data-ce="save">' + (ED.isNew ? '创建卡牌' : '保存修改') + '</button>';
+  if (!ED.isNew && ED.isCustom) h += '<button class="btn btn-danger" data-ce="delete">删除此卡</button>';
   if (!ED.isNew && !ED.isCustom && getOverrides()[ED.origName]) h += '<button class="btn" data-ce="reset">恢复原始</button>';
   h += '<button class="btn" data-ce="new">新建空白</button>';
   h += '</div>';

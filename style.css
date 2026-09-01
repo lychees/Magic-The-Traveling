@@ -992,3 +992,34 @@
 }
 [data-theme="pixel"] .board-row { background: #2a2a4a; border-color: #101040; }
 [data-theme="pixel"] ::selection { background: #4050c8; color: #ffffff; }
+
+/* ==================== 一致性：字阶 / 按钮层级 / 面板标题 ==================== */
+/* 字阶角色（唯一来源，见 DESIGN.md） */
+.t-display, #topbar h1, .rl-title, .ce-head h1, #overlay .result, #viewer-title {
+  font-size: 20px; font-weight: bold; color: var(--gold); letter-spacing: 2px;
+}
+.t-h2, .race-section h2, .rl-sub, #log-header, #deck-title, .d-name, #deck-count {
+  font-size: 15px; font-weight: bold; color: var(--gold); letter-spacing: 1px;
+}
+.t-label, .ce-grid label, .filter-label, .sb-label, .d-sub {
+  font-size: 13px; color: var(--text-2);
+}
+.t-meta, .rl-note, .ce-note, .rl-status, .empty-hint, .ce-item-sub {
+  font-size: 12px; color: var(--muted);
+}
+body, .btn, .filter-chip, .ce-item, .rl-deck-list { font-size: 14px; }
+
+/* 按钮层级 */
+.btn-ghost { background: transparent; border-color: var(--line-2); color: var(--muted); }
+.btn-ghost:hover:not(:disabled) { background: var(--line); color: var(--text-2); }
+select.btn { padding: 4px 8px; height: 29px; }
+
+/* 顶栏：主标题不换行，按钮组弹性换行 */
+#topbar h1 { white-space: nowrap; }
+#topbar > div { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: center; }
+#topbar .btn { white-space: nowrap; }
+
+/* 浮层面板标题统一：display 字阶 + 统一间距 */
+.rl-title, .ce-head h1, #viewer-title { margin: 4px 0 12px; }
+.ce-head { margin-bottom: 12px; }
+#roguelike .rl-status { margin: 6px 0 14px; }
