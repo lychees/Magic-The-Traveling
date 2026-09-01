@@ -24,6 +24,11 @@
       <button class="btn" id="open-album">集卡册</button>
       <button class="btn" id="open-roguelike">闯关模式</button>
       <button class="btn" id="open-card-editor">卡牌编辑器</button>
+      <select id="theme-select" class="btn" style="padding:4px 6px;" title="画面风格">
+        <option value="default">原版</option>
+        <option value="skeuo">拟物</option>
+        <option value="pixel">像素 RPG</option>
+      </select>
       <button class="btn" id="dev-toggle" title="开发者模式：开启后显示刷钱按钮">开发者模式</button>
       <button class="btn" id="dev-gold" style="display:none" title="开发者刷钱：+1000 金币">+1000🪙</button>
       <button class="btn mode-btn active" id="mode-ai">人机对战</button>
@@ -4665,6 +4670,19 @@
 <script src="js/card-editor.js"></script>
 <script>
 'use strict';
+
+// ---------- 画风主题切换 ----------
+const themeSel = document.getElementById('theme-select');
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  try { storage.setItem('mtcg-theme', t); } catch (e) {}
+  themeSel.value = t;
+}
+let savedTheme = 'default';
+try { savedTheme = storage.getItem('mtcg-theme') || 'default'; } catch (e) {}
+if (!['default', 'skeuo', 'pixel'].includes(savedTheme)) savedTheme = 'default';
+applyTheme(savedTheme);
+themeSel.addEventListener('change', () => applyTheme(themeSel.value));
 
 loadEconomy();
 showBuilder();
