@@ -233,7 +233,7 @@
 
 <script type="application/json" id="cards-json">
 {
-  "version": 2,
+  "version": 4,
   "_comment": {
     "name": "卡名（唯一键）",
     "race": "阵营，必须是 races 之一",
@@ -6351,6 +6351,191 @@
         "hue": 220
       },
       "rating": 2
+    },
+    {
+      "name": "盾墙勇士",
+      "race": "城堡",
+      "cost": 3,
+      "atk": 2,
+      "arm": 1,
+      "hp": 6,
+      "traits": [
+        "盾墙协防"
+      ],
+      "rating": 13,
+      "art": {
+        "icon": "🛡️",
+        "hue": 45
+      }
+    },
+    {
+      "name": "暗影刺客",
+      "race": "地下城",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 5,
+      "traits": [
+        "背刺"
+      ],
+      "rating": 10,
+      "art": {
+        "icon": "🗡️",
+        "hue": 310
+      }
+    },
+    {
+      "name": "高山哨卫",
+      "race": "堡垒",
+      "cost": 3,
+      "atk": 2,
+      "arm": 1,
+      "hp": 5,
+      "traits": [
+        "居高临下"
+      ],
+      "rating": 12,
+      "art": {
+        "icon": "⛰️",
+        "hue": 45
+      }
+    },
+    {
+      "name": "反击大师",
+      "race": "城堡",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 6,
+      "traits": [
+        "反扑2"
+      ],
+      "rating": 13,
+      "art": {
+        "icon": "⚔️",
+        "hue": 40
+      }
+    },
+    {
+      "name": "血怒狂战",
+      "race": "据点",
+      "cost": 4,
+      "atk": 3,
+      "arm": 0,
+      "hp": 7,
+      "traits": [
+        "愈挫愈勇"
+      ],
+      "rating": 12,
+      "art": {
+        "icon": "💢",
+        "hue": 80
+      }
+    },
+    {
+      "name": "绝境斗士",
+      "race": "据点",
+      "cost": 5,
+      "atk": 4,
+      "arm": 0,
+      "hp": 8,
+      "traits": [
+        "死战"
+      ],
+      "rating": 14,
+      "art": {
+        "icon": "🪓",
+        "hue": 85
+      }
+    },
+    {
+      "name": "幻影刺客",
+      "race": "地下城",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 7,
+      "traits": [
+        "影遁"
+      ],
+      "rating": 12,
+      "art": {
+        "icon": "🌫️",
+        "hue": 300
+      }
+    },
+    {
+      "name": "集结号角",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "土",
+      "spellEffect": "rally",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "📯",
+        "hue": 50
+      }
+    },
+    {
+      "name": "调虎离山",
+      "type": "spell",
+      "race": "中立",
+      "cost": 2,
+      "school": "气",
+      "spellEffect": "feint",
+      "target": "enemyUnit",
+      "rating": 2,
+      "art": {
+        "icon": "🌪️",
+        "hue": 190
+      }
+    },
+    {
+      "name": "破胆怒吼",
+      "type": "spell",
+      "race": "中立",
+      "cost": 4,
+      "school": "火",
+      "spellEffect": "warShout",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "📢",
+        "hue": 15
+      }
+    },
+    {
+      "name": "釜底抽薪",
+      "type": "spell",
+      "race": "中立",
+      "cost": 3,
+      "school": "土",
+      "spellEffect": "sabotage",
+      "target": "none",
+      "rating": 2,
+      "art": {
+        "icon": "🕳️",
+        "hue": 30
+      }
+    },
+    {
+      "name": "穿杨神射手",
+      "race": "城堡",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "traits": [
+        "远程",
+        "穿杨"
+      ],
+      "rating": 14,
+      "art": {
+        "icon": "🏹",
+        "hue": 195
+      }
     }
   ]
 }
@@ -6519,6 +6704,14 @@ globalThis.__api = {
   '狗头人领袖': '所有狗头人 +1 攻击（含自身，多个可叠加）',
   '英灵感召': '当全场所有其它单位（盖牌与墓园/元素除外）都处于正士气时，自身 +1 攻击',
   '吸血': '造成的伤害等量恢复自身生命',
+  '盾墙协防': '同排左右相邻的友方单位护甲 +1（多个可叠加）',
+  '背刺': '攻击守备表示的单位时，伤害翻倍',
+  '居高临下': '位于后排时攻击 +2，位于前排时护甲 +1',
+  '反扑': '反击伤害 +X（X=等级）',
+  '愈挫愈勇': '每次受到伤害后攻击 +1（永久累积）',
+  '死战': '生命低于一半时攻击 +3',
+  '穿杨': '远程攻击时，对目标正后方同列的单位造成一半溅射伤害',
+  '影遁': '每战斗阶段第一次被普通攻击时，免疫该次伤害',
   '法术护盾': '受到的法术伤害 -X（X=等级）',
   '法术护盾2': '受到的法术伤害 -2',
 },
@@ -6612,6 +6805,10 @@ globalThis.__api = {
   animalSummon: '召唤一个【恐狼】到己方前排',
   timeStop: '敌方所有单位失明 1 回合（无法攻击/反击/施法/切换形态）',
   wish: '摸 3 张牌，英雄恢复 6 点生命',
+  rally: '我方前排所有单位士气 +2、恢复 2 点生命',
+  feint: '将目标敌方单位移到其后排',
+  warShout: '敌方前排所有单位士气 -3 且攻击 -1',
+  sabotage: '敌方下轮法力 -2',
   raiseSkeletons: '选择敌方或我方墓地任意一个单位除外，召唤（其费用÷2 向上取整 + 1）个骷髅兵到我方前排',
   slimeSwarm: '消耗所有剩余法力，召唤等量史莱姆到前排；数量大于 4 时每 4 个史莱姆换成 1 个巨型史莱姆',
   vortex: '对随机至多 2 个敌方单位各造成 3 点伤害（守备加权，不重复）',

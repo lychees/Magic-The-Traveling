@@ -91,9 +91,19 @@ function isTargetable(x) { return !x.isSpellShell && !x.faceDown; }
 function targetableUnits(board) { return board.filter(isTargetable); }
 
 // 有效护甲：石化生命未满时视为 4；石像形态守备表示时护甲 +2
+function adjArmBonus(p, m) { // 盾墙协防：同排左右相邻的友方单位护甲 +1（多个可叠加）
+  const rowMins = p.board.filter(o => o.row === m.row);
+  const i = rowMins.indexOf(m);
+  let n = 0;
+  [rowMins[i - 1], rowMins[i + 1]].forEach(o => { if (o && o.traits.includes('盾墙协防')) n++; });
+  return n;
+}
 function effArmor(m) {
   if (m.traits.includes('石化') && m.curHp < m.maxHp) return 4;
-  return m.arm + (m.traits.includes('石像形态') && m.defense ? 2 : 0) + ((m.petrified || 0) > 0 ? 3 : 0); // 被石化时护甲 +3
+  const side = state.player.board.indexOf(m) >= 0 ? 'player' : 'enemy';
+  return m.arm + adjArmBonus(state[side], m)
+    + (m.traits.includes('石像形态') && m.defense ? 2 : 0) + ((m.petrified || 0) > 0 ? 3 : 0)
+    + (m.traits.includes('居高临下') && m.row === 0 ? 1 : 0); // 居高临下：前排护甲 +1
 }
 
 // 有效飞行：守备表示的飞行单位暂时失去飞行效果（可被任何单位攻击、不再被远程加倍）
@@ -108,6 +118,9 @@ function attackDamage(attacker, target) {
   let dmg = Math.max(0, attacker.atk - Math.max(0, effArmor(target) - pen));
   if (attacker.traits.includes('远程') && isFlying(target)) dmg *= 2;
   if (attacker.traits.includes('破法') && (target.actSpell || (target.actSpells && target.actSpells.length))) dmg *= 2; // 破法：攻击拥有法术的单位伤害翻倍
+  if (attacker.traits.includes('背刺') && target.defense) dmg *= 2; // 背刺：攻击守备表示的单位伤害翻倍
+  if (attacker.traits.includes('居高临下') && attacker.row === 2) dmg += 2; // 居高临下：后排攻击 +2
+  if (attacker.traits.includes('死战') && attacker.curHp <= attacker.maxHp / 2) dmg += 3; // 死战：生命低于一半攻击 +3
   return dmg;
 }
 
@@ -356,6 +369,40 @@ function resolveSpellEffect(side, def, target, costPaid) {
       drawCard(side); drawCard(side); drawCard(side);
       healHero(side, 6);
       log('【祈愿术】：摸 3 张牌，英雄恢复 6 点生命');
+      break;
+    }
+    case 'rally': { // 集结号角：我方前排所有单位士气 +2、恢复 2 点生命
+      const fr = frontRowOf(side);
+      const targets = p.board.filter(m => m.row === fr);
+      if (!targets.length) log('【集结号角】：我方前排没有单位，无效果');
+      targets.forEach(m => {
+        changeMorale(m, 2);
+        const before = m.curHp;
+        m.curHp = Math.min(m.maxHp, m.curHp + 2);
+        if (m.curHp > before) log('【集结号角】：【' + m.name + '】士气 +2，恢复 2 点生命');
+      });
+      sfx('heal');
+      break;
+    }
+    case 'feint': { // 调虎离山：将目标敌方单位移到其后排
+      target.row = 2;
+      log('【调虎离山】：【' + target.name + '】被调到了后排');
+      break;
+    }
+    case 'warShout': { // 破胆怒吼：敌方前排所有单位士气 -3 且攻击 -1
+      const fr = frontRowOf(foeSide);
+      const targets = foe.board.filter(m => m.row === fr);
+      if (!targets.length) log('【破胆怒吼】：敌方前排没有单位，无效果');
+      targets.forEach(m => {
+        changeMorale(m, -3);
+        m.baseAtk = Math.max(0, m.baseAtk - 1);
+        log('【破胆怒吼】：【' + m.name + '】士气 -3，攻击 -1');
+      });
+      break;
+    }
+    case 'sabotage': { // 釜底抽薪：敌方下轮法力 -2
+      foe.burned += 2;
+      log('【釜底抽薪】：敌方下轮法力 -2');
       break;
     }
     case 'heal':
@@ -872,6 +919,10 @@ const SPELL_FX_TEXT = {
   animalSummon: '召唤一个【恐狼】到己方前排',
   timeStop: '敌方所有单位失明 1 回合（无法攻击/反击/施法/切换形态）',
   wish: '摸 3 张牌，英雄恢复 6 点生命',
+  rally: '我方前排所有单位士气 +2、恢复 2 点生命',
+  feint: '将目标敌方单位移到其后排',
+  warShout: '敌方前排所有单位士气 -3 且攻击 -1',
+  sabotage: '敌方下轮法力 -2',
   raiseSkeletons: '选择敌方或我方墓地任意一个单位除外，召唤（其费用÷2 向上取整 + 1）个骷髅兵到我方前排',
   slimeSwarm: '消耗所有剩余法力，召唤等量史莱姆到前排；数量大于 4 时每 4 个史莱姆换成 1 个巨型史莱姆',
   vortex: '对随机至多 2 个敌方单位各造成 3 点伤害（守备加权，不重复）',
@@ -1245,7 +1296,7 @@ function executeCounter(target, attacker, attackerSide, shaken, depth, isDefense
   const vg = traitLv(target, '复仇'); // 复仇X：每次反击前攻击 +X（永久累积）
   if (vg > 0) { target.baseAtk += vg; target.atk += vg; log('【' + target.name + '】复仇：攻击 +' + vg + '（当前 ' + target.atk + '）'); }
   if (!isDefense) target.counterLeft--;
-  const back = attackDamage(target, attacker);
+  const back = attackDamage(target, attacker) + traitLv(target, '反扑'); // 反扑X：反击伤害 +X
   if (back <= 0) {
     log('【' + target.name + '】' + (isDefense ? '（守备）' : '') + '反击【' + attacker.name + '】，伤害被护甲完全抵挡' + (isDefense ? '' : '（本阶段反击机会已用）'));
     return;
@@ -1333,6 +1384,12 @@ function moraleFx(m, kind) {
 // 消耗本战斗阶段唯一一次反击机会；够不到或 0 攻则不消耗机会。
 // 反击造成的伤害不再触发反击（depth > 0 即为反击）。label 区分 主攻击/溅射/反击 的日志措辞。
 function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, label) {
+  // 影遁：每战斗阶段第一次被普通攻击时，免疫该次伤害
+  if (label == null && depth === 0 && target.traits.includes('影遁') && !target._vanishUsed) {
+    target._vanishUsed = true;
+    log('【' + target.name + '】影遁：免疫了【' + attacker.name + '】的攻击！');
+    return;
+  }
   // 觉醒计数：被普通攻击一次（无论是否造成伤害）
   if (depth === 0 && label == null && traitLv(target, '觉醒') > 0) {
     const need = traitLv(target, '觉醒');
@@ -1364,6 +1421,11 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
   else if (label === 'defcounter') log('【' + attacker.name + '】反击【' + target.name + '】，造成 ' + dmg + ' 点伤害（守备表示·同时结算）' + antiAir + remain);
   else if (label === 'splash') log('【' + attacker.name + '】的溅射对【' + target.name + '】造成 ' + dmg + ' 点伤害' + antiAir + remain);
   else log('【' + attacker.name + '】攻击【' + target.name + '】，造成 ' + dmg + ' 点伤害' + antiAir + remain);
+  // 愈挫愈勇：每次受到伤害后攻击 +1（永久累积）
+  if (target.traits.includes('愈挫愈勇')) {
+    target.baseAtk += 1; target.atk += 1;
+    log('【' + target.name + '】愈挫愈勇：攻击 +1（当前 ' + target.atk + '）');
+  }
   applyPoison(attacker, target);
   // 吸血：造成的伤害等量恢复自身生命（封顶）
   if (attacker.traits.includes('吸血') && dmg > 0) {
@@ -1379,6 +1441,16 @@ function dealAttackDamage(attacker, attackerSide, target, dmg, shaken, depth, la
       executeCounter(target, attacker, attackerSide, shaken, depth, true);
     } else if (target.curHp > 0 && target.counterLeft > 0 && canCounter(target, attacker, attackerSide)) {
       executeCounter(target, attacker, attackerSide, shaken, depth, false);
+    }
+  }
+  // 穿杨：远程普通攻击时，对目标正后方同列的单位造成一半溅射伤害
+  if (label == null && depth === 0 && attacker.traits.includes('穿杨') && attacker.traits.includes('远程')) {
+    const foeBoard = state[otherSide(attackerSide)].board;
+    const tRow = foeBoard.filter(o => o.row === target.row);
+    const bRow = foeBoard.filter(o => o.row === target.row + 1);
+    if (tRow.length && bRow.length) {
+      const t2 = bRow[Math.min(tRow.indexOf(target), bRow.length - 1)];
+      if (t2) dealAttackDamage(attacker, attackerSide, t2, Math.floor(dmg / 2), shaken, depth, 'splash');
     }
   }
   // 尸火：被近战普通攻击时，随机对伤害来源造成 0-2 点闪电/火焰/冰冻伤害（存活才触发）
@@ -1644,7 +1716,7 @@ function aiSpellDecision(def) {
   switch (def.spellEffect) {
     case 'stoneSkin': case 'fireShield': case 'mirror': case 'frenzy': case 'airShield': case 'lifeBoon': // 增益单体 → 自己攻击最高单位
       return me.board.length ? highest(me.board).uid : null;
-    case 'slow': case 'iceBolt': case 'fireballSpell': case 'lightningBolt': case 'dispel': case 'powerWordKill': case 'entangle':
+    case 'slow': case 'iceBolt': case 'fireballSpell': case 'lightningBolt': case 'dispel': case 'powerWordKill': case 'entangle': case 'feint':
     case 'sear': case 'meteor': case 'thunderBolt': // 伤害/减益 → 敌方攻击最高单位
       return foe.board.length ? highest(foe.board).uid : null;
     case 'confuse': case 'forget': case 'blind': { // 心智魔法 → 敌方攻击最高的非免疫单位
@@ -2359,7 +2431,7 @@ function startCombat() {
     if (dread > 0) { foe.board.forEach(m => changeMorale(m, -dread)); log(sideName(sd) + '施加威吓：敌方全场士气 -' + dread); }
   });
   // 战斗阶段开始：双方所有随从重置反击机会（默认 1 次；反击X 特性为 X 次，如皇家狮鹫反击2）
-  ['player', 'enemy'].forEach(s => state[s].board.forEach(m => { m.counterLeft = Math.max(1, traitLv(m, '反击')); m._extraUsed = false; }));
+  ['player', 'enemy'].forEach(s => state[s].board.forEach(m => { m.counterLeft = Math.max(1, traitLv(m, '反击')); m._extraUsed = false; m._vanishUsed = false; }));
   render();
   setTimeout(combatTick, 650);
 }

@@ -20,7 +20,7 @@ function applyCardEdits() {
 }
 
 const ED = { origName: null, isCustom: false, isNew: true, filter: 'all', def: null };
-const ED_PARAM_TRAITS = ['法术护盾', '再生', '毒Lv', '护甲穿透', '复仇', '威吓', '鼓舞', '觉醒', '反击', '法力燃烧']; // 可自定义 X 的词条家族
+const ED_PARAM_TRAITS = ['法术护盾', '再生', '毒Lv', '护甲穿透', '复仇', '威吓', '鼓舞', '觉醒', '反击', '法力燃烧', '反扑']; // 可自定义 X 的词条家族
 const ED_TRAITS = [...new Set(CARD_ORIG.flatMap(d => d.traits || []))].filter(t => !ED_PARAM_TRAITS.some(f => t.startsWith(f))).sort((a, b) => a.localeCompare(b));
 const ED_SPELL_KEYS = Object.keys((window.VIEWER_TEXT || {}).spell || {});
 const ED_ACT_KEYS = Object.keys((window.VIEWER_TEXT || {}).unitSpell || {});

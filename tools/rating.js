@@ -10,6 +10,7 @@
     if (t === '飞行' || t === '远程' || t === '石像形态') return 3;
     if (t.startsWith('法术护盾')) return parseInt(t.slice(4), 10) || 1; // 法术护盾X = X 分
     if (t.startsWith('再生')) return parseInt(t.slice(2), 10) || 1; // 再生X = X 分
+    if (t.startsWith('反扑')) return parseInt(t.slice(2), 10) || 1; // 反扑X = X 分
     if (t.startsWith('觉醒')) return 0; // 觉醒是限制词条，不计分
     return 2;
   }
