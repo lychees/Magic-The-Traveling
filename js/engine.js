@@ -860,6 +860,7 @@ function aiRowFor(def) {
   if (def.traits.includes('飞行')) return AIR_ROW;
   if (def.traits.includes('远程')) return 2;
   if (def.hp >= 8) return 0;
+  if (def.cost <= 2 || def.hp <= 3) return 0; // 低费/脆皮前置当炮灰，掩护后排
   return 1;
 }
 
@@ -1713,9 +1714,13 @@ function checkGameOver() {
 function aiSpellDecision(def) {
   const me = state.enemy, foe = state.player;
   const highest = arr => arr.slice().sort((a, b) => b.atk - a.atk)[0] || null;
+  const AOE = ['deathRipple', 'doom', 'hellfire', 'earthSpikes', 'meteorShower', 'warShout', 'backRowSpikes'];
+  if (AOE.includes(def.spellEffect) && foe.board.filter(x => isTargetable(x)).length < 2) return null; // AoE 至少 2 个目标才放，不浪费
   switch (def.spellEffect) {
     case 'stoneSkin': case 'fireShield': case 'mirror': case 'frenzy': case 'airShield': case 'lifeBoon': // 增益单体 → 自己攻击最高单位
       return me.board.length ? highest(me.board).uid : null;
+    case 'bless': case 'bloodlust': // 群体增益：有高攻单位（≥3）才值得放
+      return me.board.some(x => x.atk >= 3) ? true : null;
     case 'slow': case 'iceBolt': case 'fireballSpell': case 'lightningBolt': case 'dispel': case 'powerWordKill': case 'entangle': case 'feint':
     case 'sear': case 'meteor': case 'thunderBolt': // 伤害/减益 → 敌方攻击最高单位
       return foe.board.length ? highest(foe.board).uid : null;
@@ -1776,7 +1781,7 @@ function aiPlayStep() {
   const affordable = e.hand
     .map((c, i) => ({ c, i }))
     .filter(x => effCost('enemy', x.c) <= e.mana)
-    .sort((a, b) => effCost('enemy', b.c) - effCost('enemy', a.c));
+    .sort((a, b) => (b.c.rating - a.c.rating) || (effCost('enemy', b.c) - effCost('enemy', a.c))); // 评分降序（最强先出），费用降序为并列
   if (affordable.length === 0) return false;
   for (let k = 0; k < affordable.length; k++) {
     const x = affordable[k];
@@ -2306,7 +2311,7 @@ function aiCastSpells() {
       });
       castUnitSpell('enemy', m.uid, { key: en.key, graveIndex: best });
     } else if (en.key === 'bless') {
-      const t = e.board.filter(x => isTargetable(x)).sort((a, b) => b.atk - a.atk)[0];
+      const t = e.board.filter(x => isTargetable(x)).sort((a, b) => unitPower(b) - unitPower(a))[0];
       castUnitSpell('enemy', m.uid, { key: en.key, targetUid: t.uid });
     } else if (en.key === 'iceBolt') {
       const t = state.player.board.filter(x => isTargetable(x)).sort((a, b) => b.atk - a.atk)[0];
@@ -2334,7 +2339,10 @@ function aiSetDefense(side) {
     let want;
     if (m.atk <= 1 && m.maxHp >= 5) want = true;                       // 低攻高血天然墙
     else if ((heroDanger || boardBehind) && m.maxHp >= 8) want = true; // 危局大身板筑墙托局
+    else if (heroDanger && m.atk <= 2 && m.maxHp >= 6) want = true;    // 危局中坚也筑墙
     else if (m.atk >= 4 && !heroDanger) want = false;                  // 高攻保持进攻
+    else if (m.atk >= 3 && !heroDanger && !boardBehind) want = false;  // 中高攻非危局也保持进攻
+    else if ((m.morale || 0) < 0) want = true;                         // 负士气单位筑墙（行动不稳，无限反击不亏）
     else want = m.defense;                                              // 其余维持现状
     if (want !== m.defense) {
       m.defense = want;
