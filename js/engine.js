@@ -312,6 +312,52 @@ function resolveSpellEffect(side, def, target, costPaid) {
       targets.forEach(m => dealSpellDamage(def, m, 3));
       break;
     }
+    case 'magicMissile': { // 魔法飞弹：对随机 3 个敌方单位各造成 2 点伤害
+      const pool = foe.board.filter(m => isTargetable(m));
+      if (!pool.length) log('【魔法飞弹】：没有合法目标');
+      for (let i = 0; i < 3 && pool.length; i++) {
+        const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        dealSpellDamage(def, t, 2);
+      }
+      break;
+    }
+    case 'powerWordKill': { // 律令死亡：消灭生命 ≤ 6 的一个敌方单位
+      if (target.curHp <= 6) { log('【律令死亡】：【' + target.name + '】被直接消灭'); dealSpellDamage(def, target, target.curHp); }
+      else log('【律令死亡】：【' + target.name + '】生命过高（' + target.curHp + ' > 6），无效果');
+      break;
+    }
+    case 'backRowSpikes': { // 冰锥术：对敌方后排所有单位造成 4 点伤害
+      const targets = foe.board.filter(m => m.row === 2);
+      if (targets.length === 0) log('【冰锥术】：敌方后排没有单位，无效果');
+      targets.forEach(m => dealSpellDamage(def, m, 4));
+      break;
+    }
+    case 'entangle': { // 荆棘缠绕：对目标敌方单位造成 2 点伤害并使其攻击 -2
+      dealSpellDamage(def, target, 2);
+      if (target.curHp > 0) { target.baseAtk = Math.max(0, target.baseAtk - 2); log('【荆棘缠绕】：【' + target.name + '】攻击 -2'); }
+      break;
+    }
+    case 'gate': { // 异界之门：召唤一个【恶鬼】到己方前排
+      const d = findDef('恶鬼');
+      if (d) { summonMinion(side, d, 0); log('【异界之门】：【恶鬼】应门而来'); }
+      break;
+    }
+    case 'animalSummon': { // 动物召唤：召唤一个【恐狼】到己方前排
+      const d = findDef('恐狼');
+      if (d) { summonMinion(side, d, 0); log('【动物召唤】：【恐狼】响应了召唤'); }
+      break;
+    }
+    case 'timeStop': { // 时间停止：敌方所有单位失明 1 回合
+      foe.board.forEach(m => { m.blind = 1; });
+      log('【时间停止】：敌方所有单位失明 1 回合');
+      break;
+    }
+    case 'wish': { // 祈愿术：摸 3 张牌，英雄恢复 6 点生命
+      drawCard(side); drawCard(side); drawCard(side);
+      healHero(side, 6);
+      log('【祈愿术】：摸 3 张牌，英雄恢复 6 点生命');
+      break;
+    }
     case 'heal':
       // 治疗：可对友方单位使用，也可治疗英雄
       if (target && target.hero) healHero(side, 7);
@@ -818,6 +864,14 @@ const SPELL_FX_TEXT = {
   frenzy: '目标友方单位攻击 +4 并中毒 Lv1',
   twister: '随机重排敌方阵型：地面单位随机分配到前/中/后三排（飞行单位不动）',
   airShield: '目标友方单位获得「法术护盾3」（重复无效）',
+  magicMissile: '对随机 3 个敌方单位各造成 2 点伤害',
+  powerWordKill: '消灭生命 ≤ 6 的一个敌方单位',
+  backRowSpikes: '对敌方后排所有单位造成 4 点伤害',
+  entangle: '对目标敌方单位造成 2 点伤害并使其攻击 -2',
+  gate: '召唤一个【恶鬼】到己方前排',
+  animalSummon: '召唤一个【恐狼】到己方前排',
+  timeStop: '敌方所有单位失明 1 回合（无法攻击/反击/施法/切换形态）',
+  wish: '摸 3 张牌，英雄恢复 6 点生命',
   raiseSkeletons: '选择敌方或我方墓地任意一个单位除外，召唤（其费用÷2 向上取整 + 1）个骷髅兵到我方前排',
   slimeSwarm: '消耗所有剩余法力，召唤等量史莱姆到前排；数量大于 4 时每 4 个史莱姆换成 1 个巨型史莱姆',
   vortex: '对随机至多 2 个敌方单位各造成 3 点伤害（守备加权，不重复）',
@@ -1590,7 +1644,7 @@ function aiSpellDecision(def) {
   switch (def.spellEffect) {
     case 'stoneSkin': case 'fireShield': case 'mirror': case 'frenzy': case 'airShield': case 'lifeBoon': // 增益单体 → 自己攻击最高单位
       return me.board.length ? highest(me.board).uid : null;
-    case 'slow': case 'iceBolt': case 'fireballSpell': case 'lightningBolt': case 'dispel':
+    case 'slow': case 'iceBolt': case 'fireballSpell': case 'lightningBolt': case 'dispel': case 'powerWordKill': case 'entangle':
     case 'sear': case 'meteor': case 'thunderBolt': // 伤害/减益 → 敌方攻击最高单位
       return foe.board.length ? highest(foe.board).uid : null;
     case 'confuse': case 'forget': case 'blind': { // 心智魔法 → 敌方攻击最高的非免疫单位
