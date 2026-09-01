@@ -222,7 +222,9 @@ function boardHtml(side, isTop) {
       '<div class="row-minions">' + inner + '</div></div>';
   };
   const ground = order.map(rowHtml).join('');
-  const air = rowHtml(AIR_ROW);
+  // 空中行仅在有飞行单位（或正在播放的死亡动画）时显示，避免空行占位
+  const hasAir = p.board.some(m => m.row === AIR_ROW) || dying.some(g => g.side === side && g.row === AIR_ROW);
+  const air = hasAir ? rowHtml(AIR_ROW) : '';
   // 空中区域悬浮在战场上方（靠近中线一侧）：上方半场放在最下，下方半场放在最上
   return isTop ? ground + air : air + ground;
 }
