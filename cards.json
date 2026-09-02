@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "_comment": {
     "name": "卡名（唯一键）",
     "race": "阵营，必须是 races 之一",
@@ -6302,6 +6302,161 @@
         "icon": "🏹",
         "hue": 195
       }
+    },
+    {
+      "name": "流浪学者",
+      "race": "塔楼",
+      "cost": 2,
+      "atk": 1,
+      "arm": 0,
+      "hp": 2,
+      "spell": "searchAny",
+      "rating": 5,
+      "art": {
+        "icon": "📚",
+        "hue": 220
+      },
+      "traits": []
+    },
+    {
+      "name": "阵营向导",
+      "race": "城堡",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "spell": "searchRace",
+      "rating": 8,
+      "art": {
+        "icon": "🎖️",
+        "hue": 45
+      },
+      "traits": []
+    },
+    {
+      "name": "精灵游学者",
+      "race": "壁垒",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "spell": "searchRace",
+      "rating": 8,
+      "art": {
+        "icon": "🧝",
+        "hue": 140
+      },
+      "traits": []
+    },
+    {
+      "name": "骷髅考古学家",
+      "race": "墓园",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "spell": "searchRace",
+      "rating": 8,
+      "art": {
+        "icon": "💀",
+        "hue": 270
+      },
+      "traits": []
+    },
+    {
+      "name": "寻宝猎人",
+      "race": "中立",
+      "cost": 3,
+      "atk": 2,
+      "arm": 0,
+      "hp": 4,
+      "spell": "searchCost",
+      "rating": 8,
+      "art": {
+        "icon": "🗺️",
+        "hue": 40
+      },
+      "spellParam": 3,
+      "traits": []
+    },
+    {
+      "name": "火系研究员",
+      "race": "塔楼",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "spell": "searchSchool",
+      "rating": 9,
+      "art": {
+        "icon": "🔥",
+        "hue": 15
+      },
+      "spellParam": "火",
+      "traits": []
+    },
+    {
+      "name": "水系研究员",
+      "race": "塔楼",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "spell": "searchSchool",
+      "rating": 9,
+      "art": {
+        "icon": "💧",
+        "hue": 195
+      },
+      "spellParam": "水",
+      "traits": []
+    },
+    {
+      "name": "土系研究员",
+      "race": "塔楼",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "spell": "searchSchool",
+      "rating": 9,
+      "art": {
+        "icon": "⛰️",
+        "hue": 35
+      },
+      "spellParam": "土",
+      "traits": []
+    },
+    {
+      "name": "气系研究员",
+      "race": "塔楼",
+      "cost": 4,
+      "atk": 2,
+      "arm": 0,
+      "hp": 5,
+      "spell": "searchSchool",
+      "rating": 9,
+      "art": {
+        "icon": "🌪️",
+        "hue": 190
+      },
+      "spellParam": "气",
+      "traits": []
+    },
+    {
+      "name": "博学士",
+      "race": "中立",
+      "cost": 5,
+      "atk": 3,
+      "arm": 0,
+      "hp": 6,
+      "spell": "searchAny",
+      "rating": 11,
+      "art": {
+        "icon": "🎓",
+        "hue": 50
+      },
+      "traits": []
     }
   ]
 }

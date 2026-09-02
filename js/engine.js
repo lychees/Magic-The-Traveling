@@ -1170,7 +1170,24 @@ function playCard(side, idx, row, beforeUid, faceDown, targetUid) {
 
 function battlecry(side, m) {
   const p = state[side], foeSide = otherSide(side), foe = state[foeSide];
+  // 检索：从牌库把符合条件的卡置入手牌（无差别/同阵营/低费/指定系别）
+  const searchDeckToHand = (label, filterFn) => {
+    const matches = p.deck.map((d, i) => ({ d, i })).filter(x => filterFn(x.d));
+    if (!matches.length || p.hand.length >= HAND_LIMIT) {
+      log(label + '：' + (p.hand.length >= HAND_LIMIT ? '手牌已满' : '牌库中没有符合条件的卡') + '，无效果');
+      return false;
+    }
+    const pick = matches[Math.floor(Math.random() * matches.length)];
+    p.deck.splice(pick.i, 1);
+    p.hand.push(pick.d);
+    log(label + '：从牌库检索一张【' + pick.d.name + '】置入手牌');
+    return true;
+  };
   switch (m.spell) {
+    case 'searchAny': searchDeckToHand('【' + m.name + '】战吼·检索', () => true); break;
+    case 'searchRace': searchDeckToHand('【' + m.name + '】战吼·检索', d => d.race === m.race); break;
+    case 'searchCost': searchDeckToHand('【' + m.name + '】战吼·检索', d => d.cost <= (m.spellParam || 3)); break;
+    case 'searchSchool': searchDeckToHand('【' + m.name + '】战吼·检索', d => d.type === 'spell' && d.school === m.spellParam); break;
     case 'prayer': {
       let n = 0;
       p.board.forEach(o => { if (o !== m) { o.baseAtk += 1; o.baseMaxHp += 2; o.atk += 1; o.maxHp += 2; o.curHp += 2; n++; } });
