@@ -2367,12 +2367,13 @@ function combatTick() {
     return;
   }
   autoAttack(side, m);
-  // 正士气：x*10% 概率额外行动一次（每战斗阶段限一次）
+  // 正士气：x*10% 概率额外行动一次（每战斗阶段限一次，同一单位立即连动）
   if (!m._extraUsed && m.morale > 0 && m.curHp > 0 && Math.random() < m.morale * 0.1) {
     m._extraUsed = true;
-    m.canAttack = true;
+    m.canAttack = true; // 恢复行动资格以保证连动
     log('【' + m.name + '】士气高涨，获得额外行动机会！（士气 +' + m.morale + '）');
     moraleFx(m, 'up');
+    autoAttack(side, m); // 士气高涨：同一单位立即连续行动
   }
   render();
   if (!state.gameOver) setTimeout(combatTick, 650);
